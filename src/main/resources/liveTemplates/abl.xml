@@ -1,0 +1,97 @@
+<templateSet group="ABL">
+    <!-- VARIABLES & PARAMETERS -->
+    <template name="defvar" value="DEFINE VARIABLE $VAR_NAME$ AS $TYPE$ NO-UNDO." description="Define Variable" toReformat="true" toShortenFQNames="true">
+        <variable name="VAR_NAME" expression="" defaultValue="&quot;lv_name&quot;" alwaysStopAt="true"/>
+        <variable name="TYPE" expression="" defaultValue="&quot;CHARACTER&quot;" alwaysStopAt="true"/>
+        <context><option name="ABL" value="true"/></context>
+    </template>
+    
+    <template name="defparam" value="DEFINE $DIR$ PARAMETER $PARAM_NAME$ AS $TYPE$ NO-UNDO." description="Define Parameter" toReformat="true" toShortenFQNames="true">
+        <variable name="DIR" expression="" defaultValue="&quot;INPUT&quot;" alwaysStopAt="true"/>
+        <variable name="PARAM_NAME" expression="" defaultValue="&quot;p_name&quot;" alwaysStopAt="true"/>
+        <variable name="TYPE" expression="" defaultValue="&quot;CHARACTER&quot;" alwaysStopAt="true"/>
+        <context><option name="ABL" value="true"/></context>
+    </template>
+
+    <!-- TABLES & DATASETS -->
+    <template name="deftt" value="DEFINE TEMP-TABLE tt$NAME$ NO-UNDO&#10;    FIELD $FIELD_NAME$ AS $FIELD_TYPE$&#10;    INDEX idx$NAME$ IS PRIMARY UNIQUE $FIELD_NAME$.&#10;$END$" description="Define Temp-Table" toReformat="true" toShortenFQNames="true">
+        <variable name="NAME" expression="" defaultValue="&quot;Table&quot;" alwaysStopAt="true"/>
+        <variable name="FIELD_NAME" expression="" defaultValue="&quot;Id&quot;" alwaysStopAt="true"/>
+        <variable name="FIELD_TYPE" expression="" defaultValue="&quot;INTEGER&quot;" alwaysStopAt="true"/>
+        <context><option name="ABL" value="true"/></context>
+    </template>
+
+    <template name="defds" value="DEFINE DATASET ds$NAME$ FOR tt$NAME$.&#10;$END$" description="Define Dataset" toReformat="true" toShortenFQNames="true">
+        <variable name="NAME" expression="" defaultValue="&quot;Dataset&quot;" alwaysStopAt="true"/>
+        <context><option name="ABL" value="true"/></context>
+    </template>
+
+    <!-- CONTROL FLOW -->
+    <template name="do" value="DO:&#10;    $END$&#10;END." description="DO block" toReformat="true" toShortenFQNames="true">
+        <context><option name="ABL" value="true"/></context>
+    </template>
+
+    <template name="if" value="IF $CONDITION$ THEN DO:&#10;    $END$&#10;END." description="IF statement" toReformat="true" toShortenFQNames="true">
+        <variable name="CONDITION" expression="" defaultValue="&quot;lCondition&quot;" alwaysStopAt="true"/>
+        <context><option name="ABL" value="true"/></context>
+    </template>
+
+    <template name="ifelse" value="IF $CONDITION$ THEN DO:&#10;    $END$&#10;END.&#10;ELSE DO:&#10;    &#10;END." description="IF ELSE statement" toReformat="true" toShortenFQNames="true">
+        <variable name="CONDITION" expression="" defaultValue="&quot;lCondition&quot;" alwaysStopAt="true"/>
+        <context><option name="ABL" value="true"/></context>
+    </template>
+
+    <template name="case" value="CASE $EXPRESSION$:&#10;    WHEN $VALUE$ THEN DO:&#10;        $END$&#10;    END.&#10;    OTHERWISE DO:&#10;        &#10;    END.&#10;END CASE." description="CASE statement" toReformat="true" toShortenFQNames="true">
+        <variable name="EXPRESSION" expression="" defaultValue="&quot;cExpression&quot;" alwaysStopAt="true"/>
+        <variable name="VALUE" expression="" defaultValue="&quot;\&quot;Value\&quot;&quot;" alwaysStopAt="true"/>
+        <context><option name="ABL" value="true"/></context>
+    </template>
+
+    <!-- DB ACCESS -->
+    <template name="foreach" value="FOR EACH $TABLE$ NO-LOCK:&#10;    $END$&#10;END." description="FOR EACH loop" toReformat="true" toShortenFQNames="true">
+        <variable name="TABLE" expression="" defaultValue="&quot;table&quot;" alwaysStopAt="true"/>
+        <context><option name="ABL" value="true"/></context>
+    </template>
+
+    <template name="findfirst" value="FIND FIRST $TABLE$ WHERE $TABLE$.$FIELD$ = $VALUE$ NO-LOCK NO-ERROR.&#10;IF AVAILABLE($TABLE$) THEN DO:&#10;    $END$&#10;END." description="FIND FIRST with IF AVAILABLE" toReformat="true" toShortenFQNames="true">
+        <variable name="TABLE" expression="" defaultValue="&quot;table&quot;" alwaysStopAt="true"/>
+        <variable name="FIELD" expression="" defaultValue="&quot;field&quot;" alwaysStopAt="true"/>
+        <variable name="VALUE" expression="" defaultValue="&quot;value&quot;" alwaysStopAt="true"/>
+        <context><option name="ABL" value="true"/></context>
+    </template>
+
+    <!-- ERROR HANDLING -->
+    <template name="catch" value="CATCH e AS Progress.Lang.Error:&#10;    MESSAGE &quot;Error: &quot; e:GetMessage(1) VIEW-AS ALERT-BOX ERROR.&#10;    $END$&#10;END CATCH." description="CATCH block" toReformat="true" toShortenFQNames="true">
+        <context><option name="ABL" value="true"/></context>
+    </template>
+
+    <template name="finally" value="FINALLY:&#10;    $END$&#10;END FINALLY." description="FINALLY block" toReformat="true" toShortenFQNames="true">
+        <context><option name="ABL" value="true"/></context>
+    </template>
+
+    <!-- ROUTINES & OOABL -->
+    <template name="proc" value="PROCEDURE $PROC_NAME$:&#10;    $END$&#10;END PROCEDURE." description="Define Procedure" toReformat="true" toShortenFQNames="true">
+        <variable name="PROC_NAME" expression="" defaultValue="&quot;myProcedure&quot;" alwaysStopAt="true"/>
+        <context><option name="ABL" value="true"/></context>
+    </template>
+
+    <template name="func" value="FUNCTION $FUNC_NAME$ RETURNS $RET_TYPE$ ($PARAMS$):&#10;    $END$&#10;END FUNCTION." description="Define Function" toReformat="true" toShortenFQNames="true">
+        <variable name="FUNC_NAME" expression="" defaultValue="&quot;myFunction&quot;" alwaysStopAt="true"/>
+        <variable name="RET_TYPE" expression="" defaultValue="&quot;CHARACTER&quot;" alwaysStopAt="true"/>
+        <variable name="PARAMS" expression="" defaultValue="&quot;&quot;" alwaysStopAt="true"/>
+        <context><option name="ABL" value="true"/></context>
+    </template>
+
+    <template name="method" value="METHOD PUBLIC $RET_TYPE$ $METHOD_NAME$($PARAM$):&#10;    $END$&#10;END METHOD." description="Class Method" toReformat="true" toShortenFQNames="true">
+        <variable name="RET_TYPE" expression="" defaultValue="&quot;VOID&quot;" alwaysStopAt="true"/>
+        <variable name="METHOD_NAME" expression="" defaultValue="&quot;MyMethod&quot;" alwaysStopAt="true"/>
+        <variable name="PARAM" expression="" defaultValue="&quot;&quot;" alwaysStopAt="true"/>
+        <context><option name="ABL" value="true"/></context>
+    </template>
+
+    <template name="prop" value="DEFINE PUBLIC PROPERTY $PROP_NAME$ AS $TYPE$ NO-UNDO&#10;    GET.&#10;    SET.&#10;$END$" description="Define Property" toReformat="true" toShortenFQNames="true">
+        <variable name="PROP_NAME" expression="" defaultValue="&quot;MyProperty&quot;" alwaysStopAt="true"/>
+        <variable name="TYPE" expression="" defaultValue="&quot;CHARACTER&quot;" alwaysStopAt="true"/>
+        <context><option name="ABL" value="true"/></context>
+    </template>
+</templateSet>

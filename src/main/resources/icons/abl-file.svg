@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+  <!-- Fond de l'icône fichier -->
+  <rect x="2" y="1" width="10" height="13" rx="1" fill="#4B9FE1" opacity="0.9"/>
+  <!-- Corner fold -->
+  <path d="M9 1 L12 4 L9 4 Z" fill="#FFFFFF" opacity="0.4"/>
+  <!-- Texte "ABL" -->
+  <text x="3.5" y="11" font-family="Arial, sans-serif" font-size="5"
+        font-weight="bold" fill="#FFFFFF" letter-spacing="0.2">ABL</text>
+</svg>

@@ -1,0 +1,35 @@
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+.intellijPlatform/
+.kotlin/
+
+# Gradle
+.gradle/
+build/
+**/build/
+!gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.properties
+
+# OS générés
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Logs et temporaires
+*.log
+*.tmp
+*.bak
+*.swp
+
+# Environnement local
+.env
+.env.local
+
+# Claude Code
+.claude/
+unnamed.patch

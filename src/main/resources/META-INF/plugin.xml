@@ -1,0 +1,169 @@
+<!-- ABL Language Support Plugin — plugin.xml -->
+<idea-plugin>
+
+    <id>com.ablls.abl-language-support</id>
+    <name>ABL Language Support</name>
+    <vendor email="contact@ablls.com" url="https://github.com/your-org/abl-intellij-plugin">
+        ABL Language Support
+    </vendor>
+    <version>1.0.0</version>
+    <idea-version since-build="232"/>
+
+    <description><![CDATA[
+        <b>ABL Language Support for IntelliJ IDEA</b><br/>
+        <br/>
+        Support complet du langage Progress OpenEdge ABL (Advanced Business Language) :<br/>
+        <ul>
+          <li>Coloration syntaxique — via le parser CABL (Riverside Software)</li>
+          <li>Complétion de code (IntelliSense) — mots-clés + symboles du projet</li>
+          <li>Navigation : Go to Definition</li>
+          <li>Diagnostics en temps réel (erreurs de syntaxe CABL)</li>
+          <li>Documentation hover (built-ins + symboles utilisateur)</li>
+          <li>Lecture du fichier openedge-project.json</li>
+        </ul>
+        <br/>
+        Extensions supportées : .p, .cls, .i, .w, .t
+    ]]></description>
+
+    <!-- ── Dépendances ──────────────────────────────────────────────────────── -->
+    <depends>com.intellij.modules.platform</depends>
+
+    <!-- ── Extension points ───────────────────────────────────────────────── -->
+    <extensions defaultExtensionNs="com.intellij">
+
+        <!-- ── Type de fichier ──────────────────────────────────────────────── -->
+        <fileType
+            name="ABL File"
+            implementationClass="com.ablls.plugin.language.AblFileType"
+            fieldName="INSTANCE"
+            language="ABL"
+            extensions="p;cls;i;w;t"/>
+
+        <!-- ── Coloration syntaxique ────────────────────────────────────────── -->
+        <lang.syntaxHighlighterFactory
+            language="ABL"
+            implementationClass="com.ablls.plugin.highlight.AblHighlighterFactory"/>
+
+        <colorSettingsPage
+            implementation="com.ablls.plugin.highlight.AblColorSettingsPage"/>
+
+        <!-- ── Parser / PSI ─────────────────────────────────────────────────── -->
+        <lang.parserDefinition
+            language="ABL"
+            implementationClass="com.ablls.plugin.parser.AblParserDefinition"/>
+
+        <!-- ── Folding (DO...END, PROCEDURE...END, CLASS...END) ────────────── -->
+        <lang.foldingBuilder
+            language="ABL"
+            implementationClass="com.ablls.plugin.highlight.AblFoldingBuilder"/>
+
+        <!-- ── Commenter (/* */ et //) ─────────────────────────────────────── -->
+        <lang.commenter
+            language="ABL"
+            implementationClass="com.ablls.plugin.highlight.AblCommenter"/>
+
+        <!-- ── Structure view (outline du fichier) ──────────────────────────── -->
+        <lang.psiStructureViewFactory
+            language="ABL"
+            implementationClass="com.ablls.plugin.structure.AblStructureViewFactory"/>
+
+        <!-- ── Services projet ───────────────────────────────────────────────── -->
+        <projectService
+            serviceImplementation="com.ablls.plugin.core.AblProjectAnalysisService"/>
+
+        <projectService
+            serviceInterface="com.ablls.plugin.project.OpenEdgeProjectService"
+            serviceImplementation="com.ablls.plugin.project.OpenEdgeProjectServiceImpl"/>
+
+        <!-- ── Diagnostics : erreurs syntaxiques CABL ────────────────────────── -->
+        <externalAnnotator
+            language="ABL"
+            implementationClass="com.ablls.plugin.annotator.AblAnnotator"/>
+
+        <!-- ── Inspections (Best Practices & Linting) ────────────────────────── -->
+        <localInspection language="ABL" groupPath="ABL" groupName="Best Practices"
+                         displayName="Missing NO-UNDO modifier" shortName="AblMissingNoUndo"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="com.ablls.plugin.inspections.AblNoUndoInspection"/>
+        <localInspection language="ABL" groupPath="ABL" groupName="Best Practices"
+                         displayName="Missing Lock mode on FIND" shortName="AblFindNoLock"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="com.ablls.plugin.inspections.AblFindNoLockInspection"/>
+
+        <!-- ── Complétion de code ─────────────────────────────────────────────── -->
+        <completion.contributor
+            language="ABL"
+            implementationClass="com.ablls.plugin.completion.AblCompletionContributor"/>
+
+        <!-- ── Live Templates (Snippets) ────────────────────────────────────── -->
+        <defaultLiveTemplates file="liveTemplates/abl.xml"/>
+        <liveTemplateContext implementation="com.ablls.plugin.completion.AblTemplateContextType"/>
+
+        <!-- ── Auto-Casing (Formatage à la volée) ──────────────────────────── -->
+        <typedHandler implementation="com.ablls.plugin.completion.AblAutoCaseTypedHandler" />
+
+        <!-- ── Documentation hover ────────────────────────────────────────────── -->
+        <lang.documentationProvider
+            language="ABL"
+            implementationClass="com.ablls.plugin.documentation.AblDocumentationProvider"/>
+
+        <!-- ── Go to Definition ───────────────────────────────────────────────── -->
+        <gotoDeclarationHandler
+            implementationClass="com.ablls.plugin.navigation.AblGotoDeclarationHandler"/>
+
+        <!-- ── Find Usages ───────────────────────────────────────────────────── -->
+        <lang.findUsagesProvider
+            language="ABL"
+            implementationClass="com.ablls.plugin.navigation.AblFindUsagesProvider"/>
+
+        <!-- ── Rename ────────────────────────────────────────────────────────── -->
+        <renameHandler
+            implementation="com.ablls.plugin.refactor.AblRenameHandler"/>
+
+        <!-- ── Bracket Matcher ───────────────────────────────────────────────── -->
+        <lang.bracketMatcher
+            language="ABL"
+            implementationClass="com.ablls.plugin.highlight.AblBracketMatcher"/>
+
+        <!-- ── Activité de démarrage : indexation du projet ──────────────────── -->
+        <postStartupActivity
+            implementation="com.ablls.plugin.startup.AblStartupActivity"/>
+
+        <postStartupActivity
+            implementation="com.ablls.plugin.project.AblProjectListener"/>
+
+        <!-- ── Notification group ───────────────────────────────────────────── -->
+        <notificationGroup
+            id="ABL Language Support"
+            displayType="BALLOON"/>
+
+        <!-- ── Run configuration : lancer un .p directement ─────────────────── -->
+        <configurationType
+            implementation="com.ablls.plugin.run.AblRunConfigurationType"/>
+
+    </extensions>
+
+    <!-- ── Actions du menu ────────────────────────────────────────────────────── -->
+    <actions>
+
+        <action id="ABL.ReindexProject"
+                class="com.ablls.plugin.actions.ReindexProjectAction"
+                text="Re-index ABL Project"
+                description="Relance l'indexation des symboles ABL du projet">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </action>
+
+        <action id="ABL.OpenProjectConfig"
+                class="com.ablls.plugin.actions.OpenProjectConfigAction"
+                text="Open openedge-project.json"
+                description="Ouvre ou crée le fichier de configuration du projet ABL">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </action>
+
+    </actions>
+
+    <!-- ── Listeners ───────────────────────────────────────────────────────── -->
+    <applicationListeners>
+    </applicationListeners>
+
+</idea-plugin>
