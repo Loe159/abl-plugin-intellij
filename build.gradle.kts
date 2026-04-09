@@ -47,6 +47,12 @@ dependencies {
         exclude(group = "org.sonarsource.analyzer-commons")
     }
 
+    // ── Profiler parser RSSW (couverture de code via .prof) ──────────────────
+    implementation("eu.rssw.openedge.parsers:profiler-parser:3.7.2") {
+        exclude(group = "org.sonarsource.sonarqube")
+        exclude(group = "org.sonarsource.analyzer-commons")
+    }
+
     // ── ANTLR4 runtime (requis par proparse) ─────────────────────────────────
     implementation("org.antlr:antlr4-runtime:4.13.1")
 

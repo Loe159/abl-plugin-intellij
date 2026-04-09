@@ -21,7 +21,9 @@ data class OpenEdgeProjectConfig(
     val buildPath: String = ".build",
     val charset: String = "UTF-8",
     val databases: List<DatabaseConnection> = emptyList(),
-    val aliases: List<DatabaseAlias> = emptyList()
+    val aliases: List<DatabaseAlias> = emptyList(),
+    val warningsDir: String = ".build/.warnings",
+    val profilerDir: String? = null
 )
 
 @Serializable

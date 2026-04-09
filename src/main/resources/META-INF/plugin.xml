@@ -89,6 +89,51 @@
                          displayName="Missing Lock mode on FIND" shortName="AblFindNoLock"
                          enabledByDefault="true" level="WARNING"
                          implementationClass="com.ablls.plugin.inspections.AblFindNoLockInspection"/>
+        <localInspection language="ABL" groupPath="ABL" groupName="Best Practices"
+                         displayName="NO-ERROR without error check" shortName="AblNoErrorWithoutCheck"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="com.ablls.plugin.inspections.AblNoErrorWithoutCheckInspection"/>
+        <localInspection language="ABL" groupPath="ABL" groupName="Best Practices"
+                         displayName="Variable defined but never read" shortName="AblUnusedVariable"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="com.ablls.plugin.inspections.AblUnusedVariableInspection"/>
+        <localInspection language="ABL" groupPath="ABL" groupName="Best Practices"
+                         displayName="Fortran-style comparison operator" shortName="AblFortranOperators"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="com.ablls.plugin.inspections.AblFortranOperatorsInspection"/>
+        <localInspection language="ABL" groupPath="ABL" groupName="Best Practices"
+                         displayName="String concatenation in WHERE clause" shortName="AblStringConcatInWhere"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="com.ablls.plugin.inspections.AblStringConcatInWhereInspection"/>
+        <localInspection language="ABL" groupPath="ABL" groupName="Best Practices"
+                         displayName="Empty or return-only CATCH block" shortName="AblEmptyCatch"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="com.ablls.plugin.inspections.AblEmptyCatchInspection"/>
+        <localInspection language="ABL" groupPath="ABL" groupName="Security"
+                         displayName="Table reference without database prefix (multi-db)"
+                         shortName="AblMissingSchemaPrefix"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="com.ablls.plugin.inspections.AblMissingSchemaPrefixInspection"/>
+
+        <!-- ── Avertissements compilateur ──────────────────────────────────────────── -->
+        <externalAnnotator language="ABL"
+                           implementationClass="com.ablls.plugin.annotator.AblCompilerWarningAnnotator"/>
+
+        <!-- ── Couverture de code (profiler) ───────────────────────────────────── -->
+        <projectService serviceImplementation="com.ablls.plugin.coverage.AblCoverageService"/>
+
+        <!-- ── Tool windows ──────────────────────────────────────────────────────────── -->
+        <toolWindow id="ABL XREF" secondary="true" icon="/icons/abl-file.svg"
+                    anchor="bottom" factoryClass="com.ablls.plugin.xref.XrefToolWindowFactory"/>
+        <toolWindow id="ABL Duplicates" secondary="true" icon="/icons/abl-file.svg"
+                    anchor="bottom" factoryClass="com.ablls.plugin.duplication.AblDuplicatesToolWindowFactory"/>
+
+        <!-- ── Debug ──────────────────────────────────────────────────────────────────────── -->
+        <configurationType implementation="com.ablls.plugin.debug.AblDebugConfigurationType"/>
+        <xdebugger.breakpointType implementation="com.ablls.plugin.debug.AblLineBreakpointType"/>
+
+        <!-- ── Console filter ──────────────────────────────────────────────────────── -->
+        <consoleFilterProvider implementation="com.ablls.plugin.run.AblConsoleFilterProvider"/>
 
         <!-- ── Complétion de code ─────────────────────────────────────────────── -->
         <completion.contributor
@@ -160,10 +205,36 @@
             <add-to-group group-id="ToolsMenu" anchor="last"/>
         </action>
 
+        <action id="ABL.ShowXref"
+                class="com.ablls.plugin.xref.ShowXrefAction"
+                text="Show ABL XREF"
+                description="Opens the ABL XREF tool window">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </action>
+
+        <action id="ABL.FindDuplicates"
+                class="com.ablls.plugin.duplication.FindAblDuplicatesAction"
+                text="Find ABL Duplicates"
+                description="Detect duplicated ABL code blocks">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </action>
+
+        <action id="ABL.LoadCoverage"
+                class="com.ablls.plugin.coverage.LoadCoverageAction"
+                text="Load ABL Coverage (.prof)"
+                description="Load an OpenEdge profiler file to display code coverage">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </action>
+
     </actions>
 
     <!-- ── Listeners ───────────────────────────────────────────────────────── -->
     <applicationListeners>
     </applicationListeners>
+
+    <projectListeners>
+        <listener class="com.ablls.plugin.annotator.AblWarningFileListener"
+                  topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
+    </projectListeners>
 
 </idea-plugin>
