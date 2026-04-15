@@ -2,100 +2,191 @@ package com.ablls.plugin.run
 
 import com.ablls.plugin.language.AblFileType
 import com.ablls.plugin.language.AblIcons
+import com.ablls.plugin.project.OpenEdgeProjectService
+import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.*
 import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.ProcessHandlerFactory
 import com.intellij.execution.process.ProcessTerminatedListener
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.components.service
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.panel
+import org.jdom.Element
+import java.io.File
 import javax.swing.JComponent
 
 // ─── Type de configuration ────────────────────────────────────────────────────
 
 class AblRunConfigurationType : ConfigurationType {
-    override fun getDisplayName(): String = "ABL Program"
-    override fun getConfigurationTypeDescription(): String = "Run a Progress OpenEdge ABL program"
-    override fun getIcon() = AblIcons.FILE
-    override fun getId(): String = "ABL_RUN_CONFIGURATION"
-
-    override fun getConfigurationFactories(): Array<ConfigurationFactory> =
-        arrayOf(AblRunConfigurationFactory(this))
+    override fun getDisplayName()                  = "ABL Program"
+    override fun getConfigurationTypeDescription() = "Run or debug a Progress OpenEdge ABL program"
+    override fun getIcon()                         = AblIcons.FILE
+    override fun getId()                           = "ABL_RUN_CONFIGURATION"
+    override fun getConfigurationFactories()       = arrayOf(AblRunConfigurationFactory(this))
 }
 
 // ─── Factory ──────────────────────────────────────────────────────────────────
 
 class AblRunConfigurationFactory(type: ConfigurationType) : ConfigurationFactory(type) {
-
-    override fun getId(): String = "ABL_RUN_CONFIGURATION_FACTORY"
-
+    override fun getId() = "ABL_RUN_CONFIGURATION_FACTORY"
     override fun createTemplateConfiguration(project: Project): RunConfiguration =
         AblRunConfiguration(project, this)
 }
 
 // ─── Configuration ────────────────────────────────────────────────────────────
 
+/**
+ * IMPORTANT : on utilise RunConfigurationOptions (pas de sous-classe custom)
+ * pour éviter un ClassCastException lors de la création de la config depuis le "+" menu.
+ */
 class AblRunConfiguration(
     project: Project,
     factory: ConfigurationFactory
-) : RunConfigurationBase<AblRunConfigurationOptions>(project, factory, "ABL Program") {
+) : RunConfigurationBase<RunConfigurationOptions>(project, factory, "ABL Program") {
 
-    // Options persistées (fichier, paramètres, DLC path...)
-    var programFile: String = ""
-    var programParam: String = ""
-    var dlcPath: String = ""
-    var workingDirectory: String = ""
-    var batchMode: Boolean = true
-
-    override fun getOptions(): AblRunConfigurationOptions =
-        super.getOptions() as AblRunConfigurationOptions
+    var programFile:      String  = ""
+    var programParam:     String  = ""
+    var dlcPath:          String  = ""
+    var workingDirectory: String  = ""
+    var batchMode:        Boolean = true
+    /** Port du debugger OE. 0 = pas de debug (exécution normale). */
+    var debugPort:        Int     = 0
 
     override fun getConfigurationEditor(): SettingsEditor<out RunConfiguration> =
         AblRunConfigurationEditor()
 
     override fun getState(
         executor: com.intellij.execution.Executor,
-        environment: ExecutionEnvironment
-    ): CommandLineState {
-        return AblRunState(environment, this)
+        env: ExecutionEnvironment
+    ): CommandLineState = AblRunState(env, this)
+
+    // ── Persistance XML ──────────────────────────────────────────────────────
+
+    override fun writeExternal(element: Element) {
+        super.writeExternal(element)
+        element.setAttribute("programFile",      programFile)
+        element.setAttribute("programParam",     programParam)
+        element.setAttribute("dlcPath",          dlcPath)
+        element.setAttribute("workingDirectory", workingDirectory)
+        element.setAttribute("batchMode",        batchMode.toString())
+        element.setAttribute("debugPort",        debugPort.toString())
+    }
+
+    override fun readExternal(element: Element) {
+        super.readExternal(element)
+        programFile      = element.getAttributeValue("programFile")      ?: ""
+        programParam     = element.getAttributeValue("programParam")     ?: ""
+        dlcPath          = element.getAttributeValue("dlcPath")          ?: ""
+        workingDirectory = element.getAttributeValue("workingDirectory") ?: ""
+        batchMode        = element.getAttributeValue("batchMode")?.toBooleanStrictOrNull() ?: true
+        debugPort        = element.getAttributeValue("debugPort")?.toIntOrNull() ?: 0
+    }
+
+    // ── Validation ────────────────────────────────────────────────────────────
+
+    @Throws(RuntimeConfigurationException::class)
+    override fun checkConfiguration() {
+        if (programFile.isBlank())
+            throw RuntimeConfigurationError("Program file (.p) is required")
+
+        val resolvedDlc = dlcPath.ifBlank {
+            runCatching {
+                project.service<OpenEdgeProjectService>().config.dlcPath
+            }.getOrNull()
+                ?: System.getenv("DLC")
+        }
+        if (resolvedDlc.isNullOrBlank())
+            throw RuntimeConfigurationWarning(
+                "DLC path not configured — set it in the run config, in openedge-project.json (\"dlcPath\"), or via \$DLC"
+            )
     }
 }
-
-// ─── Options persistées ───────────────────────────────────────────────────────
-
-class AblRunConfigurationOptions : RunConfigurationOptions()
 
 // ─── État d'exécution ─────────────────────────────────────────────────────────
 
 class AblRunState(
-    private val environment: ExecutionEnvironment,
-    private val config: AblRunConfiguration
+    environment: ExecutionEnvironment,
+    val config: AblRunConfiguration
 ) : CommandLineState(environment) {
 
-    override fun startProcess(): OSProcessHandler {
-        // Résoudre l'exécutable Progress (_progres ou prowin.exe)
-        val dlc = config.dlcPath.ifBlank {
-            System.getenv("DLC") ?: "/usr/dlc"
-        }
-        val isWindows = System.getProperty("os.name").lowercase().contains("win")
-        val executable = if (isWindows) "$dlc/bin/prowin.exe" else "$dlc/bin/_progres"
+    /**
+     * Résout le chemin DLC selon la priorité :
+     *   1. Champ "DLC path" de la config Run (si renseigné)
+     *   2. `dlcPath` dans openedge-project.json (OpenEdgeProjectService)
+     *   3. Variable d'environnement $DLC
+     *
+     * Lève [ExecutionException] si aucune source ne fournit le chemin.
+     */
+    fun resolveDlc(): String {
+        if (config.dlcPath.isNotBlank()) return config.dlcPath
 
-        val args = mutableListOf(executable, "-nosplash", "-p", config.programFile)
+        val fromJson = runCatching {
+            config.project.service<OpenEdgeProjectService>().config.dlcPath
+        }.getOrNull()
+        if (!fromJson.isNullOrBlank()) return fromJson
+
+        val fromEnv = System.getenv("DLC")
+        if (!fromEnv.isNullOrBlank()) return fromEnv
+
+        throw ExecutionException(
+            "DLC path not found.\n\n" +
+            "Set it in one of these places (in order of priority):\n" +
+            "  1. Run Configuration → DLC path field\n" +
+            "  2. openedge-project.json → \"dlcPath\": \"C:/Progress/OpenEdge\"\n" +
+            "  3. Environment variable \$DLC"
+        )
+    }
+
+    /**
+     * Construit la ligne de commande.
+     * @param debugPort  si > 0, ajoute -debugport PORT pour le mode Launch+Debug.
+     * @param forDebug   si true, supprime le flag -b (batch incompatible avec le debugger
+     *                   sur certaines versions OE Windows — prowin.exe doit démarrer normalement).
+     */
+    fun buildCommandLine(debugPort: Int = 0, forDebug: Boolean = false): GeneralCommandLine {
+        val dlc = resolveDlc()
+        val isWindows = System.getProperty("os.name").lowercase().contains("win")
+
+        // Mode debug : _progres.exe (client caractère) est requis — prowin.exe (client GUI)
+        // ne reconnaît pas -debugport et le parse caractère par caractère (-d -e -b -u -g -p -o …),
+        // ce qui déclenche l'erreur (1403) « pas précisé de valeur pour l'option -o ».
+        // Mode run normal : prowin.exe en priorité (splash / GUI mode), _progres.exe en fallback.
+        val executable = if (isWindows) {
+            val candidates = if (forDebug || debugPort > 0)
+                listOf("bin/_progres.exe", "bin/prowin.exe", "bin/prowin32.exe")
+            else
+                listOf("bin/prowin.exe", "bin/_progres.exe", "bin/prowin32.exe")
+            candidates.map { File(dlc, it) }.firstOrNull { it.exists() }?.absolutePath
+                ?: File(dlc, candidates.first()).absolutePath  // message d'erreur OS explicite
+        } else {
+            File(dlc, "bin/_progres").absolutePath
+        }
+
+        // Normaliser le chemin du fichier programme (forward slashes → séparateur natif)
+        val programPath = java.io.File(config.programFile).path
+
+        val args = mutableListOf(executable, "-p", programPath)
         if (config.batchMode) args.add(1, "-b")
-        if (config.programParam.isNotBlank()) { args += listOf("-param", config.programParam) }
+        if (debugPort > 0) {
+            // -debugReady PORT : OE (client) se connecte à IntelliJ (ServerSocket) sur localhost:PORT.
+            // IntelliJ doit écouter AVANT de lancer OE. OE attend GO avant de démarrer l'exécution.
+            args += listOf("-debugReady", debugPort.toString())
+        }
+        if (config.programParam.isNotBlank()) args += listOf("-param", config.programParam)
 
         val workDir = config.workingDirectory.ifBlank { config.project.basePath ?: "." }
-        val commandLine = com.intellij.execution.configurations.GeneralCommandLine(args)
-            .withWorkDirectory(workDir)
+        return GeneralCommandLine(args).withWorkDirectory(workDir)
+    }
 
+    override fun startProcess(): OSProcessHandler {
         val handler = ProcessHandlerFactory.getInstance()
-            .createColoredProcessHandler(commandLine)
+            .createColoredProcessHandler(buildCommandLine())
         ProcessTerminatedListener.attach(handler)
         return handler
     }
@@ -105,7 +196,7 @@ class AblRunState(
 
 class AblRunConfigurationEditor : SettingsEditor<AblRunConfiguration>() {
 
-    private val programFileField  = TextFieldWithBrowseButton().apply {
+    private val programFileField = TextFieldWithBrowseButton().apply {
         addBrowseFolderListener("Select ABL Program", null, null,
             FileChooserDescriptorFactory.createSingleFileDescriptor())
     }
@@ -119,32 +210,38 @@ class AblRunConfigurationEditor : SettingsEditor<AblRunConfiguration>() {
             FileChooserDescriptorFactory.createSingleFolderDescriptor())
     }
     private val batchModeCheckbox  = JBCheckBox("Batch mode (-b)")
+    private val debugPortField     = JBTextField()
 
     override fun createEditor(): JComponent = panel {
-        row("Program file (.p):") {
-            cell(programFileField).resizableColumn()
+        group("Program") {
+            row("Program file (.p):") { cell(programFileField).resizableColumn() }
+            row("Parameters:")        { cell(programParamField).resizableColumn() }
+            row("Working directory:") { cell(workingDirField).resizableColumn() }
+            row("DLC path:") {
+                cell(dlcPathField).resizableColumn()
+                comment("Leave empty to use \$DLC environment variable")
+            }
+            row("") { cell(batchModeCheckbox) }
         }
-        row("Parameters:") {
-            cell(programParamField).resizableColumn()
-        }
-        row("Working directory:") {
-            cell(workingDirField).resizableColumn()
-        }
-        row("DLC path (optional):") {
-            cell(dlcPathField).resizableColumn()
-            comment("Leave empty to use \$DLC environment variable")
-        }
-        row("") {
-            cell(batchModeCheckbox)
+        group("Debug (optional)") {
+            row("Debug port:") {
+                cell(debugPortField)
+                comment(
+                    "Port for -debugport (e.g. 3075). " +
+                    "When set, the <b>Debug</b> button launches OE with -debugport and auto-attaches. " +
+                    "Leave 0 or empty for normal run (no debugger)."
+                )
+            }
         }
     }
 
     override fun resetEditorFrom(config: AblRunConfiguration) {
-        programFileField.text  = config.programFile
-        programParamField.text = config.programParam
-        dlcPathField.text      = config.dlcPath
-        workingDirField.text   = config.workingDirectory
+        programFileField.text        = config.programFile
+        programParamField.text       = config.programParam
+        dlcPathField.text            = config.dlcPath
+        workingDirField.text         = config.workingDirectory
         batchModeCheckbox.isSelected = config.batchMode
+        debugPortField.text          = if (config.debugPort > 0) config.debugPort.toString() else ""
     }
 
     override fun applyEditorTo(config: AblRunConfiguration) {
@@ -153,5 +250,6 @@ class AblRunConfigurationEditor : SettingsEditor<AblRunConfiguration>() {
         config.dlcPath           = dlcPathField.text.trim()
         config.workingDirectory  = workingDirField.text.trim()
         config.batchMode         = batchModeCheckbox.isSelected
+        config.debugPort         = debugPortField.text.trim().toIntOrNull() ?: 0
     }
 }

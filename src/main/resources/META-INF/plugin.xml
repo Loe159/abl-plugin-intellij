@@ -132,6 +132,15 @@
         <configurationType implementation="com.ablls.plugin.debug.AblDebugConfigurationType"/>
         <xdebugger.breakpointType implementation="com.ablls.plugin.debug.AblLineBreakpointType"/>
 
+        <!-- ── Program runners ─────────────────────────────────────────────────────────── -->
+        <!--
+             AblProgramRunner gère deux cas :
+               1. "ABL Program" + Debug (si debugPort > 0)  → launch OE -debugport + auto-attach
+               2. "ABL Remote Debug" + Debug                → attach à un OE déjà démarré
+             Le mode Run simple est géré par DefaultProgramRunner (CommandLineState).
+        -->
+        <programRunner implementation="com.ablls.plugin.run.AblProgramRunner"/>
+
         <!-- ── Console filter ──────────────────────────────────────────────────────── -->
         <consoleFilterProvider implementation="com.ablls.plugin.run.AblConsoleFilterProvider"/>
 
@@ -185,6 +194,16 @@
         <!-- ── Run configuration : lancer un .p directement ─────────────────── -->
         <configurationType
             implementation="com.ablls.plugin.run.AblRunConfigurationType"/>
+
+        <!-- ── Run configuration producer ──────────────────────────────────── -->
+        <!--
+             Crée automatiquement une config "ABL Program" depuis le contexte
+             (fichier .p/.cls/.w ouvert ou sélectionné) :
+               - Active les boutons Run/Debug dans la barre d'outils de l'éditeur
+               - Ajoute "Run <fichier>" dans le menu clic-droit
+        -->
+        <runConfigurationProducer
+            implementation="com.ablls.plugin.run.AblRunConfigurationProducer"/>
 
     </extensions>
 
