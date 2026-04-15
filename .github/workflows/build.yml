@@ -1,0 +1,87 @@
+name: Build & Test
+
+on:
+  push:
+    branches: ["**"]
+    tags-ignore: ["v*"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "Branch to build (leave empty for current)"
+        required: false
+        default: ""
+
+env:
+  JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
+
+jobs:
+  build:
+    name: Build Plugin
+    runs-on: [self-hosted, vps]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch || github.ref }}
+
+      - name: Set up Java
+        run: |
+          echo "JAVA_HOME=$JAVA_HOME" >> "$GITHUB_ENV"
+          echo "$JAVA_HOME/bin" >> "$GITHUB_PATH"
+          java -version
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ hashFiles('**/*.gradle.kts', 'gradle.properties') }}
+          restore-keys: gradle-
+
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+
+      - name: Run tests
+        run: ./gradlew test --no-daemon --info 2>&1 | tail -60
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report-${{ github.run_number }}
+          path: build/reports/tests/test/
+          retention-days: 14
+
+      - name: Build plugin
+        run: ./gradlew buildPlugin --no-daemon
+
+      - name: Find plugin ZIP
+        id: find_zip
+        run: |
+          ZIP=$(ls build/distributions/*.zip | head -1)
+          echo "zip_path=$ZIP" >> "$GITHUB_OUTPUT"
+          echo "zip_name=$(basename $ZIP)" >> "$GITHUB_OUTPUT"
+          echo "Built: $ZIP ($(du -sh $ZIP | cut -f1))"
+
+      - name: Upload plugin artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.find_zip.outputs.zip_name }}
+          path: ${{ steps.find_zip.outputs.zip_path }}
+          retention-days: 30
+
+      - name: Summary
+        run: |
+          echo "## Build Summary" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| | |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---|---|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Plugin | \`${{ steps.find_zip.outputs.zip_name }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Branch | \`${{ github.ref_name }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Commit | \`${{ github.sha }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Download the ZIP from the **Artifacts** section above ↑" >> "$GITHUB_STEP_SUMMARY"
