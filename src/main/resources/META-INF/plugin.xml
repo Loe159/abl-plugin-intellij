@@ -156,6 +156,9 @@
         <!-- ── Auto-Casing (Formatage à la volée) ──────────────────────────── -->
         <typedHandler implementation="com.ablls.plugin.completion.AblAutoCaseTypedHandler" />
 
+        <!-- ── Auto-END. (Insertion automatique de END. après les blocs) ─────── -->
+        <typedHandler implementation="com.ablls.plugin.completion.AblAutoEndTypedHandler" />
+
         <!-- ── Documentation hover ────────────────────────────────────────────── -->
         <lang.documentationProvider
             language="ABL"
