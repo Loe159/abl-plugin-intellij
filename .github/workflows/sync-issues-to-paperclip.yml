@@ -1,0 +1,43 @@
+name: Sync GitHub Issue → Paperclip
+
+on:
+  issues:
+    types: [opened, reopened]
+
+jobs:
+  sync:
+    runs-on: [self-hosted, vps]
+    steps:
+      - name: Create Paperclip issue and assign to ABL Engineer
+        run: |
+          ISSUE_NUMBER="${{ github.event.issue.number }}"
+          ISSUE_TITLE="${{ github.event.issue.title }}"
+          ISSUE_URL="${{ github.event.issue.html_url }}"
+          ISSUE_BODY=$(cat <<'BODY'
+          ${{ github.event.issue.body }}
+          BODY
+          )
+
+          echo "Syncing GitHub issue #${ISSUE_NUMBER}: ${ISSUE_TITLE}"
+
+          # Create issue in Paperclip
+          RESPONSE=$(curl -s -X POST "http://localhost:3100/api/companies/ce9abf54-b240-4fd5-8cd5-97c8e54b1894/issues" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"title\": \"${ISSUE_TITLE}\",
+              \"description\": \"GitHub issue #${ISSUE_NUMBER}\n\n${ISSUE_URL}\n\n---\n${ISSUE_BODY}\",
+              \"projectId\": \"6a562517-39e1-46ef-84b5-48496fe49046\",
+              \"priority\": \"medium\",
+              \"assigneeAgentId\": \"d8785573-8516-42d4-abbb-844244f7f15e\",
+              \"status\": \"todo\"
+            }")
+
+          PAPERCLIP_ID=$(echo "$RESPONSE" | python3 -c "import sys,json; r=json.load(sys.stdin); print(r.get('identifier','?'))")
+          echo "Created Paperclip issue: ${PAPERCLIP_ID}"
+
+          # Comment on GitHub issue with Paperclip link
+          gh issue comment "${ISSUE_NUMBER}" \
+            --repo "${{ github.repository }}" \
+            --body "🤖 Issue importée dans Paperclip : **${PAPERCLIP_ID}** — assignée à ABL Engineer."
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
