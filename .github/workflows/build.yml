@@ -64,14 +64,20 @@ jobs:
         run: |
           ZIP=$(ls build/distributions/*.zip | head -1)
           echo "zip_path=$ZIP" >> "$GITHUB_OUTPUT"
-          echo "zip_name=$(basename $ZIP)" >> "$GITHUB_OUTPUT"
+          echo "zip_name=$(basename $ZIP .zip)" >> "$GITHUB_OUTPUT"
           echo "Built: $ZIP ($(du -sh $ZIP | cut -f1))"
+
+      - name: Extract plugin ZIP for upload
+        run: |
+          mkdir -p build/distributions/upload
+          cd build/distributions/upload
+          python3 -c "import zipfile,os; zipfile.ZipFile('../${{ steps.find_zip.outputs.zip_name }}.zip').extractall('.')"
 
       - name: Upload plugin artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.find_zip.outputs.zip_name }}
-          path: ${{ steps.find_zip.outputs.zip_path }}
+          path: build/distributions/upload/
           retention-days: 30
 
       - name: Summary
