@@ -155,6 +155,8 @@
 
         <!-- ── Auto-Casing (Formatage à la volée) ──────────────────────────── -->
         <typedHandler implementation="com.ablls.plugin.completion.AblAutoCaseTypedHandler" />
+        <typedHandler implementation="com.ablls.plugin.completion.AblAutoEndTypedHandler" />
+        <editor.enterHandlerDelegate implementationClass="com.ablls.plugin.highlight.AblIndentProcessor"/>
 
         <!-- ── Documentation hover ────────────────────────────────────────────── -->
         <lang.documentationProvider
