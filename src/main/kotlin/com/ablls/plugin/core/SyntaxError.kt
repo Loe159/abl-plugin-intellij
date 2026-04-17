@@ -10,5 +10,6 @@ data class SyntaxError(
     val line: Int,     // 0-based
     val column: Int,   // 0-based
     val message: String,
-    val uri: String = ""
+    val uri: String = "",
+    val length: Int = 1
 )
