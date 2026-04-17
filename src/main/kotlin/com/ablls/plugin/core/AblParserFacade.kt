@@ -170,7 +170,8 @@ class AblParserFacade {
                 val alreadyCaptured = errors.any { it.line == line }
                 if (!alreadyCaptured) {
                     val text = symbol.text?.replace("\r", "")?.replace("\n", " ")?.take(30) ?: ""
-                    errors.add(SyntaxError(line, col, "Token inattendu : '$text'", uri))
+                    val tokenLength = symbol.text?.let { if (it == "<EOF>") 0 else it.length } ?: 1
+                    errors.add(SyntaxError(line, col, "Token inattendu : '$text'", uri, tokenLength))
                 }
             }
         }
@@ -194,7 +195,7 @@ class AblParserFacade {
             e: RecognitionException?
         ) {
             var cleanMsg = msg ?: "Erreur syntaxique"
-            
+
             // Rendre les messages d'erreur ANTLR plus lisibles pour un dev ABL
             if (cleanMsg.contains("mismatched input '(' expecting")) {
                 cleanMsg = "Parenthèse inattendue (fonction non définie, include manquant ou point '.' manquant ?)"
@@ -217,7 +218,11 @@ class AblParserFacade {
                 cleanMsg = "Il manque $missing près de '$at'"
             }
 
-            errors.add(SyntaxError(line - 1, charPositionInLine, cleanMsg, uri))
+            val tokenLength = (offendingSymbol as? Token)?.text
+                ?.let { if (it == "<EOF>") 0 else it.length }
+                ?: 1
+
+            errors.add(SyntaxError(line - 1, charPositionInLine, cleanMsg, uri, tokenLength))
         }
     }
 

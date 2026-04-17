@@ -55,7 +55,7 @@ class AblAnnotator : ExternalAnnotator<AblAnnotator.Input, List<SyntaxError>>() 
             val lineStart  = document.getLineStartOffset(line)
             val lineEnd    = document.getLineEndOffset(line)
             val colStart   = (lineStart + error.column).coerceAtMost(lineEnd)
-            val colEnd     = if (colStart < lineEnd) (colStart + 1) else colStart
+            val colEnd     = (colStart + error.length.coerceAtLeast(1)).coerceAtMost(lineEnd)
             val range      = TextRange(colStart, colEnd.coerceAtMost(docLength))
 
             holder.newAnnotation(HighlightSeverity.ERROR, error.message)
