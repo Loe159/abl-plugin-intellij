@@ -6,7 +6,7 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager
+import com.intellij.application.options.CodeStyle
 
 class AblAutoEndTypedHandler : TypedHandlerDelegate() {
 
@@ -40,7 +40,7 @@ class AblAutoEndTypedHandler : TypedHandlerDelegate() {
         val leadingWhitespace = lineText.length - trimmed.length
         if (leadingWhitespace == 0) return Result.CONTINUE
 
-        val indentOptions = CodeStyleSettingsManager.getSettings(project).getIndentOptions(file.fileType)
+        val indentOptions = CodeStyle.getSettings(file).getIndentOptions(file.fileType)
         val indentUnit = if (indentOptions.USE_TAB_CHARACTER) "\t"
                          else " ".repeat(indentOptions.INDENT_SIZE)
         if (!lineText.startsWith(indentUnit)) return Result.CONTINUE

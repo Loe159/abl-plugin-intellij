@@ -4,12 +4,11 @@ import com.ablls.plugin.language.AblLanguage
 import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate
 import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate.Result
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiFile
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager
+import com.intellij.application.options.CodeStyle
 
 class AblIndentProcessor : EnterHandlerDelegate {
 
@@ -45,14 +44,12 @@ class AblIndentProcessor : EnterHandlerDelegate {
         // ABL block openers always end with ':' (DO:, FOR EACH...:, PROCEDURE foo:, etc.)
         if (!prevLineTrimmed.endsWith(':')) return Result.Continue
 
-        val indentOptions = CodeStyleSettingsManager.getSettings(file.project).getIndentOptions(file.fileType)
+        val indentOptions = CodeStyle.getSettings(file).getIndentOptions(file.fileType)
         val indentUnit = if (indentOptions.USE_TAB_CHARACTER) "\t"
                          else " ".repeat(indentOptions.INDENT_SIZE)
 
-        WriteCommandAction.runWriteCommandAction(file.project) {
-            document.insertString(offset, indentUnit)
-            editor.caretModel.moveToOffset(offset + indentUnit.length)
-        }
+        document.insertString(offset, indentUnit)
+        editor.caretModel.moveToOffset(offset + indentUnit.length)
 
         return Result.Stop
     }
