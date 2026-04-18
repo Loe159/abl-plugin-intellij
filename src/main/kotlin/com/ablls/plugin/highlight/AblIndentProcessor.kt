@@ -44,12 +44,26 @@ class AblIndentProcessor : EnterHandlerDelegate {
         // ABL block openers always end with ':' (DO:, FOR EACH...:, PROCEDURE foo:, etc.)
         if (!prevLineTrimmed.endsWith(':')) return Result.Continue
 
+        // Guard against OO member chains like `oObj:SomeMethod():` triggering indent
+        val blockOpenerRegex = Regex("""(?i)\b(DO|FOR|REPEAT|PROCEDURE|FUNCTION|METHOD|CLASS|INTERFACE|CASE|CATCH|FINALLY|ON)\b.*:$""")
+        if (!blockOpenerRegex.containsMatchIn(prevLineTrimmed)) return Result.Continue
+
         val indentOptions = CodeStyle.getSettings(file).getIndentOptions(file.fileType)
         val indentUnit = if (indentOptions.USE_TAB_CHARACTER) "\t"
                          else " ".repeat(indentOptions.INDENT_SIZE)
 
-        document.insertString(offset, indentUnit)
-        editor.caretModel.moveToOffset(offset + indentUnit.length)
+        // Compute absolute target indent from previous line's leading whitespace so
+        // this stays correct even when IntelliJ strips trailing whitespace before firing
+        val prevLeading = prevLine.takeWhile { it == ' ' || it == '\t' }
+        val targetIndent = prevLeading + indentUnit
+
+        val currentLineStart = document.getLineStartOffset(lineNumber)
+        val currentLineEnd = document.getLineEndOffset(lineNumber)
+        val currentLine = document.charsSequence.subSequence(currentLineStart, currentLineEnd).toString()
+        val currentLeading = currentLine.takeWhile { it == ' ' || it == '\t' }
+
+        document.replaceString(currentLineStart, currentLineStart + currentLeading.length, targetIndent)
+        editor.caretModel.moveToOffset(currentLineStart + targetIndent.length)
 
         return Result.Stop
     }

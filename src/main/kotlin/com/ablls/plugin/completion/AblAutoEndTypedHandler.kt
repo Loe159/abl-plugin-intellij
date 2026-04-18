@@ -45,7 +45,7 @@ class AblAutoEndTypedHandler : TypedHandlerDelegate() {
                          else " ".repeat(indentOptions.INDENT_SIZE)
         if (!lineText.startsWith(indentUnit)) return Result.CONTINUE
 
-        val newIndent = lineText.substring(0, leadingWhitespace - indentUnit.length)
+        val newIndent = lineText.substring(0, maxOf(0, leadingWhitespace - indentUnit.length))
 
         WriteCommandAction.runWriteCommandAction(project) {
             document.replaceString(lineStart, lineStart + leadingWhitespace, newIndent)
