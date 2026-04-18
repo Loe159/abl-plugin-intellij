@@ -6,6 +6,7 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 
 class AblAutoEndTypedHandler : TypedHandlerDelegate() {
 
@@ -22,14 +23,26 @@ class AblAutoEndTypedHandler : TypedHandlerDelegate() {
         val lineText = document.charsSequence.subSequence(lineStart, offset).toString()
         val trimmed = lineText.trimStart()
 
-        // Only act when the line is exactly "END" (case-insensitive), nothing else
-        if (trimmed.uppercase() != "END") return Result.CONTINUE
+        // Match "END" as a word: trimmed must start with END and have no identifier char after it
+        val trimmedUpper = trimmed.uppercase()
+        if (!trimmedUpper.startsWith("END")) return Result.CONTINUE
+        if (trimmed.length > 3) {
+            val afterEnd = trimmed[3]
+            if (afterEnd.isLetterOrDigit() || afterEnd == '-' || afterEnd == '_') return Result.CONTINUE
+        }
+
+        // Also guard against the next character in the document forming an identifier (e.g. END-POINT)
+        if (offset < document.textLength) {
+            val nextChar = document.charsSequence[offset]
+            if (nextChar.isLetterOrDigit() || nextChar == '-' || nextChar == '_') return Result.CONTINUE
+        }
 
         val leadingWhitespace = lineText.length - trimmed.length
         if (leadingWhitespace == 0) return Result.CONTINUE
 
-        // Determine indent unit from context (tab or 4 spaces)
-        val indentUnit = if (lineText[0] == '\t') "\t" else "    "
+        val indentOptions = CodeStyleSettingsManager.getSettings(project).getIndentOptions(file.fileType)
+        val indentUnit = if (indentOptions.USE_TAB_CHARACTER) "\t"
+                         else " ".repeat(indentOptions.INDENT_SIZE)
         if (!lineText.startsWith(indentUnit)) return Result.CONTINUE
 
         val newIndent = lineText.substring(0, leadingWhitespace - indentUnit.length)

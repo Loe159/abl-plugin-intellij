@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiFile
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 
 class AblIndentProcessor : EnterHandlerDelegate {
 
@@ -44,7 +45,9 @@ class AblIndentProcessor : EnterHandlerDelegate {
         // ABL block openers always end with ':' (DO:, FOR EACH...:, PROCEDURE foo:, etc.)
         if (!prevLineTrimmed.endsWith(':')) return Result.Continue
 
-        val indentUnit = if (prevLine.isNotEmpty() && prevLine[0] == '\t') "\t" else "    "
+        val indentOptions = CodeStyleSettingsManager.getSettings(file.project).getIndentOptions(file.fileType)
+        val indentUnit = if (indentOptions.USE_TAB_CHARACTER) "\t"
+                         else " ".repeat(indentOptions.INDENT_SIZE)
 
         WriteCommandAction.runWriteCommandAction(file.project) {
             document.insertString(offset, indentUnit)
