@@ -8,7 +8,6 @@ import com.intellij.lang.PairedBraceMatcher
 import com.intellij.lang.folding.FoldingBuilderEx
 import com.intellij.lang.folding.FoldingDescriptor
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.editor.FoldingGroup
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -17,78 +16,193 @@ import com.intellij.psi.tree.IElementType
 // ─── AblFoldingBuilder ───────────────────────────────────────────────────────
 
 /**
- * Pliage de code (Code Folding) pour ABL.
+ * Code folding for ABL.
  *
- * Replie les blocs :
+ * Folds:
  *   - PROCEDURE name: ... END [PROCEDURE].
  *   - FUNCTION name ...: ... END [FUNCTION].
  *   - CLASS name: ... END [CLASS].
+ *   - INTERFACE name: ... END [INTERFACE].
  *   - METHOD name ...: ... END [METHOD].
- *   - DO: ... END.
- *   - FOR EACH ...: ... END.
+ *   - CONSTRUCTOR ...: ... END [CONSTRUCTOR].
+ *   - DESTRUCTOR ...: ... END [DESTRUCTOR].
+ *   - DO: ... END. / DO WHILE ...: ... END. / DO x = TO:  ... END.
+ *   - FOR EACH/FIRST/LAST ...: ... END.
  *   - REPEAT: ... END.
- *   - /* commentaire multi-lignes */
+ *   - CATCH ...: ... END [CATCH].
+ *   - FINALLY: ... END [FINALLY].
+ *   - /* multi-line block comments */
  *
- * Note : dans notre architecture PSI plate, les blocs sont détectés
- * par token matching. Pour un folding hiérarchique précis, il faudrait
- * un PSI arborescent complet.
+ * Strategy: flat PSI → collect all leaf tokens, then use a stack to match
+ * block-opening keywords (those followed by ':' before any 'END') with 'END'.
  */
 class AblFoldingBuilder : FoldingBuilderEx() {
 
-    override fun buildFoldRegions(
-        root: PsiElement,
-        document: Document,
-        quick: Boolean
-    ): Array<FoldingDescriptor> {
-        val descriptors = mutableListOf<FoldingDescriptor>()
-        collectFolds(root.node, document, descriptors)
-        return descriptors.toTypedArray()
-    }
+    private data class Tok(val node: ASTNode, val upper: String, val start: Int, val end: Int)
+    private data class BlockStart(val openerNode: ASTNode, val startOffset: Int, val placeholder: String)
 
-    private fun collectFolds(
-        node: ASTNode,
-        document: Document,
-        descriptors: MutableList<FoldingDescriptor>
-    ) {
-        // Repli des commentaires bloc multi-lignes
-        if (node.elementType == AblTokenTypes.BLOCK_COMMENT) {
-            val text = node.text
-            if (text.contains('\n')) {
-                descriptors.add(
-                    FoldingDescriptor(
-                        node,
-                        node.textRange,
-                        FoldingGroup.newGroup("ABL_COMMENT"),
-                        "/* ... */"
-                    )
-                )
+    override fun buildFoldRegions(root: PsiElement, document: Document, quick: Boolean): Array<FoldingDescriptor> {
+        val descriptors = mutableListOf<FoldingDescriptor>()
+        val tokens = collectLeaves(root.node)
+
+        for (tok in tokens) {
+            if (tok.node.elementType == AblTokenTypes.BLOCK_COMMENT && tok.node.text.contains('\n')) {
+                descriptors.add(FoldingDescriptor(tok.node, tok.node.textRange, null, "/* ... */"))
             }
         }
 
-        // Descendre dans les enfants
-        var child = node.firstChildNode
-        while (child != null) {
-            collectFolds(child, document, descriptors)
-            child = child.treeNext
+        detectBlocks(tokens, descriptors)
+        return descriptors.toTypedArray()
+    }
+
+    private fun collectLeaves(root: ASTNode): List<Tok> {
+        val result = mutableListOf<Tok>()
+        fun walk(n: ASTNode) {
+            if (n.firstChildNode == null) {
+                if (n.elementType != AblTokenTypes.WHITE_SPACE) {
+                    result.add(Tok(n, n.text.uppercase(), n.startOffset, n.startOffset + n.textLength))
+                }
+            } else {
+                var c = n.firstChildNode
+                while (c != null) { walk(c); c = c.treeNext }
+            }
+        }
+        walk(root)
+        return result
+    }
+
+    private fun detectBlocks(tokens: List<Tok>, descriptors: MutableList<FoldingDescriptor>) {
+        val stack = ArrayDeque<BlockStart>()
+        var i = 0
+        while (i < tokens.size) {
+            val tok = tokens[i]
+            when (tok.upper) {
+                "DO", "REPEAT" -> {
+                    if (hasBlockColon(tokens, i)) {
+                        stack.addLast(BlockStart(tok.node, tok.start, "${tok.upper}: ..."))
+                    }
+                }
+                "FOR" -> {
+                    val next = tokens.getOrNull(i + 1)?.upper
+                    if (next in setOf("EACH", "FIRST", "LAST") && hasBlockColon(tokens, i)) {
+                        stack.addLast(BlockStart(tok.node, tok.start, "FOR $next: ..."))
+                    }
+                }
+                "PROCEDURE", "PROC" -> {
+                    if (hasBlockColon(tokens, i)) {
+                        val name = nameAfter(tokens, i)
+                        stack.addLast(BlockStart(tok.node, tok.start, "PROCEDURE $name..."))
+                    }
+                }
+                "FUNCTION" -> {
+                    if (hasBlockColon(tokens, i)) {
+                        val name = nameAfter(tokens, i)
+                        stack.addLast(BlockStart(tok.node, tok.start, "FUNCTION $name..."))
+                    }
+                }
+                "CLASS" -> {
+                    if (hasBlockColon(tokens, i)) {
+                        val name = nameAfter(tokens, i)
+                        stack.addLast(BlockStart(tok.node, tok.start, "CLASS $name..."))
+                    }
+                }
+                "INTERFACE" -> {
+                    if (hasBlockColon(tokens, i)) {
+                        val name = nameAfter(tokens, i)
+                        stack.addLast(BlockStart(tok.node, tok.start, "INTERFACE $name..."))
+                    }
+                }
+                "METHOD" -> {
+                    if (hasBlockColon(tokens, i)) {
+                        val name = nameAfter(tokens, i)
+                        stack.addLast(BlockStart(tok.node, tok.start, "METHOD $name..."))
+                    }
+                }
+                "CONSTRUCTOR" -> {
+                    if (hasBlockColon(tokens, i)) {
+                        stack.addLast(BlockStart(tok.node, tok.start, "CONSTRUCTOR ..."))
+                    }
+                }
+                "DESTRUCTOR" -> {
+                    if (hasBlockColon(tokens, i)) {
+                        stack.addLast(BlockStart(tok.node, tok.start, "DESTRUCTOR ..."))
+                    }
+                }
+                "CATCH" -> {
+                    if (hasBlockColon(tokens, i)) {
+                        stack.addLast(BlockStart(tok.node, tok.start, "CATCH ..."))
+                    }
+                }
+                "FINALLY" -> {
+                    if (hasBlockColon(tokens, i)) {
+                        stack.addLast(BlockStart(tok.node, tok.start, "FINALLY: ..."))
+                    }
+                }
+                "END" -> {
+                    if (stack.isNotEmpty()) {
+                        val block = stack.removeLast()
+                        var endPos = tok.end
+                        var j = i + 1
+                        // optional qualifier: END PROCEDURE / END CLASS / etc.
+                        if (j < tokens.size && tokens[j].upper in END_QUALIFIERS) {
+                            endPos = tokens[j].end
+                            j++
+                        }
+                        // trailing dot
+                        if (j < tokens.size && tokens[j].upper == ".") {
+                            endPos = tokens[j].end
+                            i = j
+                        }
+                        if (endPos > block.startOffset) {
+                            descriptors.add(
+                                FoldingDescriptor(block.openerNode, TextRange(block.startOffset, endPos), null, block.placeholder)
+                            )
+                        }
+                    }
+                }
+            }
+            i++
         }
     }
 
-    override fun getPlaceholderText(node: ASTNode): String? {
-        return when (node.elementType) {
-            AblTokenTypes.BLOCK_COMMENT -> "/* ... */"
-            else -> "..."
+    // Returns true if there is a ':' (outside parentheses) before the next END keyword,
+    // scanning up to 50 tokens ahead. This identifies block-opening statements.
+    private fun hasBlockColon(tokens: List<Tok>, startIdx: Int): Boolean {
+        var depth = 0
+        val limit = minOf(tokens.size, startIdx + 50)
+        for (i in startIdx + 1 until limit) {
+            when (tokens[i].upper) {
+                "(" -> depth++
+                ")" -> if (depth > 0) depth--
+                ":" -> if (depth == 0) return true
+                "END" -> if (depth == 0) return false
+            }
         }
+        return false
+    }
+
+    private fun nameAfter(tokens: List<Tok>, startIdx: Int): String {
+        val text = tokens.getOrNull(startIdx + 1)?.upper ?: return ""
+        return if (text.isNotEmpty() && text[0].isLetter()) "$text " else ""
+    }
+
+    override fun getPlaceholderText(node: ASTNode): String? = when (node.elementType) {
+        AblTokenTypes.BLOCK_COMMENT -> "/* ... */"
+        else -> "..."
     }
 
     override fun isCollapsedByDefault(node: ASTNode): Boolean = false
+
+    companion object {
+        private val END_QUALIFIERS = setOf(
+            "PROCEDURE", "PROC", "FUNCTION", "CLASS", "INTERFACE",
+            "METHOD", "CONSTRUCTOR", "DESTRUCTOR", "CATCH", "FINALLY"
+        )
+    }
 }
 
 // ─── AblCommenter ────────────────────────────────────────────────────────────
 
-/**
- * Commentaire de ligne et de bloc pour ABL.
- * Ctrl+/ ou Ctrl+Shift+/ dans l'éditeur.
- */
 class AblCommenter : Commenter {
     override fun getLineCommentPrefix(): String = "// "
     override fun getBlockCommentPrefix(): String = "/* "
@@ -99,9 +213,6 @@ class AblCommenter : Commenter {
 
 // ─── AblBracketMatcher ───────────────────────────────────────────────────────
 
-/**
- * Mise en évidence des parenthèses/crochets appariés pour ABL.
- */
 class AblBracketMatcher : PairedBraceMatcher {
 
     private val PAIRS = arrayOf(
