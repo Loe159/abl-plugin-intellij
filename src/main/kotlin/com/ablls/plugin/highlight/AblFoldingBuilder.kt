@@ -29,6 +29,8 @@ import com.intellij.psi.tree.IElementType
  *   - DO: ... END. / DO WHILE ...: ... END. / DO x = TO:  ... END.
  *   - FOR EACH/FIRST/LAST ...: ... END.
  *   - REPEAT: ... END.
+ *   - CASE expr: ... END CASE.
+ *   - TRY: ... END. / TRY: ... CATCH ...: ... END CATCH. / ... FINALLY: ... END FINALLY.
  *   - CATCH ...: ... END [CATCH].
  *   - FINALLY: ... END [FINALLY].
  *   - /* multi-line block comments */
@@ -39,7 +41,7 @@ import com.intellij.psi.tree.IElementType
 class AblFoldingBuilder : FoldingBuilderEx() {
 
     private data class Tok(val node: ASTNode, val upper: String, val start: Int, val end: Int)
-    private data class BlockStart(val openerNode: ASTNode, val startOffset: Int, val placeholder: String)
+    private data class BlockStart(val openerNode: ASTNode, val startOffset: Int, val placeholder: String, val keyword: String = "")
 
     override fun buildFoldRegions(root: PsiElement, document: Document, quick: Boolean): Array<FoldingDescriptor> {
         val descriptors = mutableListOf<FoldingDescriptor>()
@@ -79,63 +81,73 @@ class AblFoldingBuilder : FoldingBuilderEx() {
             when (tok.upper) {
                 "DO", "REPEAT" -> {
                     if (hasBlockColon(tokens, i)) {
-                        stack.addLast(BlockStart(tok.node, tok.start, "${tok.upper}: ..."))
+                        stack.addLast(BlockStart(tok.node, tok.start, "${tok.upper}: ...", tok.upper))
                     }
                 }
                 "FOR" -> {
                     val next = tokens.getOrNull(i + 1)?.upper
                     if (next in setOf("EACH", "FIRST", "LAST") && hasBlockColon(tokens, i)) {
-                        stack.addLast(BlockStart(tok.node, tok.start, "FOR $next: ..."))
+                        stack.addLast(BlockStart(tok.node, tok.start, "FOR $next: ...", "FOR"))
                     }
                 }
                 "PROCEDURE", "PROC" -> {
                     if (hasBlockColon(tokens, i)) {
                         val name = nameAfter(tokens, i)
-                        stack.addLast(BlockStart(tok.node, tok.start, "PROCEDURE $name..."))
+                        stack.addLast(BlockStart(tok.node, tok.start, "PROCEDURE $name...", "PROCEDURE"))
                     }
                 }
                 "FUNCTION" -> {
                     if (hasBlockColon(tokens, i)) {
                         val name = nameAfter(tokens, i)
-                        stack.addLast(BlockStart(tok.node, tok.start, "FUNCTION $name..."))
+                        stack.addLast(BlockStart(tok.node, tok.start, "FUNCTION $name...", "FUNCTION"))
                     }
                 }
                 "CLASS" -> {
                     if (hasBlockColon(tokens, i)) {
                         val name = nameAfter(tokens, i)
-                        stack.addLast(BlockStart(tok.node, tok.start, "CLASS $name..."))
+                        stack.addLast(BlockStart(tok.node, tok.start, "CLASS $name...", "CLASS"))
                     }
                 }
                 "INTERFACE" -> {
                     if (hasBlockColon(tokens, i)) {
                         val name = nameAfter(tokens, i)
-                        stack.addLast(BlockStart(tok.node, tok.start, "INTERFACE $name..."))
+                        stack.addLast(BlockStart(tok.node, tok.start, "INTERFACE $name...", "INTERFACE"))
                     }
                 }
                 "METHOD" -> {
                     if (hasBlockColon(tokens, i)) {
                         val name = nameAfter(tokens, i)
-                        stack.addLast(BlockStart(tok.node, tok.start, "METHOD $name..."))
+                        stack.addLast(BlockStart(tok.node, tok.start, "METHOD $name...", "METHOD"))
                     }
                 }
                 "CONSTRUCTOR" -> {
                     if (hasBlockColon(tokens, i)) {
-                        stack.addLast(BlockStart(tok.node, tok.start, "CONSTRUCTOR ..."))
+                        stack.addLast(BlockStart(tok.node, tok.start, "CONSTRUCTOR ...", "CONSTRUCTOR"))
                     }
                 }
                 "DESTRUCTOR" -> {
                     if (hasBlockColon(tokens, i)) {
-                        stack.addLast(BlockStart(tok.node, tok.start, "DESTRUCTOR ..."))
+                        stack.addLast(BlockStart(tok.node, tok.start, "DESTRUCTOR ...", "DESTRUCTOR"))
+                    }
+                }
+                "CASE" -> {
+                    if (hasBlockColon(tokens, i)) {
+                        stack.addLast(BlockStart(tok.node, tok.start, "CASE ...", "CASE"))
+                    }
+                }
+                "TRY" -> {
+                    if (hasBlockColon(tokens, i)) {
+                        stack.addLast(BlockStart(tok.node, tok.start, "TRY: ...", "TRY"))
                     }
                 }
                 "CATCH" -> {
                     if (hasBlockColon(tokens, i)) {
-                        stack.addLast(BlockStart(tok.node, tok.start, "CATCH ..."))
+                        stack.addLast(BlockStart(tok.node, tok.start, "CATCH ...", "CATCH"))
                     }
                 }
                 "FINALLY" -> {
                     if (hasBlockColon(tokens, i)) {
-                        stack.addLast(BlockStart(tok.node, tok.start, "FINALLY: ..."))
+                        stack.addLast(BlockStart(tok.node, tok.start, "FINALLY: ...", "FINALLY"))
                     }
                 }
                 "END" -> {
@@ -157,6 +169,19 @@ class AblFoldingBuilder : FoldingBuilderEx() {
                             descriptors.add(
                                 FoldingDescriptor(block.openerNode, TextRange(block.startOffset, endPos), null, block.placeholder)
                             )
+                        }
+                        // When CATCH or FINALLY closes, also close a pending TRY if no more
+                        // CATCH/FINALLY follows — TRY has no dedicated END keyword of its own.
+                        if (block.keyword in setOf("CATCH", "FINALLY") && stack.isNotEmpty() && stack.last().keyword == "TRY") {
+                            val lookahead = tokens.getOrNull(i + 1)?.upper
+                            if (lookahead != "CATCH" && lookahead != "FINALLY") {
+                                val tryBlock = stack.removeLast()
+                                if (endPos > tryBlock.startOffset) {
+                                    descriptors.add(
+                                        FoldingDescriptor(tryBlock.openerNode, TextRange(tryBlock.startOffset, endPos), null, tryBlock.placeholder)
+                                    )
+                                }
+                            }
                         }
                     }
                 }
@@ -196,7 +221,7 @@ class AblFoldingBuilder : FoldingBuilderEx() {
     companion object {
         private val END_QUALIFIERS = setOf(
             "PROCEDURE", "PROC", "FUNCTION", "CLASS", "INTERFACE",
-            "METHOD", "CONSTRUCTOR", "DESTRUCTOR", "CATCH", "FINALLY"
+            "METHOD", "CONSTRUCTOR", "DESTRUCTOR", "CATCH", "FINALLY", "CASE"
         )
     }
 }
