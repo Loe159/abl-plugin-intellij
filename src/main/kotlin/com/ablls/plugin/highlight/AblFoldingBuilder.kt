@@ -190,16 +190,18 @@ class AblFoldingBuilder : FoldingBuilderEx() {
         }
     }
 
-    // Returns true if there is a ':' (outside parentheses) before the next END keyword,
-    // scanning up to 50 tokens ahead. This identifies block-opening statements.
+    // Returns true if there is a ':' (outside parentheses) before a statement boundary.
+    // Stops at END (next block closer) or '.' (statement terminator) — not at an arbitrary
+    // token count, so long FOR EACH WHERE clauses are handled correctly.
     private fun hasBlockColon(tokens: List<Tok>, startIdx: Int): Boolean {
         var depth = 0
-        val limit = minOf(tokens.size, startIdx + 50)
-        for (i in startIdx + 1 until limit) {
+        for (i in startIdx + 1 until tokens.size) {
             when (tokens[i].upper) {
                 "(" -> depth++
                 ")" -> if (depth > 0) depth--
                 ":" -> if (depth == 0) return true
+                // '.' terminates the current statement — no block colon follows.
+                "." -> if (depth == 0) return false
                 "END" -> if (depth == 0) return false
             }
         }
