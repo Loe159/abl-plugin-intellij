@@ -508,4 +508,87 @@ class AblFoldingBuilderTest {
         assert(result.tree != null)
     }
 
+    @Test
+    fun testCaseBlock() {
+        val content = """
+            CASE iStatus:
+              WHEN 1 THEN MESSAGE "active".
+              WHEN 2 THEN MESSAGE "inactive".
+              OTHERWISE MESSAGE "unknown".
+            END CASE.
+        """.trimIndent()
+
+        val result = facade.parse(content, "test.p")
+        assert(result.tree != null)
+    }
+
+    @Test
+    fun testCaseWithDoBlocks() {
+        val content = """
+            CASE iStatus:
+              WHEN 1 THEN DO:
+                MESSAGE "active".
+                LOG-MANAGER:WRITE-MESSAGE("active", "").
+              END.
+              WHEN 2 THEN DO:
+                MESSAGE "inactive".
+              END.
+              OTHERWISE DO:
+                MESSAGE "unknown".
+              END.
+            END CASE.
+        """.trimIndent()
+
+        val result = facade.parse(content, "test.p")
+        assert(result.tree != null)
+    }
+
+    @Test
+    fun testTryBlock() {
+        val content = """
+            TRY:
+              RUN someProc.
+            CATCH ex AS Progress.Lang.Error:
+              MESSAGE ex:GetMessage().
+            END CATCH.
+        """.trimIndent()
+
+        val result = facade.parse(content, "test.p")
+        assert(result.tree != null)
+    }
+
+    @Test
+    fun testTryWithFinallyOnly() {
+        val content = """
+            TRY:
+              RUN someProc.
+            FINALLY:
+              MESSAGE "always runs".
+            END FINALLY.
+        """.trimIndent()
+
+        val result = facade.parse(content, "test.p")
+        assert(result.tree != null)
+    }
+
+    @Test
+    fun testNestedCaseInsideProcedure() {
+        val content = """
+            PROCEDURE processStatus:
+              DEFINE INPUT PARAMETER iStatus AS INTEGER NO-UNDO.
+              CASE iStatus:
+                WHEN 1 THEN DO:
+                  FOR EACH Customer WHERE Customer.Active:
+                    DISPLAY Customer.Name.
+                  END.
+                END.
+                WHEN 2 THEN MESSAGE "inactive".
+              END CASE.
+            END PROCEDURE.
+        """.trimIndent()
+
+        val result = facade.parse(content, "test.p")
+        assert(result.tree != null)
+    }
+
 }
