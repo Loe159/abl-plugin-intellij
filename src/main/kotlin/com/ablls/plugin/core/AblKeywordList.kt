@@ -80,7 +80,8 @@ object AblKeywordList {
             "OF", "USE-INDEX", "PRESELECT",
             "RELEASE", "VALIDATE",
             "AMBIGUOUS", "LOCKED",
-            "FIRST-OF", "LAST-OF"
+            "FIRST-OF", "LAST-OF",
+            "BUFFER-COPY", "BUFFER-COMPARE"
         ))
 
         // ── OO ────────────────────────────────────────────────────────────────
