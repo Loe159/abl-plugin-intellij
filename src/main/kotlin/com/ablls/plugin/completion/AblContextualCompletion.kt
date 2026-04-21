@@ -100,16 +100,21 @@ object AblContextualCompletion {
     }
 
     // ─── Error strategy that suppresses recovery side-effects ────────────────────
+    //
+    // We must NOT override recoverInline here. DefaultErrorStrategy.recoverInline:
+    //   1. tries singleTokenDeletion → if null, falls through
+    //   2. tries singleTokenInsertion → if false, falls through
+    //   3. calls reportError → notifyErrorListeners → our syntaxError listener captures expected tokens
+    //   4. throws InputMismatchException
+    //
+    // By returning null/false from steps 1 & 2, we always reach step 3, which is
+    // the only path that calls syntaxError and captures lastExpectedTokens.
 
     private class SilentErrorStrategy : DefaultErrorStrategy() {
-        override fun recover(recognizer: Parser, e: RecognitionException) {
-            // do nothing — we just want to finish parsing without crashing
-        }
-        override fun recoverInline(recognizer: Parser): Token {
-            throw InputMismatchException(recognizer)
-        }
-        override fun sync(recognizer: Parser) {
-            // no sync — let the parser proceed as far as it can
-        }
+        override fun recover(recognizer: Parser, e: RecognitionException) { /* no-op */ }
+        override fun sync(recognizer: Parser) { /* no-op */ }
+        override fun singleTokenDeletion(recognizer: Parser): Token? = null
+        override fun singleTokenInsertion(recognizer: Parser): Boolean = false
+        // recoverInline NOT overridden → DefaultErrorStrategy calls reportError → our listener fires
     }
 }
