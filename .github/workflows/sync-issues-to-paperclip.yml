@@ -4,37 +4,50 @@ on:
   issues:
     types: [opened, reopened]
 
+env:
+  PAPERCLIP_API: http://localhost:3100/api
+  COMPANY_ID: 01420bc5-12ec-4b56-bf6a-2d420be0b2d5
+  PROJECT_ID: cefe7156-21f5-4e8c-bf50-ee9101ccad2c
+  # ABL Product Manager — entry point for GitHub-sourced issues.
+  # PM triages then delegates: Engineer → Tester → Reviewer → PR Agent.
+  PM_AGENT_ID: c961ca24-0a97-43ff-9d36-daffb7c5dab3
+
 jobs:
   sync:
     runs-on: [self-hosted, vps]
     steps:
-      - name: Create Paperclip issue and assign to ABL PM
-        run: |
-          ISSUE_NUMBER="${{ github.event.issue.number }}"
-          ISSUE_TITLE="${{ github.event.issue.title }}"
-          ISSUE_URL="${{ github.event.issue.html_url }}"
-          ISSUE_BODY="${{ github.event.issue.body }}"
-
-          echo "Syncing GitHub issue #${ISSUE_NUMBER}: ${ISSUE_TITLE}"
-
-          # Create issue in Paperclip — assign to ABL PM for orchestration
-          RESPONSE=$(curl -s -X POST "http://localhost:3100/api/companies/ce9abf54-b240-4fd5-8cd5-97c8e54b1894/issues" \
-            -H "Content-Type: application/json" \
-            -d "{
-              \"title\": \"${ISSUE_TITLE}\",
-              \"description\": \"GitHub issue #${ISSUE_NUMBER}\n\n${ISSUE_URL}\n\n---\n${ISSUE_BODY}\",
-              \"projectId\": \"6a562517-39e1-46ef-84b5-48496fe49046\",
-              \"priority\": \"medium\",
-              \"assigneeAgentId\": \"32aa6c45-7e58-4f6c-a5b5-8fbb70143bf3\",
-              \"status\": \"todo\"
-            }")
-
-          PAPERCLIP_ID=$(echo "$RESPONSE" | python3 -c "import sys,json; r=json.load(sys.stdin); print(r.get('identifier','?'))")
-          echo "Created Paperclip issue: ${PAPERCLIP_ID}"
-
-          # Comment on GitHub issue with Paperclip link
-          gh issue comment "${ISSUE_NUMBER}" \
-            --repo "${{ github.repository }}" \
-            --body "🤖 Issue importée dans Paperclip : **${PAPERCLIP_ID}** — assignée à ABL PM pour orchestration."
+      - name: Create Paperclip issue → ABL Product Manager
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PAYLOAD=$(jq -n \
+            --arg title "${{ github.event.issue.title }}" \
+            --arg num   "${{ github.event.issue.number }}" \
+            --arg url   "${{ github.event.issue.html_url }}" \
+            --arg body  "${{ github.event.issue.body }}" \
+            --arg agent "$PM_AGENT_ID" \
+            --arg proj  "$PROJECT_ID" \
+            '{
+              title: $title,
+              description: ("GitHub #" + $num + "\n\n" + $url + "\n\n---\n" + $body),
+              projectId: $proj,
+              assigneeAgentId: $agent,
+              priority: "medium",
+              status: "backlog"
+            }')
+
+          RESP=$(curl -s -X POST \
+            "$PAPERCLIP_API/companies/$COMPANY_ID/issues" \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD")
+
+          IDENT=$(echo "$RESP" | jq -r '.identifier // empty')
+          if [ -z "$IDENT" ]; then
+            echo "::error::Paperclip sync failed: $RESP"
+            exit 1
+          fi
+          echo "Paperclip issue created: $IDENT"
+
+          gh issue comment "${{ github.event.issue.number }}" \
+            --repo "${{ github.repository }}" \
+            --body "🤖 Paperclip **${IDENT}** — assignée à ABL Product Manager pour triage (company *Superpowers Dev Shop*)."
