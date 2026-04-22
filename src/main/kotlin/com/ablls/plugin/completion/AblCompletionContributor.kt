@@ -1,8 +1,8 @@
 package com.ablls.plugin.completion
 
 import com.ablls.plugin.core.AblBuiltinDocs
-import com.ablls.plugin.core.AblKeywordList
 import com.ablls.plugin.core.AblParserFacade
+import com.ablls.plugin.core.AblProparseKeywords
 import com.ablls.plugin.core.AblProjectAnalysisService
 import com.ablls.plugin.core.AblSymbol
 import com.ablls.plugin.language.AblLanguage
@@ -83,7 +83,7 @@ private class AblCompletionProvider : CompletionProvider<CompletionParameters>()
         val session = service.parserFacade.session
         val validKeywords = AblContextualCompletion.getExpectedKeywords(content, prefixStart, session)
 
-        for (keyword in AblKeywordList.KEYWORDS) {
+        for (keyword in AblProparseKeywords.ALL) {
             if (!keyword.startsWith(upperPrefix, ignoreCase = true)) continue
             // Si le contexte est déterminé, ne proposer que les tokens valides
             if (validKeywords != null && keyword.uppercase() !in validKeywords) continue

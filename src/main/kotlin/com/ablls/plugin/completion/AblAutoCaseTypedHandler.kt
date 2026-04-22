@@ -1,6 +1,6 @@
 package com.ablls.plugin.completion
 
-import com.ablls.plugin.core.AblKeywordList
+import com.ablls.plugin.core.AblProparseKeywords
 import com.ablls.plugin.language.AblLanguage
 import com.intellij.codeInsight.editorActions.TypedHandlerDelegate
 import com.intellij.openapi.command.WriteCommandAction
@@ -46,7 +46,7 @@ class AblAutoCaseTypedHandler : TypedHandlerDelegate() {
         
         // Si le mot est en minuscules/camelCase et correspond à un mot clé ABL
         val upperWord = wordTyped.uppercase()
-        if (wordTyped != upperWord && AblKeywordList.KEYWORDS.contains(upperWord)) {
+        if (wordTyped != upperWord && AblProparseKeywords.ALL.contains(upperWord)) {
             // Remplacer par la version majuscule
             WriteCommandAction.runWriteCommandAction(project) {
                 document.replaceString(startOffset, endOffset, upperWord)
