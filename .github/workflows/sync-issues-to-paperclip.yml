@@ -19,12 +19,17 @@ jobs:
       - name: Create Paperclip issue → ABL Product Manager
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          ISSUE_URL: ${{ github.event.issue.html_url }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_REPO: ${{ github.repository }}
         run: |
           PAYLOAD=$(jq -n \
-            --arg title "${{ github.event.issue.title }}" \
-            --arg num   "${{ github.event.issue.number }}" \
-            --arg url   "${{ github.event.issue.html_url }}" \
-            --arg body  "${{ github.event.issue.body }}" \
+            --arg title "$ISSUE_TITLE" \
+            --arg num   "$ISSUE_NUMBER" \
+            --arg url   "$ISSUE_URL" \
+            --arg body  "$ISSUE_BODY" \
             --arg agent "$PM_AGENT_ID" \
             --arg proj  "$PROJECT_ID" \
             '{
@@ -48,6 +53,6 @@ jobs:
           fi
           echo "Paperclip issue created: $IDENT"
 
-          gh issue comment "${{ github.event.issue.number }}" \
-            --repo "${{ github.repository }}" \
+          gh issue comment "$ISSUE_NUMBER" \
+            --repo "$ISSUE_REPO" \
             --body "🤖 Paperclip **${IDENT}** — assignée à ABL Product Manager pour triage (company *Superpowers Dev Shop*)."
