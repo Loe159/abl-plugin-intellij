@@ -8,15 +8,14 @@ env:
   PAPERCLIP_API: http://localhost:3100/api
   COMPANY_ID: 01420bc5-12ec-4b56-bf6a-2d420be0b2d5
   PROJECT_ID: cefe7156-21f5-4e8c-bf50-ee9101ccad2c
-  # ABL Product Manager — entry point for GitHub-sourced issues.
-  # PM triages then delegates: Engineer → Tester → Reviewer → PR Agent.
-  PM_AGENT_ID: c961ca24-0a97-43ff-9d36-daffb7c5dab3
+  # ABL CEO — receives GitHub issues, triages, and spawns the pipeline.
+  CEO_AGENT_ID: 6c93a3f6-af4b-432c-b12b-46ef7b2cb011
 
 jobs:
   sync:
     runs-on: [self-hosted, vps]
     steps:
-      - name: Create Paperclip issue → ABL Product Manager
+      - name: Create Paperclip issue → ABL CEO
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ISSUE_TITLE: ${{ github.event.issue.title }}
@@ -30,7 +29,7 @@ jobs:
             --arg num   "$ISSUE_NUMBER" \
             --arg url   "$ISSUE_URL" \
             --arg body  "$ISSUE_BODY" \
-            --arg agent "$PM_AGENT_ID" \
+            --arg agent "$CEO_AGENT_ID" \
             --arg proj  "$PROJECT_ID" \
             '{
               title: $title,
@@ -55,4 +54,4 @@ jobs:
 
           gh issue comment "$ISSUE_NUMBER" \
             --repo "$ISSUE_REPO" \
-            --body "🤖 Paperclip **${IDENT}** — assignée à ABL Product Manager pour triage (company *Superpowers Dev Shop*)."
+            --body "🤖 Paperclip **${IDENT}** — assigné à ABL CEO pour triage et orchestration du pipeline (company *Superpowers Dev Shop*)."
