@@ -2,6 +2,7 @@ package com.ablls.plugin.parser
 
 import com.intellij.lexer.LexerBase
 import com.intellij.psi.tree.IElementType
+import org.prorefactor.core.ABLNodeType
 
 /**
  * Lexer léger pour la coloration syntaxique ABL dans IntelliJ.
@@ -233,7 +234,12 @@ class AblLexerAdapter : LexerBase() {
         "UNKNOWN"
             -> AblTokenTypes.LOGICAL_LITERAL
 
-        // Tout le reste est un mot-clé générique
-        else -> AblTokenTypes.KEYWORD
+        // Vérifie via ABLNodeType (source de vérité RSSW) :
+        // si c'est un mot-clé connu → KEYWORD, sinon → IDENTIFIER (variable/procédure utilisateur)
+        else -> {
+            val nodeType = ABLNodeType.getLiteral(word.lowercase())
+            if (nodeType != null && nodeType.isKeyword()) AblTokenTypes.KEYWORD
+            else AblTokenTypes.IDENTIFIER
+        }
     }
 }

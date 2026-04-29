@@ -148,7 +148,7 @@ class AblUnusedVariableInspection : LocalInspectionTool() {
             }
             if (count == 0 && nameTok.line > 0) {
                 val range = AblInspectionHelper.toRange(doc, nameTok.line, nameTok.charPositionInLine, name.length)
-                holder.registerProblem(file, "Variable '\$name' is defined but never read", ProblemHighlightType.WARNING, range)
+                holder.registerProblem(file, "Variable '$name' is defined but never read", ProblemHighlightType.WARNING, range)
             }
         }
     }
