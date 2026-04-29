@@ -1,7 +1,8 @@
 package com.ablls.plugin.completion
 
 import com.ablls.plugin.core.AblBuiltinDocs
-import com.ablls.plugin.core.AblKeywordList
+import com.ablls.plugin.core.AblParserFacade
+import com.ablls.plugin.core.AblProparseKeywords
 import com.ablls.plugin.core.AblProjectAnalysisService
 import com.ablls.plugin.core.AblSymbol
 import com.ablls.plugin.language.AblLanguage
@@ -45,6 +46,7 @@ private class AblCompletionProvider : CompletionProvider<CompletionParameters>()
         val uri     = file.virtualFile?.url ?: return
         val prefix  = result.prefixMatcher.prefix
         val content = file.text
+        val cursorOffset = parameters.offset
 
         val service = project.service<AblProjectAnalysisService>()
 
@@ -73,18 +75,26 @@ private class AblCompletionProvider : CompletionProvider<CompletionParameters>()
             )
         }
 
-        // ── 3. Mots-clés ABL ──────────────────────────────────────────────────
-        for (keyword in AblKeywordList.KEYWORDS) {
-            if (keyword.startsWith(upperPrefix, ignoreCase = true)) {
-                val isBuiltin = AblBuiltinDocs.has(keyword)
-                val detail    = if (isBuiltin) "built-in" else "keyword"
-                result.addElement(
-                    LookupElementBuilder.create(keyword)
-                        .withTypeText(detail, true)
-                        .withIcon(if (isBuiltin) AllIcons.Nodes.Function else AllIcons.Nodes.Tag)
-                        .bold()
-                )
-            }
+        // ── 3. Mots-clés ABL — filtrés par les tokens valides au curseur ──────
+        // Calcul de l'offset réel : le curseur IntelliJ inclut le suffixe fictif
+        // IntelliJ insère un marqueur "IntellijIdeaRulezzz" à la fin du préfixe —
+        // on recule de la longueur du préfixe pour obtenir le début du token.
+        val prefixStart = (cursorOffset - prefix.length).coerceAtLeast(0)
+        val session = service.parserFacade.session
+        val validKeywords = AblContextualCompletion.getExpectedKeywords(content, prefixStart, session)
+
+        for (keyword in AblProparseKeywords.ALL) {
+            if (!keyword.startsWith(upperPrefix, ignoreCase = true)) continue
+            // Si le contexte est déterminé, ne proposer que les tokens valides
+            if (validKeywords != null && keyword.uppercase() !in validKeywords) continue
+            val isBuiltin = AblBuiltinDocs.has(keyword)
+            val detail    = if (isBuiltin) "built-in" else "keyword"
+            result.addElement(
+                LookupElementBuilder.create(keyword)
+                    .withTypeText(detail, true)
+                    .withIcon(if (isBuiltin) AllIcons.Nodes.Function else AllIcons.Nodes.Tag)
+                    .bold()
+            )
         }
     }
 
