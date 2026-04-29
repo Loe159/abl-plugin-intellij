@@ -2,6 +2,7 @@ package com.ablls.plugin.highlight
 
 import com.ablls.plugin.parser.AblTokenTypes
 import com.intellij.lang.ASTNode
+import org.prorefactor.core.ABLNodeType
 import com.intellij.lang.BracePair
 import com.intellij.lang.Commenter
 import com.intellij.lang.PairedBraceMatcher
@@ -83,12 +84,13 @@ class AblFoldingBuilder : FoldingBuilderEx() {
                     }
                 }
                 "FOR" -> {
-                    val next = tokens.getOrNull(i + 1)?.upper
-                    if (next in setOf("EACH", "FIRST", "LAST") && hasBlockColon(tokens, i)) {
-                        stack.addLast(BlockStart(tok.node, tok.start, "FOR $next: ..."))
+                    val nextTok = tokens.getOrNull(i + 1)
+                    val nextType = nextTok?.let { ABLNodeType.getLiteral(it.upper.lowercase()) }
+                    if (nextType in FOR_ITERATOR_TYPES && hasBlockColon(tokens, i)) {
+                        stack.addLast(BlockStart(tok.node, tok.start, "FOR ${nextTok?.upper}: ..."))
                     }
                 }
-                "PROCEDURE", "PROC" -> {
+                "PROCEDURE" -> {
                     if (hasBlockColon(tokens, i)) {
                         val name = nameAfter(tokens, i)
                         stack.addLast(BlockStart(tok.node, tok.start, "PROCEDURE $name..."))
@@ -144,7 +146,7 @@ class AblFoldingBuilder : FoldingBuilderEx() {
                         var endPos = tok.end
                         var j = i + 1
                         // optional qualifier: END PROCEDURE / END CLASS / etc.
-                        if (j < tokens.size && tokens[j].upper in END_QUALIFIERS) {
+                        if (j < tokens.size && ABLNodeType.getLiteral(tokens[j].upper.lowercase()) in END_QUALIFIER_TYPES) {
                             endPos = tokens[j].end
                             j++
                         }
@@ -194,9 +196,15 @@ class AblFoldingBuilder : FoldingBuilderEx() {
     override fun isCollapsedByDefault(node: ASTNode): Boolean = false
 
     companion object {
-        private val END_QUALIFIERS = setOf(
-            "PROCEDURE", "PROC", "FUNCTION", "CLASS", "INTERFACE",
-            "METHOD", "CONSTRUCTOR", "DESTRUCTOR", "CATCH", "FINALLY"
+        // Itérateurs valides après FOR — source de vérité : ABLNodeType
+        private val FOR_ITERATOR_TYPES: Set<ABLNodeType> = java.util.EnumSet.of(
+            ABLNodeType.EACH, ABLNodeType.FIRST, ABLNodeType.LAST
+        )
+        // Qualificateurs optionnels après END — source de vérité : ABLNodeType
+        private val END_QUALIFIER_TYPES: Set<ABLNodeType> = java.util.EnumSet.of(
+            ABLNodeType.PROCEDURE, ABLNodeType.FUNCTION, ABLNodeType.CLASS,
+            ABLNodeType.INTERFACE, ABLNodeType.METHOD, ABLNodeType.CONSTRUCTOR,
+            ABLNodeType.DESTRUCTOR, ABLNodeType.CATCH, ABLNodeType.FINALLY
         )
     }
 }

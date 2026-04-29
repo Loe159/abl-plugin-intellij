@@ -8,6 +8,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
 import org.antlr.v4.runtime.Token
+import org.prorefactor.core.ABLNodeType
 
 /**
  * Inspection : bloc CATCH vide ou ne contenant qu'un RETURN.
@@ -61,9 +62,10 @@ class AblEmptyCatchInspection : LocalInspectionTool() {
                         val bt = tokens.get(j)
                         if (bt.channel == Token.DEFAULT_CHANNEL) {
                             val btText = bt.text?.uppercase() ?: ""
+                            val btNodeType = ABLNodeType.getLiteral(btText.lowercase())
                             when {
-                                btText in BLOCK_OPENERS -> depth++
-                                btText == "END" -> {
+                                btNodeType in BLOCK_OPENER_TYPES -> depth++
+                                btNodeType == ABLNodeType.END -> {
                                     depth--
                                     if (depth == 0) break
                                 }
@@ -74,8 +76,11 @@ class AblEmptyCatchInspection : LocalInspectionTool() {
                     }
 
                     // Filtrer les tokens non significatifs
-                    val significant = bodyTokens.filter { it !in NON_SIGNIFICANT }
-                    if (significant.isEmpty() || (significant.size == 1 && significant[0] == "RETURN")) {
+                    val significant = bodyTokens.filter { tok ->
+                        tok !in NON_SIGNIFICANT_PUNCT &&
+                        ABLNodeType.getLiteral(tok.lowercase()) !in NON_SIGNIFICANT_KW
+                    }
+                    if (significant.isEmpty() || (significant.size == 1 && ABLNodeType.getLiteral(significant[0].lowercase()) == ABLNodeType.RETURN)) {
                         val range = AblInspectionHelper.toRange(doc, catchLine, catchCol, "CATCH".length)
                         holder.registerProblem(file, "Empty CATCH block silently swallows exceptions — add error handling or logging", ProblemHighlightType.WARNING, range)
                     }
@@ -85,7 +90,18 @@ class AblEmptyCatchInspection : LocalInspectionTool() {
         }
 
     companion object {
-        private val BLOCK_OPENERS    = setOf("DO", "REPEAT", "FOR", "PROCEDURE", "FUNCTION", "CLASS", "METHOD", "IF", "CASE", "FINALLY", "CATCH")
-        private val NON_SIGNIFICANT  = setOf(".", ":", "CATCH", "AS", "RETURN")
+        // Mots-clés ouvrant un bloc imbriqué — source de vérité : ABLNodeType
+        private val BLOCK_OPENER_TYPES: Set<ABLNodeType> = java.util.EnumSet.of(
+            ABLNodeType.DO, ABLNodeType.REPEAT, ABLNodeType.FOR,
+            ABLNodeType.PROCEDURE, ABLNodeType.FUNCTION, ABLNodeType.CLASS,
+            ABLNodeType.METHOD, ABLNodeType.IF, ABLNodeType.CASE,
+            ABLNodeType.FINALLY, ABLNodeType.CATCH
+        )
+        // Ponctuations non significatives (non couvertes par ABLNodeType)
+        private val NON_SIGNIFICANT_PUNCT = setOf(".", ":")
+        // Mots-clés non significatifs dans le corps du CATCH — source de vérité : ABLNodeType
+        private val NON_SIGNIFICANT_KW: Set<ABLNodeType> = java.util.EnumSet.of(
+            ABLNodeType.CATCH, ABLNodeType.AS, ABLNodeType.RETURN
+        )
     }
 }

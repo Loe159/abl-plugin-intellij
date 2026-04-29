@@ -177,14 +177,14 @@ class AblLexerAdapter : LexerBase() {
         "RETURN", "LEAVE", "NEXT", "UNDO",
         "CATCH", "FINALLY", "THROW",
         "BY", "WHILE", "TO", "FROM",
-        "BREAK", "CONTINUE"
+        "BREAK"
             -> AblTokenTypes.KEYWORD_FLOW
 
         // Définitions / structure
         "DEFINE", "DEF", "VARIABLE", "VAR",
         "PARAMETER", "PARAM",
         "TEMP-TABLE", "WORKFILE",
-        "PROCEDURE", "PROC", "FUNCTION",
+        "PROCEDURE", "FUNCTION",
         "CLASS", "INTERFACE", "ENUM",
         "METHOD", "PROPERTY", "EVENT",
         "CONSTRUCTOR", "DESTRUCTOR",

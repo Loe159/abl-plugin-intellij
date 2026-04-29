@@ -9,6 +9,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
 import org.antlr.v4.runtime.Token
+import org.prorefactor.core.ABLNodeType
 
 /**
  * Inspection : référence à une table sans préfixe de base de données (dbname.Table)
@@ -51,16 +52,16 @@ class AblMissingSchemaPrefixInspection : LocalInspectionTool() {
                     if (t.channel != Token.DEFAULT_CHANNEL) { i++; continue }
                     val text = t.text?.uppercase() ?: ""
 
-                    if (text !in TABLE_CONTEXT_KEYWORDS) { i++; continue }
+                    if (ABLNodeType.getLiteral(text.lowercase()) !in TABLE_CONTEXT_TYPES) { i++; continue }
 
                     // Sauter les tokens non-default jusqu'au prochain mot
                     var j = i + 1
                     while (j < size && tokens.get(j).channel != Token.DEFAULT_CHANNEL) j++
                     if (j >= size) break
 
-                    // Ignorer EACH, FIRST, LAST, BUFFER
+                    // Ignorer EACH, FIRST, LAST, BUFFER, CURRENT
                     val next = tokens.get(j).text?.uppercase() ?: ""
-                    if (next in setOf("EACH", "FIRST", "LAST", "BUFFER", "CURRENT")) {
+                    if (ABLNodeType.getLiteral(next.lowercase()) in FOR_QUALIFIER_TYPES) {
                         j++
                         while (j < size && tokens.get(j).channel != Token.DEFAULT_CHANNEL) j++
                     }
@@ -88,6 +89,15 @@ class AblMissingSchemaPrefixInspection : LocalInspectionTool() {
         }
 
     companion object {
-        private val TABLE_CONTEXT_KEYWORDS = setOf("FIND", "FOR", "CAN-FIND", "OPEN", "PRESELECT")
+        // Mots-clés introduisant une référence de table — source de vérité : ABLNodeType
+        private val TABLE_CONTEXT_TYPES: Set<ABLNodeType> = java.util.EnumSet.of(
+            ABLNodeType.FIND, ABLNodeType.FOR, ABLNodeType.CANFIND,
+            ABLNodeType.OPEN, ABLNodeType.PRESELECT
+        )
+        // Qualificateurs après FOR/FIND ignorés (pointent vers le token de table suivant)
+        private val FOR_QUALIFIER_TYPES: Set<ABLNodeType> = java.util.EnumSet.of(
+            ABLNodeType.EACH, ABLNodeType.FIRST, ABLNodeType.LAST,
+            ABLNodeType.BUFFER, ABLNodeType.CURRENT
+        )
     }
 }

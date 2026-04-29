@@ -8,6 +8,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
 import org.antlr.v4.runtime.Token
+import org.prorefactor.core.ABLNodeType
 
 /**
  * Inspection : concaténation de chaîne (+) dans une clause WHERE.
@@ -52,7 +53,10 @@ class AblStringConcatInWhereInspection : LocalInspectionTool() {
                     }
 
                     // Tokens terminant la clause WHERE
-                    if (text in WHERE_TERMINATORS) { inWhere = false; continue }
+                    val textNodeType = ABLNodeType.getLiteral(text.lowercase())
+                    if (text in WHERE_TERMINATOR_PUNCT || textNodeType in WHERE_TERMINATOR_TYPES) {
+                        inWhere = false; continue
+                    }
 
                     if (text == "+") {
                         val range = AblInspectionHelper.toRange(doc, t.line, t.charPositionInLine, 1)
@@ -63,10 +67,14 @@ class AblStringConcatInWhereInspection : LocalInspectionTool() {
         }
 
     companion object {
-        private val WHERE_TERMINATORS = setOf(
-            "NO-LOCK", "SHARE-LOCK", "EXCLUSIVE-LOCK",
-            "BY", "BREAK", "OF", "EACH", "FIRST", "LAST",
-            "DO", "END", ":", "."
+        // Ponctuations terminant la clause WHERE (non couvertes par ABLNodeType)
+        private val WHERE_TERMINATOR_PUNCT = setOf(":", ".")
+        // Mots-clés terminant la clause WHERE — source de vérité : ABLNodeType
+        private val WHERE_TERMINATOR_TYPES: Set<ABLNodeType> = java.util.EnumSet.of(
+            ABLNodeType.NOLOCK, ABLNodeType.SHARELOCK, ABLNodeType.EXCLUSIVELOCK,
+            ABLNodeType.BY, ABLNodeType.BREAK, ABLNodeType.OF,
+            ABLNodeType.EACH, ABLNodeType.FIRST, ABLNodeType.LAST,
+            ABLNodeType.DO, ABLNodeType.END
         )
     }
 }

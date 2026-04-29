@@ -7,6 +7,7 @@ import com.intellij.openapi.components.service
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
+import org.prorefactor.core.ABLNodeType
 
 /**
  * Inspection : FIND / CAN-FIND / RUN avec NO-ERROR sans vérification
@@ -51,14 +52,14 @@ class AblNoErrorWithoutCheckInspection : LocalInspectionTool() {
                     val precedingTexts = (maxOf(0, i - 30) until i).map {
                         tokens.get(it).text?.uppercase() ?: ""
                     }
-                    val hasTrigger = precedingTexts.any { it in TRIGGER_KEYWORDS }
+                    val hasTrigger = precedingTexts.any { ABLNodeType.getLiteral(it.lowercase()) in TRIGGER_TYPES }
                     if (!hasTrigger) continue
 
                     // Regarder les tokens suivants pour une vérification d'erreur
                     val lookAhead = (i + 1 until minOf(size, i + 40)).map {
                         tokens.get(it).text?.uppercase() ?: ""
                     }
-                    val hasCheck = lookAhead.any { it in CHECK_KEYWORDS }
+                    val hasCheck = lookAhead.any { ABLNodeType.getLiteral(it.lowercase()) in CHECK_TYPES }
                     if (hasCheck) continue
 
                     val range = AblInspectionHelper.toRange(doc, t.line, t.charPositionInLine, "NO-ERROR".length)
@@ -68,8 +69,16 @@ class AblNoErrorWithoutCheckInspection : LocalInspectionTool() {
         }
 
     companion object {
-        private val TRIGGER_KEYWORDS = setOf("FIND", "RUN", "CAN-FIND", "INPUT", "OUTPUT")
-        private val CHECK_KEYWORDS   = setOf("ERROR-STATUS", "AVAILABLE", "RETURN-VALUE",
-                                              "NOT", "IF", "AVAIL")
+        // Mots-clés déclencheurs de NO-ERROR — source de vérité : ABLNodeType
+        private val TRIGGER_TYPES: Set<ABLNodeType> = java.util.EnumSet.of(
+            ABLNodeType.FIND, ABLNodeType.RUN, ABLNodeType.CANFIND,
+            ABLNodeType.INPUT, ABLNodeType.OUTPUT
+        )
+        // Mots-clés de vérification d'erreur — source de vérité : ABLNodeType
+        // AVAIL (5 car.) est une abréviation valide d'AVAILABLE (getLiteral le résout)
+        private val CHECK_TYPES: Set<ABLNodeType> = java.util.EnumSet.of(
+            ABLNodeType.ERRORSTATUS, ABLNodeType.AVAILABLE, ABLNodeType.RETURNVALUE,
+            ABLNodeType.NOT, ABLNodeType.IF
+        )
     }
 }
