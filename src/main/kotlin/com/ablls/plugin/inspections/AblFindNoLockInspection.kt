@@ -37,6 +37,7 @@ class AblFindNoLockInspection : LocalInspectionTool() {
                 val doc     = PsiDocumentManager.getInstance(file.project).getDocument(file) ?: return
 
                 for (findNode in topNode.queryStateHead(ABLNodeType.FIND)) {
+                    if (findNode.hasProparseDirective("NOANALYSIS")) continue
                     val hasLock = findNode.query(ABLNodeType.NOLOCK, ABLNodeType.SHARELOCK, ABLNodeType.EXCLUSIVELOCK).isNotEmpty()
                     if (!hasLock) {
                         val range = AblInspectionHelper.toRange(doc, findNode.line, findNode.column, "FIND".length)

@@ -44,6 +44,7 @@ class AblMissingSchemaPrefixInspection : LocalInspectionTool() {
                 val dbNames = projectService.config.databases.map { it.logicalName.uppercase() }.toSet()
 
                 for (recordNode in topNode.query(ABLNodeType.RECORD_NAME)) {
+                    if (recordNode.getStatement().hasProparseDirective("NOANALYSIS")) continue
                     val hasPrefix = recordNode.directChildren.any { it.nodeType == ABLNodeType.NAMEDOT }
                     if (hasPrefix) continue
 

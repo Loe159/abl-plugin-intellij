@@ -114,6 +114,11 @@
                          shortName="AblMissingSchemaPrefix"
                          enabledByDefault="true" level="WARNING"
                          implementationClass="com.ablls.plugin.inspections.AblMissingSchemaPrefixInspection"/>
+        <localInspection language="ABL" groupPath="ABL" groupName="Best Practices"
+                         displayName="High cognitive complexity (RSSW)"
+                         shortName="AblCognitiveComplexity"
+                         enabledByDefault="true" level="WEAK WARNING"
+                         implementationClass="com.ablls.plugin.inspections.AblCognitiveComplexityInspection"/>
 
         <!-- ── Avertissements compilateur ──────────────────────────────────────────── -->
         <externalAnnotator language="ABL"

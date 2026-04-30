@@ -42,6 +42,7 @@ class AblFortranOperatorsInspection : LocalInspectionTool() {
                 for (node in topNode.query(ABLNodeType.EQ, ABLNodeType.NE,
                                            ABLNodeType.GTHAN, ABLNodeType.LTHAN,
                                            ABLNodeType.GE, ABLNodeType.LE)) {
+                    if (node.getStatement().hasProparseDirective("NOANALYSIS")) continue
                     val old    = FORTRAN_TEXT[node.nodeType] ?: continue
                     val modern = MODERN_MAP[node.nodeType]   ?: continue
                     val range  = AblInspectionHelper.toRange(doc, node.line, node.column, old.length)

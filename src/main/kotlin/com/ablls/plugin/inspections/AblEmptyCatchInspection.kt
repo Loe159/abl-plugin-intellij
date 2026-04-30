@@ -39,6 +39,7 @@ class AblEmptyCatchInspection : LocalInspectionTool() {
                 val doc     = PsiDocumentManager.getInstance(file.project).getDocument(file) ?: return
 
                 for (catchNode in topNode.queryStateHead(ABLNodeType.CATCH)) {
+                    if (catchNode.hasProparseDirective("NOANALYSIS")) continue
                     val codeBlock = catchNode.directChildren.find { it.nodeType == ABLNodeType.CODE_BLOCK }
                         ?: continue
 

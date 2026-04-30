@@ -37,6 +37,7 @@ class AblNoUndoInspection : LocalInspectionTool() {
                 val doc     = PsiDocumentManager.getInstance(file.project).getDocument(file) ?: return
 
                 for (defineNode in topNode.queryStateHead(ABLNodeType.DEFINE)) {
+                    if (defineNode.hasProparseDirective("NOANALYSIS")) continue
                     val nodeType2 = runCatching { defineNode.asIStatement().nodeType2 }.getOrNull()
                         ?: continue
                     val isVariable  = nodeType2 == ABLNodeType.VARIABLE

@@ -16,7 +16,8 @@ class AblParseResult(
     val tokens: CommonTokenStream?,
     val syntaxErrors: List<SyntaxError>,
     val uri: String,
-    val topNode: JPNode? = null
+    val topNode: JPNode? = null,
+    val preprocessorMessages: List<String> = emptyList()
 ) {
     val hasTree: Boolean get() = tree != null
     val hasSyntaxErrors: Boolean get() = syntaxErrors.isNotEmpty()

@@ -7,8 +7,9 @@ package com.ablls.plugin.core
  * La conversion vers 0-based est effectuée dans [AblParserFacade].
  */
 data class SyntaxError(
-    val line: Int,     // 0-based
-    val column: Int,   // 0-based
+    val line: Int,       // 0-based
+    val column: Int,     // 0-based
     val message: String,
-    val uri: String = ""
+    val uri: String = "",
+    val isWarning: Boolean = false
 )

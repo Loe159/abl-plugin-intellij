@@ -40,6 +40,7 @@ class AblNoErrorWithoutCheckInspection : LocalInspectionTool() {
                 val stmts = topNode.queryStateHead()
                 stmts.forEachIndexed { idx, stmt ->
                     if (stmt.nodeType !in TRIGGER_TYPES) return@forEachIndexed
+                    if (stmt.hasProparseDirective("NOANALYSIS")) return@forEachIndexed
                     val noErrorNodes = stmt.query(ABLNodeType.NOERROR)
                     if (noErrorNodes.isEmpty()) return@forEachIndexed
 

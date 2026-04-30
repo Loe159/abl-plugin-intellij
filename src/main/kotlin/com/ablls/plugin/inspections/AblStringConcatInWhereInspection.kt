@@ -39,6 +39,7 @@ class AblStringConcatInWhereInspection : LocalInspectionTool() {
                 val doc     = PsiDocumentManager.getInstance(file.project).getDocument(file) ?: return
 
                 for (whereNode in topNode.query(ABLNodeType.WHERE)) {
+                    if (whereNode.getStatement().hasProparseDirective("NOANALYSIS")) continue
                     for (plusNode in whereNode.query(ABLNodeType.PLUS)) {
                         val range = AblInspectionHelper.toRange(doc, plusNode.line, plusNode.column, 1)
                         holder.registerProblem(

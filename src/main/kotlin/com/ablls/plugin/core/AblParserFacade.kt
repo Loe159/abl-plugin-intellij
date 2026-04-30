@@ -4,6 +4,7 @@ import com.intellij.openapi.diagnostic.Logger
 import org.antlr.v4.runtime.*
 import org.antlr.v4.runtime.tree.ErrorNode
 import org.antlr.v4.runtime.tree.ParseTree
+import org.prorefactor.macrolevel.PreprocessorEventListener
 import org.prorefactor.treeparser.ParseUnit
 import org.prorefactor.core.schema.Schema
 import org.prorefactor.proparse.ABLLexer
@@ -100,6 +101,12 @@ class AblParserFacade {
         val tree = parser.program()
         collectErrorNodes(tree, errors, uri)
 
+        // Collect preprocessor {&MESSAGE} directives from the ABLLexer's listener.
+        // These are compile-time messages intentionally placed by the developer.
+        val preprocMessages: List<String> = runCatching {
+            (ablLexer.getLstListener() as? PreprocessorEventListener)?.getMessages() ?: emptyList()
+        }.getOrElse { emptyList() }
+
         // Build JPNode tree via ParseUnit for structural AST traversal (inspections).
         // ParseUnit re-parses internally but produces the complete JPNode tree needed
         // to use proparse's query/queryStateHead APIs instead of raw token scanning.
@@ -112,8 +119,8 @@ class AblParserFacade {
             null
         }
 
-        LOG.debug("Parsing CABL $uri : ${tokens.size()} tokens, ${errors.size} erreurs")
-        return AblParseResult(tree, tokens, errors, uri, jpTopNode)
+        LOG.debug("Parsing CABL $uri : ${tokens.size()} tokens, ${errors.size} erreurs, ${preprocMessages.size} messages préprocesseur")
+        return AblParseResult(tree, tokens, errors, uri, jpTopNode, preprocMessages)
     }
 
     // ─── Niveau 2 : analyse sémantique complète (ParseUnit + treeParser01) ───
