@@ -6,17 +6,22 @@ import com.intellij.codeInspection.*
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
+import org.prorefactor.core.ABLNodeType
 
 /**
  * Inspection : opérateurs de comparaison style Fortran (EQ, NE, GT, LT, GE, LE)
  * au lieu des opérateurs modernes (=, <>, >, <, >=, <=).
  *
- * Les opérateurs Fortran sont dépréciés depuis OpenEdge 10.2B et seront supprimés.
+ * Les opérateurs Fortran sont dépréciés depuis OpenEdge 10.2B.
  *
- * Stratégie : scan du TokenStream proparse (plus robuste que le visitor ANTLR4).
+ * Stratégie : parcours du JPNode tree via query().
+ * Les 6 opérateurs Fortran ont chacun leur propre ABLNodeType KEYWORD,
+ * distincts des opérateurs SYMBOL modernes (EQUAL, GTHAN symbol ≠ EQ/GE/LE keyword).
+ * query() ne remonte donc jamais les opérateurs modernes.
+ *
+ * Note ABLNodeType : GT → GTHAN, LT → LTHAN (noms issus de la grammaire proparse).
  */
 class AblFortranOperatorsInspection : LocalInspectionTool() {
 
@@ -31,29 +36,44 @@ class AblFortranOperatorsInspection : LocalInspectionTool() {
                 val uri     = file.virtualFile?.url ?: return
                 val service = file.project.service<AblProjectAnalysisService>()
                 val result  = service.analyzeFile(file.text, uri)
-                val tokens  = result.tokens ?: return
+                val topNode = result.topNode ?: return
                 val doc     = PsiDocumentManager.getInstance(file.project).getDocument(file) ?: return
 
-                val size = tokens.size()
-                for (i in 0 until size) {
-                    val t    = tokens.get(i)
-                    val text = t.text?.lowercase() ?: continue
-                    if (text !in FORTRAN_OPS) continue
-                    if (t.line <= 0) continue
-
-                    val modern = MODERN_MAP[text] ?: continue
-                    val range  = AblInspectionHelper.toRange(doc, t.line, t.charPositionInLine, text.length)
-                    holder.registerProblem(file, "Deprecated Fortran-style operator '$text' — use '$modern' instead", ProblemHighlightType.WARNING, range,
-                        ReplaceFortranOperatorFix(text, modern, range.startOffset, range.endOffset)
+                for (node in topNode.query(ABLNodeType.EQ, ABLNodeType.NE,
+                                           ABLNodeType.GTHAN, ABLNodeType.LTHAN,
+                                           ABLNodeType.GE, ABLNodeType.LE)) {
+                    val old    = FORTRAN_TEXT[node.nodeType] ?: continue
+                    val modern = MODERN_MAP[node.nodeType]   ?: continue
+                    val range  = AblInspectionHelper.toRange(doc, node.line, node.column, old.length)
+                    holder.registerProblem(
+                        file,
+                        "Deprecated Fortran-style operator '$old' — use '$modern' instead",
+                        ProblemHighlightType.WARNING,
+                        range,
+                        ReplaceFortranOperatorFix(old, modern, range.startOffset, range.endOffset)
                     )
                 }
             }
         }
 
     companion object {
-        private val FORTRAN_OPS = setOf("eq", "ne", "gt", "lt", "ge", "le")
-        private val MODERN_MAP  = mapOf("eq" to "=", "ne" to "<>", "gt" to ">",
-                                        "lt" to "<", "ge" to ">=", "le" to "<=")
+        // Texte canonique (minuscules) de chaque opérateur Fortran — source : ABLNodeType
+        private val FORTRAN_TEXT = mapOf(
+            ABLNodeType.EQ    to "eq",
+            ABLNodeType.NE    to "ne",
+            ABLNodeType.GTHAN to "gt",
+            ABLNodeType.LTHAN to "lt",
+            ABLNodeType.GE    to "ge",
+            ABLNodeType.LE    to "le"
+        )
+        private val MODERN_MAP = mapOf(
+            ABLNodeType.EQ    to "=",
+            ABLNodeType.NE    to "<>",
+            ABLNodeType.GTHAN to ">",
+            ABLNodeType.LTHAN to "<",
+            ABLNodeType.GE    to ">=",
+            ABLNodeType.LE    to "<="
+        )
     }
 
     private class ReplaceFortranOperatorFix(
@@ -63,6 +83,7 @@ class AblFortranOperatorsInspection : LocalInspectionTool() {
         private val endOffset: Int
     ) : LocalQuickFix {
         override fun getFamilyName() = "Replace '$old' with '$modern'"
+
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
             val doc = descriptor.psiElement.containingFile?.viewProvider?.document ?: return
             if (endOffset <= doc.textLength) {

@@ -10,20 +10,16 @@ import com.intellij.psi.PsiFile
 import org.prorefactor.core.ABLNodeType
 
 /**
- * Inspection : FIND / CAN-FIND / RUN avec NO-ERROR sans vérification
- * de ERROR-STATUS:ERROR ou RETURN-VALUE immédiatement après.
+ * Inspection : FIND / RUN avec NO-ERROR sans vérification
+ * de ERROR-STATUS:ERROR / AVAILABLE / RETURN-VALUE dans les instructions suivantes.
  *
  * Pattern dangereux :
  *   FIND Customer WHERE CustNum = 1 NO-ERROR.
- *   // ici on ne vérifie pas si la ligne a été trouvée ou si une erreur s'est produite
+ *   // aucune vérification d'erreur — silence total
  *
- * Pattern correct :
- *   FIND Customer WHERE CustNum = 1 NO-ERROR.
- *   IF NOT AVAILABLE Customer THEN ...
- *   IF ERROR-STATUS:ERROR THEN ...
- *
- * Stratégie : scan du TokenStream — pour chaque NO-ERROR, regarder
- * les 40 tokens suivants pour trouver ERROR-STATUS, AVAILABLE, ou RETURN-VALUE.
+ * Stratégie : liste plate des statements via queryStateHead().
+ * Pour chaque statement avec un nœud NOERROR fils et un type dans TRIGGER_TYPES,
+ * on examine les 4 statements suivants à la recherche d'un check d'erreur.
  */
 class AblNoErrorWithoutCheckInspection : LocalInspectionTool() {
 
@@ -38,47 +34,42 @@ class AblNoErrorWithoutCheckInspection : LocalInspectionTool() {
                 val uri     = file.virtualFile?.url ?: return
                 val service = file.project.service<AblProjectAnalysisService>()
                 val result  = service.analyzeFile(file.text, uri)
-                val tokens  = result.tokens ?: return
+                val topNode = result.topNode ?: return
                 val doc     = PsiDocumentManager.getInstance(file.project).getDocument(file) ?: return
 
-                val size = tokens.size()
-                for (i in 0 until size) {
-                    val t    = tokens.get(i)
-                    val text = t.text?.uppercase() ?: continue
-                    if (text != "NO-ERROR") continue
-                    if (t.line <= 0) continue
+                val stmts = topNode.queryStateHead()
+                stmts.forEachIndexed { idx, stmt ->
+                    if (stmt.nodeType !in TRIGGER_TYPES) return@forEachIndexed
+                    val noErrorNodes = stmt.query(ABLNodeType.NOERROR)
+                    if (noErrorNodes.isEmpty()) return@forEachIndexed
 
-                    // Vérifier que les tokens précédents contiennent FIND, RUN ou CAN-FIND
-                    val precedingTexts = (maxOf(0, i - 30) until i).map {
-                        tokens.get(it).text?.uppercase() ?: ""
+                    // Regarder les 4 statements suivants pour une vérification d'erreur
+                    val lookAhead = stmts.subList(idx + 1, minOf(stmts.size, idx + 5))
+                    val hasCheck  = lookAhead.any { next ->
+                        next.nodeType == ABLNodeType.IF ||
+                        next.query(ABLNodeType.ERRORSTATUS).isNotEmpty() ||
+                        next.query(ABLNodeType.AVAILABLE).isNotEmpty()   ||
+                        next.query(ABLNodeType.RETURNVALUE).isNotEmpty()
                     }
-                    val hasTrigger = precedingTexts.any { ABLNodeType.getLiteral(it.lowercase()) in TRIGGER_TYPES }
-                    if (!hasTrigger) continue
+                    if (hasCheck) return@forEachIndexed
 
-                    // Regarder les tokens suivants pour une vérification d'erreur
-                    val lookAhead = (i + 1 until minOf(size, i + 40)).map {
-                        tokens.get(it).text?.uppercase() ?: ""
-                    }
-                    val hasCheck = lookAhead.any { ABLNodeType.getLiteral(it.lowercase()) in CHECK_TYPES }
-                    if (hasCheck) continue
-
-                    val range = AblInspectionHelper.toRange(doc, t.line, t.charPositionInLine, "NO-ERROR".length)
-                    holder.registerProblem(file, "NO-ERROR used without subsequent ERROR-STATUS:ERROR, AVAILABLE or RETURN-VALUE check — errors will be silently ignored", ProblemHighlightType.WARNING, range)
+                    val noErrorNode = noErrorNodes.first()
+                    val range = AblInspectionHelper.toRange(doc, noErrorNode.line, noErrorNode.column, "NO-ERROR".length)
+                    holder.registerProblem(
+                        file,
+                        "NO-ERROR used without subsequent ERROR-STATUS:ERROR, AVAILABLE or RETURN-VALUE check — errors will be silently ignored",
+                        ProblemHighlightType.WARNING,
+                        range
+                    )
                 }
             }
         }
 
     companion object {
-        // Mots-clés déclencheurs de NO-ERROR — source de vérité : ABLNodeType
+        // Statements qui peuvent porter NO-ERROR — source de vérité : ABLNodeType
         private val TRIGGER_TYPES: Set<ABLNodeType> = java.util.EnumSet.of(
-            ABLNodeType.FIND, ABLNodeType.RUN, ABLNodeType.CANFIND,
+            ABLNodeType.FIND, ABLNodeType.RUN,
             ABLNodeType.INPUT, ABLNodeType.OUTPUT
-        )
-        // Mots-clés de vérification d'erreur — source de vérité : ABLNodeType
-        // AVAIL (5 car.) est une abréviation valide d'AVAILABLE (getLiteral le résout)
-        private val CHECK_TYPES: Set<ABLNodeType> = java.util.EnumSet.of(
-            ABLNodeType.ERRORSTATUS, ABLNodeType.AVAILABLE, ABLNodeType.RETURNVALUE,
-            ABLNodeType.NOT, ABLNodeType.IF
         )
     }
 }

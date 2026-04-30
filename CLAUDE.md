@@ -258,13 +258,12 @@ val tree: Proparse.ProgramContext = parser.program()
 val pu = object : ParseUnit(content, uri, session) {}
 pu.parse()
 pu.treeParser01()   // ← résout symboles, types, références
-// getRootScope() peut ne pas être public → reflection :
-val scope = runCatching {
-    pu.javaClass.getMethod("getRootScope").invoke(pu) as? TreeParserSymbolScope
-}.getOrNull()
-val topNode = runCatching {
-    pu.javaClass.getMethod("getTopNode").invoke(pu) as? JPNode
-}.getOrNull()
+// getRootScope() et getTopNode() sont publics (vérifié sur ParseUnit.java 3.7.2)
+val scope   = runCatching { pu.getRootScope() as? TreeParserSymbolScope }.getOrNull()
+val topNode = runCatching { pu.getTopNode()  as? JPNode }.getOrNull()
+// Note : parse() seul (sans treeParser01) suffit pour obtenir topNode et faire
+// la traversal structurelle (inspections). treeParser01 n'est requis que pour
+// la résolution de symboles (complétion, navigation).
 ```
 
 ### APIs TreeParserSymbolScope
@@ -360,9 +359,10 @@ try {
 }
 ```
 
-### 2. getRootScope() n'est pas toujours public
+### 2. getRootScope() et getTopNode() sont publics
 
-Utiliser le pattern reflection avec `runCatching` (voir AblParserFacade.analyzeInternal).
+`ParseUnit.getRootScope()` et `ParseUnit.getTopNode()` sont publics dans proparse 3.7.2.
+Appel direct — pas besoin de reflection. Voir `AblParserFacade.analyzeInternal`.
 
 ### 3. Le `.` ABL est ambigu
 
@@ -395,7 +395,7 @@ jar tf ~/.m2/repository/eu/rssw/openedge/parsers/proparse/*/proparse-*.jar \
 | ~~`AblUnusedVariableInspection.kt`~~ | ~~151~~ | ~~**Bug**~~ | ~~`'\$name'` → affiche littéralement `$name`~~ — **CORRIGÉ** |
 | ~~`AblKeywordList.kt`~~ | — | ~~RSSW~~ | ~~130 mots-clés codés en dur au lieu d'utiliser `ABLNodeType`~~ — **CORRIGÉ** (ABLNodeType 900+) |
 | ~~`AblLexerAdapter.kt`~~ | ~~238~~ | ~~**Bug**~~ | ~~`else -> KEYWORD` colore tous les identifiants utilisateur en mot-clé~~ — **CORRIGÉ** (ABLNodeType.getLiteral) |
-| `AblNoUndoInspection.kt` | 24+93 | Qualité | `isStatementEnd()` dupliquée dans la classe principale et dans `AddNoUndoFix`. Extraire dans `AblInspectionHelper`. |
+| ~~`AblNoUndoInspection.kt`~~ | ~~24+93~~ | ~~Qualité~~ | ~~`isStatementEnd()` dupliquée~~ — **CORRIGÉ** (réécriture JPNode, PSI traversal supprimé) |
 | `AblParserFacade.kt` | 37 | Qualité | `LOG` déclaré comme variable d'instance — déplacer dans `companion object`. |
 | `AblProjectAnalysisService.kt` | 184 | Qualité | `catch (_: Exception) {}` silencieux dans `buildIndexInBackground()` — ajouter au moins `LOG.debug(...)`. |
 | `AblUnusedVariableInspection.kt` | 62 | Perf | `analyzeFile()` appelé à chaque itération `forEach` — sortir de la boucle (le cache le masque mais l'intention est confuse). |
@@ -561,4 +561,3 @@ God nodes actuels (nœuds les plus connectés) :
 3. **Rename sémantique** — baser sur les références JPNode plutôt que la recherche textuelle
 4. **Complétion OO** — résoudre le type de l'expression avant `:` pour lister les membres de classe
 5. **Migrer StartupActivity** → `ProjectActivity`
-6. **isStatementEnd() DRY** — extraire la duplication `AblNoUndoInspection.kt:24+93` dans `AblInspectionHelper`

@@ -100,8 +100,20 @@ class AblParserFacade {
         val tree = parser.program()
         collectErrorNodes(tree, errors, uri)
 
+        // Build JPNode tree via ParseUnit for structural AST traversal (inspections).
+        // ParseUnit re-parses internally but produces the complete JPNode tree needed
+        // to use proparse's query/queryStateHead APIs instead of raw token scanning.
+        val jpTopNode = try {
+            val pu = object : ParseUnit(content, uri, session) {}
+            pu.parse()
+            pu.getTopNode()
+        } catch (e: Exception) {
+            LOG.debug("JPNode tree unavailable for $uri : ${e.message}")
+            null
+        }
+
         LOG.debug("Parsing CABL $uri : ${tokens.size()} tokens, ${errors.size} erreurs")
-        return AblParseResult(tree, tokens, errors, uri)
+        return AblParseResult(tree, tokens, errors, uri, jpTopNode)
     }
 
     // ─── Niveau 2 : analyse sémantique complète (ParseUnit + treeParser01) ───
@@ -141,17 +153,8 @@ class AblParserFacade {
         // Remplit getSymbol() sur chaque JPNode référence
         pu.treeParser01()
 
-        val scope = runCatching {
-            pu.javaClass.getMethod("getRootScope").invoke(pu) as? TreeParserSymbolScope
-        }.getOrNull() ?: runCatching {
-            val getTopNode = pu.javaClass.getMethod("getTopNode")
-            val tNode = getTopNode.invoke(pu)
-            tNode?.javaClass?.getMethod("getSymbolScope")?.invoke(tNode) as? TreeParserSymbolScope
-        }.getOrNull()
-
-        val topNode = runCatching { 
-            pu.javaClass.getMethod("getTopNode").invoke(pu) as? org.prorefactor.core.JPNode 
-        }.getOrNull()
+        val scope   = runCatching { pu.getRootScope() as? TreeParserSymbolScope }.getOrNull()
+        val topNode = runCatching { pu.getTopNode()  as? org.prorefactor.core.JPNode }.getOrNull()
 
         LOG.debug("Analyse sémantique $uri : scope=${runCatching{scope?.javaClass?.getMethod("getVariables")?.invoke(scope) as? Collection<*>}?.getOrNull()?.size ?: 0} variables")
         return AblSemanticResult(topNode, scope, errors, uri)

@@ -1,114 +1,79 @@
 package com.ablls.plugin.inspections
 
+import com.ablls.plugin.core.AblProjectAnalysisService
 import com.ablls.plugin.language.AblLanguage
-import com.intellij.codeInspection.LocalInspectionTool
-import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.codeInspection.LocalQuickFix
-import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.*
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
+import org.prorefactor.core.ABLNodeType
 
 /**
- * Inspection signalant l'absence de NO-UNDO sur les variables et temp-tables.
- * En ABL, oublier NO-UNDO sur une variable force l'écriture des changements
- * dans le Before-Image (BI) file, ce qui dégrade drastiquement les performances.
+ * Inspection : DEFINE VARIABLE / DEFINE TEMP-TABLE sans NO-UNDO.
+ *
+ * Oublier NO-UNDO force l'écriture des changements dans le Before-Image (BI) file,
+ * ce qui dégrade drastiquement les performances.
+ *
+ * Stratégie : parcours du JPNode tree via queryStateHead(DEFINE).
+ * Pour chaque DEFINE, on vérifie le type secondaire (VARIABLE / TEMPTABLE via
+ * IStatement.getNodeType2()) et l'absence de nœud fils NOUNDO.
  */
 class AblNoUndoInspection : LocalInspectionTool() {
 
-    override fun getDisplayName() = "Missing NO-UNDO modifier"
-    override fun getShortName() = "AblMissingNoUndo"
+    override fun getDisplayName()      = "Missing NO-UNDO modifier"
+    override fun getShortName()        = "AblMissingNoUndo"
     override fun getGroupDisplayName() = "ABL Best Practices"
 
-    private fun isStatementEnd(dot: PsiElement): Boolean {
-        if (dot.text != ".") return false
-        val next = dot.nextSibling ?: return true
-        val text = next.text
-        return text.isBlank() || text.startsWith("/")
-    }
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
+        object : PsiElementVisitor() {
+            override fun visitFile(file: PsiFile) {
+                if (file.language != AblLanguage) return
+                val uri     = file.virtualFile?.url ?: return
+                val service = file.project.service<AblProjectAnalysisService>()
+                val result  = service.analyzeFile(file.text, uri)
+                val topNode = result.topNode ?: return
+                val doc     = PsiDocumentManager.getInstance(file.project).getDocument(file) ?: return
 
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
-        return object : PsiElementVisitor() {
-            override fun visitElement(element: PsiElement) {
-                if (element.language != AblLanguage) return
+                for (defineNode in topNode.queryStateHead(ABLNodeType.DEFINE)) {
+                    val nodeType2 = runCatching { defineNode.asIStatement().nodeType2 }.getOrNull()
+                        ?: continue
+                    val isVariable  = nodeType2 == ABLNodeType.VARIABLE
+                    val isTempTable = nodeType2 == ABLNodeType.TEMPTABLE
+                    if (!isVariable && !isTempTable) continue
 
-                val text = element.text
-                if (text.equals("DEFINE", ignoreCase = true) || text.equals("DEF", ignoreCase = true)) {
-                    
-                    // Trouver le prochain élément pertinent (ignorer les espaces/commentaires)
-                    var next = element.nextSibling
-                    while (next != null && next.text.isBlank()) {
-                        next = next.nextSibling
-                    }
+                    if (defineNode.query(ABLNodeType.NOUNDO).isNotEmpty()) continue
 
-                    if (next != null) {
-                        val isVariable = next.text.equals("VARIABLE", ignoreCase = true) || next.text.equals("VAR", ignoreCase = true)
-                        val isTempTable = next.text.equals("TEMP-TABLE", ignoreCase = true)
-
-                        if (isVariable || isTempTable) {
-                            var current = next.nextSibling
-                            var foundNoUndo = false
-                            var foundDot = false
-
-                            while (current != null) {
-                                val cText = current.text
-                                if (cText.equals("NO-UNDO", ignoreCase = true)) {
-                                    foundNoUndo = true
-                                    break
-                                }
-                                if (isStatementEnd(current)) {
-                                    foundDot = true
-                                    break
-                                }
-                                // Sécurité : si on tombe sur un nouveau DEFINE, on arrête.
-                                if (cText.equals("DEFINE", ignoreCase = true)) {
-                                    break
-                                }
-                                current = current.nextSibling
-                            }
-
-                            if (!foundNoUndo && foundDot) {
-                                val description = if (isVariable) "Missing NO-UNDO modifier on VARIABLE (affects performance)" 
-                                                  else "Missing NO-UNDO modifier on TEMP-TABLE (affects performance)"
-                                
-                                holder.registerProblem(
-                                    element, 
-                                    description, 
-                                    AddNoUndoFix(isVariable)
-                                )
-                            }
-                        }
-                    }
+                    val msg   = if (isVariable) "Missing NO-UNDO modifier on VARIABLE (affects performance)"
+                                else             "Missing NO-UNDO modifier on TEMP-TABLE (affects performance)"
+                    val range = AblInspectionHelper.toRange(doc, defineNode.line, defineNode.column, "DEFINE".length)
+                    holder.registerProblem(
+                        file, msg, ProblemHighlightType.WARNING, range,
+                        AddNoUndoFix(range.startOffset, isVariable)
+                    )
                 }
             }
         }
-    }
 
-    // ─── Quick Fix : Ajouter NO-UNDO automatiquement ─────────────────────────
-
-    private class AddNoUndoFix(private val isVariable: Boolean) : LocalQuickFix {
-        override fun getFamilyName() = if (isVariable) "Add NO-UNDO to variable" else "Add NO-UNDO to temp-table"
-
-        private fun isStatementEnd(dot: PsiElement): Boolean {
-            if (dot.text != ".") return false
-            val next = dot.nextSibling ?: return true
-            val text = next.text
-            return text.isBlank() || text.startsWith("/")
-        }
+    private class AddNoUndoFix(
+        private val defineOffset: Int,
+        private val isVariable: Boolean
+    ) : LocalQuickFix {
+        override fun getFamilyName() =
+            if (isVariable) "Add NO-UNDO to variable" else "Add NO-UNDO to temp-table"
 
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-            val element = descriptor.psiElement
-            var current = element.nextSibling
-            
-            // Chercher le point de fin
-            while (current != null) {
-                if (isStatementEnd(current)) {
-                    val offset = current.textOffset
-                    element.containingFile.viewProvider.document?.insertString(offset, " NO-UNDO")
+            val file = descriptor.psiElement as? PsiFile ?: return
+            val doc  = PsiDocumentManager.getInstance(project).getDocument(file) ?: return
+            val text = doc.charsSequence
+            var i    = defineOffset
+            while (i < text.length) {
+                if (text[i] == '.' && (i + 1 >= text.length || text[i + 1].isWhitespace() || text[i + 1] == '/')) {
+                    doc.insertString(i, " NO-UNDO")
                     break
                 }
-                current = current.nextSibling
+                i++
             }
         }
     }
