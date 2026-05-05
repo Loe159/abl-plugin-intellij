@@ -4,7 +4,6 @@ import com.intellij.openapi.diagnostic.Logger
 import org.antlr.v4.runtime.*
 import org.antlr.v4.runtime.tree.ErrorNode
 import org.antlr.v4.runtime.tree.ParseTree
-import org.prorefactor.core.JPNode
 import org.prorefactor.core.schema.Schema
 import org.prorefactor.proparse.ABLLexer
 import org.prorefactor.proparse.Lexer
@@ -116,10 +115,9 @@ class AblParserFacade {
             ?: return AblSemanticResult(null, null, parseResult.syntaxErrors, parseResult.uri)
         return try {
             pu.treeParser01()
-            val topNode = getTopNodeSafely(pu)
-            val scope   = getRootScopeSafely(pu)
+            val scope = getRootScopeSafely(pu)
             LOG.debug("Analyse sémantique ${parseResult.uri} : scope=${scope != null}")
-            AblSemanticResult(topNode, scope, emptyList(), parseResult.uri)
+            AblSemanticResult(parseResult.topNode, scope, emptyList(), parseResult.uri)
         } catch (e: Exception) {
             LOG.warn("Erreur analyse sémantique ${parseResult.uri} : ${e.message}")
             AblSemanticResult(null, null, parseResult.syntaxErrors, parseResult.uri)
@@ -138,11 +136,6 @@ class AblParserFacade {
         }.getOrNull() ?: runCatching {
             val tNode = pu.javaClass.getMethod("getTopNode").invoke(pu)
             tNode?.javaClass?.getMethod("getSymbolScope")?.invoke(tNode) as? TreeParserSymbolScope
-        }.getOrNull()
-
-    private fun getTopNodeSafely(pu: ParseUnit): JPNode? =
-        runCatching {
-            pu.javaClass.getMethod("getTopNode").invoke(pu) as? JPNode
         }.getOrNull()
 
     // ─── Erreurs ErrorNode (récupération ANTLR4) ─────────────────────────────

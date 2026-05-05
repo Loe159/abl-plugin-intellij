@@ -1,6 +1,8 @@
 package com.ablls.plugin.core
 
 import org.antlr.v4.runtime.CommonTokenStream
+import org.prorefactor.core.ABLNodeType
+import org.prorefactor.core.JPNode
 import org.prorefactor.proparse.antlr4.Proparse
 import org.prorefactor.proparse.support.IProparseEnvironment
 import org.prorefactor.treeparser.ParseUnit
@@ -33,6 +35,16 @@ class AblParseResult(
             object : ParseUnit(content, uri, session) {}.also { it.parse() }
         }.getOrNull()
     }
+
+    /** Racine de l'AST JPNode — disponible après parseUnit.parse(), avant treeParser01(). */
+    val topNode: JPNode? by lazy {
+        parseUnit?.let { pu ->
+            runCatching { pu.javaClass.getMethod("getTopNode").invoke(pu) as? JPNode }.getOrNull()
+        }
+    }
+
+    /** Tous les nœuds de [type] dans l'AST — délègue à JPNode.query(). */
+    fun queryNodes(type: ABLNodeType): List<JPNode> = topNode?.query(type) ?: emptyList()
 
     companion object {
         fun empty(uri: String) = AblParseResult(null, null, emptyList(), uri)
