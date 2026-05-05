@@ -4,10 +4,12 @@ import com.intellij.openapi.diagnostic.Logger
 import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.Token
 import org.antlr.v4.runtime.TokenStream
+import org.prorefactor.core.JPNode
 import org.prorefactor.proparse.antlr4.Proparse
 import org.prorefactor.proparse.antlr4.ProparseBaseVisitor
 import org.prorefactor.treeparser.TreeParserSymbolScope
 import org.prorefactor.treeparser.symbols.Routine
+import org.prorefactor.treeparser.symbols.TableBuffer
 import org.prorefactor.treeparser.symbols.Variable
 
 /**
@@ -65,39 +67,33 @@ object AblSymbolCollector {
         uri: String,
         symbols: MutableList<AblSymbol>
     ) {
-        // Variables — utilise l'API proparse TreeParserSymbolScope.getVariables()
         for (variable in runCatching { scope.variables }.getOrNull() ?: emptyList()) {
             runCatching {
-                    val defNodeMethod = variable.javaClass.getMethod("getDefineNode")
-                    val defNode = defNodeMethod.invoke(variable) as? org.prorefactor.core.JPNode
-                    val range = defNode?.let { node ->
-                        val line = node.token?.line ?: 1
-                        val col = node.token?.charPositionInLine ?: 0
-                        AblRange(line - 1, col, line - 1, col + variable.name.length)
-                    }
-                val dataType = runCatching { variable.dataType?.toString() }.getOrNull() ?: "UNKNOWN"
-                val isParam  = runCatching { variable.javaClass.simpleName == "Parameter" }.getOrNull() ?: false
+                val defNode: JPNode? = variable.getDefineNode()
+                val range = defNode?.let { node ->
+                    val line = node.token?.line ?: 1
+                    val col = node.token?.charPositionInLine ?: 0
+                    AblRange(line - 1, col, line - 1, col + variable.name.length)
+                }
                 symbols.add(AblSymbol(
                     name = variable.name,
-                    kind = if (isParam) AblSymbol.Kind.PARAMETER else AblSymbol.Kind.VARIABLE,
+                    kind = if (variable.javaClass.simpleName == "Parameter") AblSymbol.Kind.PARAMETER else AblSymbol.Kind.VARIABLE,
                     uri = uri,
                     definitionRange = range,
-                    dataType = dataType,
+                    dataType = variable.dataType?.toString() ?: "UNKNOWN",
                     documentation = null
                 ))
             }
         }
 
-        // Routines (procédures, fonctions, méthodes)
         for (routine in runCatching { scope.routines }.getOrNull() ?: emptyList()) {
             runCatching {
-                    val defNodeMethod = routine.javaClass.getMethod("getDefineNode")
-                    val defNode = defNodeMethod.invoke(routine) as? org.prorefactor.core.JPNode
-                    val range = defNode?.let { node ->
-                        val line = node.token?.line ?: 1
-                        val col = node.token?.charPositionInLine ?: 0
-                        AblRange(line - 1, col, line - 1, col + routine.name.length)
-                    }
+                val defNode: JPNode? = routine.getDefineNode()
+                val range = defNode?.let { node ->
+                    val line = node.token?.line ?: 1
+                    val col = node.token?.charPositionInLine ?: 0
+                    AblRange(line - 1, col, line - 1, col + routine.name.length)
+                }
                 val (kind, sig) = routineKindAndSig(routine)
                 symbols.add(AblSymbol(
                     name = routine.name,
@@ -110,30 +106,22 @@ object AblSymbolCollector {
             }
         }
 
-        // Buffers (table buffers)
-        val bufferList = runCatching { 
-            val method = scope.javaClass.getMethod("getBufferList")
-            method.invoke(scope) as? Collection<*> 
-        }.getOrNull() ?: runCatching { 
-            val method = scope.javaClass.getMethod("getBuffers")
-            method.invoke(scope) as? Collection<*> 
-        }.getOrNull() ?: emptyList<Any>()
+        @Suppress("UNCHECKED_CAST")
+        val bufferList: Collection<TableBuffer> = runCatching {
+            scope.javaClass.getMethod("getBufferList").invoke(scope) as? Collection<TableBuffer>
+        }.getOrNull() ?: emptyList()
 
-        for (bufferObj in bufferList) {
+        for (buffer in bufferList) {
             runCatching {
-                val defNodeMethod = bufferObj?.javaClass?.getMethod("getDefineNode")
-                val defNode = defNodeMethod?.invoke(bufferObj) as? org.prorefactor.core.JPNode
+                val defNode: JPNode? = buffer.getDefineNode()
                 val range = defNode?.let { node ->
                     val line = node.token?.line ?: 1
                     val col = node.token?.charPositionInLine ?: 0
-                    val len = (bufferObj.javaClass.getMethod("getName").invoke(bufferObj) as? String)?.length ?: 0
-                    AblRange(line - 1, col, line - 1, col + len)
+                    AblRange(line - 1, col, line - 1, col + buffer.name.length)
                 }
-                val name = bufferObj?.javaClass?.getMethod("getName")?.invoke(bufferObj) as? String ?: "?"
-                val tableObj = runCatching { bufferObj?.javaClass?.getMethod("getTable")?.invoke(bufferObj) }.getOrNull()
-                val tableName = runCatching { tableObj?.javaClass?.getMethod("getName")?.invoke(tableObj) as? String }.getOrNull() ?: "?"
+                val tableName = runCatching { buffer.getTable()?.name }.getOrNull() ?: "?"
                 symbols.add(AblSymbol(
-                    name = name,
+                    name = buffer.name,
                     kind = AblSymbol.Kind.BUFFER,
                     uri = uri,
                     definitionRange = range,
@@ -143,7 +131,6 @@ object AblSymbolCollector {
             }
         }
 
-        // Scope enfants (corps de procédures, méthodes, etc.)
         for (child in runCatching { scope.childScopes }.getOrNull() ?: emptyList()) {
             collectScopeRecursive(child, uri, symbols)
         }
@@ -151,7 +138,7 @@ object AblSymbolCollector {
 
     private fun routineKindAndSig(routine: Routine): Pair<AblSymbol.Kind, String> {
         val sig = runCatching { routine.ideSignature }.getOrNull()
-            ?: runCatching { routine.signature }.getOrNull()
+            ?: routine.signature
             ?: routine.name
         val kind = when {
             routine.name.contains("::") -> AblSymbol.Kind.METHOD
