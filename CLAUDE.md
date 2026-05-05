@@ -69,8 +69,9 @@ src/main/kotlin/com/ablls/plugin/
 │   ├── AblSymbol.kt                 DTO symbole : nom, Kind, URI, Range, dataType, doc.
 │   ├── AblSemanticResult.kt         DTO résultat sémantique : JPNode + TreeParserSymbolScope.
 │   ├── AblParseResult.kt            DTO résultat syntaxique : ProgramContext + tokens + erreurs.
+│   │                                topNode (JPNode lazy), queryNodes(ABLNodeType) → List<JPNode>.
 │   ├── SyntaxError.kt               DTO erreur (ligne, colonne, message, URI).
-│   ├── AblKeywordList.kt            ~200 mots-clés ABL statiques.
+│   ├── AblProparseKeywords.kt       Mots-clés ABL via ABLNodeType.values().filter { it.isKeyword }.
 │   └── AblBuiltinDocs.kt            Documentation Markdown de ~92 fonctions built-in ABL.
 │
 ├── annotator/
@@ -81,7 +82,9 @@ src/main/kotlin/com/ablls/plugin/
 │   ├── AblCompletionContributor.kt  3 sources de complétion :
 │   │                                1. TreeParserSymbolScope (types exacts)
 │   │                                2. AblSymbolIndex (projet entier)
-│   │                                3. Mots-clés ABL statiques
+│   │                                3. AblProparseKeywords filtrés par AblContextualCompletion
+│   ├── AblContextualCompletion.kt   Tokens valides au curseur via l'ATN ANTLR4 de Proparse.
+│   │                                Parse le source tronqué → IntervalSet attendus → keywords.
 │   ├── AblAutoCaseTypedHandler.kt   Auto-casing des mots-clés à la frappe.
 │   └── AblTemplateContextType.kt    Contexte pour les live templates.
 │
@@ -361,6 +364,35 @@ Lit `openedge-project.json`. Expose :
 
 ---
 
+## Guide de migration : garder la structure, remplacer les internals
+
+La structure de packages existante est **correcte et ne doit pas être réorganisée**.
+La migration est interne : remplacer la logique ABL écrite à la main par les APIs RSSW,
+fichier par fichier.
+
+### 🟢 Migration core/ — TERMINÉE
+
+| Fichier | Action | État |
+|---|---|---|
+| `AblParserFacade.kt` | Seul point d'instanciation `ParseUnit`/`ABLLexer`/`Proparse` | ✅ |
+| `AblParseResult.kt` | Wrapper `ParseUnit` — expose `.topNode`, `.syntaxErrors`, `.queryNodes()` | ✅ |
+| `AblSemanticResult.kt` | Référence directe aux objets RSSW (`JPNode`, `TreeParserSymbolScope`) | ✅ rien à faire |
+| `AblSymbolCollector.kt` | `collectFromScope()` via `TreeParserSymbolScope` ; `AblSymbolVisitor` via `ProparseBaseVisitor` | ✅ |
+| `AblSymbolIndex.kt` | Alimenté depuis `Variable`, `TableBuffer` via `collectFromScope` | ✅ (`ITypeInfo` = TODO OO) |
+| `AblProparseKeywords.kt` | `ABLNodeType.values().filter { it.isKeyword }` | ✅ |
+
+**Décision sur `AblSymbolVisitor` :** il étend `ProparseBaseVisitor` — le visiteur ANTLR4
+**auto-généré par RSSW**. Les contextes typés (`ctx.newIdentifier()`, `ctx.datatype()`) sont
+l'API proparse publique. Ce n'est pas un walk manuel — c'est le chemin synchrone rapide (avant
+`treeParser01`). `collectFromScope()` enrichit les symboles après `treeParser01()`.
+Les deux chemins sont intentionnels et complémentaires.
+
+**Règle absolue :** `AblParserFacade` est le **seul** endroit du codebase qui instancie
+`ParseUnit`, `ABLLexer` ou `Proparse`. Tous les autres fichiers reçoivent `AblParseResult`
+ou `AblSemanticResult`. Ne jamais appeler ces classes directement ailleurs.
+
+---
+
 ## État des fonctionnalités
 
 > Consulter ce tableau avant tout développement pour ne pas redévelopper l'existant.
@@ -373,7 +405,8 @@ Lit `openedge-project.json`. Expose :
 | Live Templates (snippets) | ✅ Opérationnel | `liveTemplates/abl.xml` |
 | Auto-casing des mots-clés | ✅ Opérationnel | `AblAutoCaseTypedHandler.kt` |
 | Diagnostics syntaxiques | ✅ Opérationnel | `AblAnnotator.kt` |
-| Complétion mots-clés | ✅ Opérationnel | `AblCompletionContributor.kt` |
+| Complétion mots-clés (ABLNodeType) | ✅ Opérationnel | `AblProparseKeywords.kt` |
+| Complétion contextuelle (ATN ANTLR4) | ✅ Opérationnel | `AblContextualCompletion.kt` |
 | Complétion symboles projet | ✅ Opérationnel | `AblCompletionContributor.kt` |
 | Complétion sémantique (typée) | ✅ Opérationnel | `AblCompletionContributor.kt` |
 | Documentation hover built-ins | ✅ Opérationnel (~92) | `AblBuiltinDocs.kt` |
@@ -453,12 +486,13 @@ typeInfo?.methods?.forEach { method ->
 Toujours entourer d'un `try/catch` et fallback sur le résultat syntaxique simple :
 
 ```kotlin
+// Dans AblParserFacade.analyze(parseResult: AblParseResult)
 try {
-    pu.treeParser01()
-    AblSemanticResult(pu.getTopNode(), getRootScopeSafely(pu))
+    parseResult.parseUnit!!.treeParser01()
+    AblSemanticResult(parseResult.topNode, getRootScopeSafely(pu), emptyList(), parseResult.uri)
 } catch (e: Exception) {
-    thisLogger().warn("treeParser01 failed for $uri: ${e.message}")
-    null  // l'appelant utilise le résultat Level 1 seul
+    LOG.warn("treeParser01 failed for ${parseResult.uri}: ${e.message}")
+    AblSemanticResult(null, null, parseResult.syntaxErrors, parseResult.uri)
 }
 ```
 
