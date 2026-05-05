@@ -70,15 +70,14 @@ class AblProjectAnalysisService(private val project: Project) {
         val hash = content.hashCode()
         semanticCache[uri]?.let { (h, r) -> if (h == hash) return r }
 
-        val result = parserFacade.analyze(content, uri)
+        // Réutilise le parse result en cache — analyse sans re-parser le fichier
+        val parseResult = parseCache[uri]?.let { (h, r) -> if (h == hash) r else null }
+            ?: analyzeFile(content, uri)
+        val result = parserFacade.analyze(parseResult)
 
-        // Enrichir l'index avec les symboles typés du scope
         if (result.rootScope != null) {
             val scopeSymbols = AblSymbolCollector.collectFromScope(result.rootScope, uri)
-            if (scopeSymbols.isNotEmpty()) {
-                // Compléter les symboles existants avec les types résolus
-                symbolIndex.updateFile(uri, scopeSymbols)
-            }
+            if (scopeSymbols.isNotEmpty()) symbolIndex.updateFile(uri, scopeSymbols)
         }
 
         semanticCache[uri] = hash to result

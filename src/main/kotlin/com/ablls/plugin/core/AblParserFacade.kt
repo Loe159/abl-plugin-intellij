@@ -4,7 +4,7 @@ import com.intellij.openapi.diagnostic.Logger
 import org.antlr.v4.runtime.*
 import org.antlr.v4.runtime.tree.ErrorNode
 import org.antlr.v4.runtime.tree.ParseTree
-import org.prorefactor.treeparser.ParseUnit
+import org.prorefactor.core.JPNode
 import org.prorefactor.core.schema.Schema
 import org.prorefactor.proparse.ABLLexer
 import org.prorefactor.proparse.Lexer
@@ -14,8 +14,8 @@ import org.prorefactor.proparse.antlr4.Proparse
 import org.prorefactor.proparse.support.IProparseEnvironment
 import org.prorefactor.refactor.RefactorSession
 import org.prorefactor.refactor.settings.ProparseSettings
+import org.prorefactor.treeparser.ParseUnit
 import org.prorefactor.treeparser.TreeParserSymbolScope
-import java.io.ByteArrayInputStream
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 
@@ -101,61 +101,49 @@ class AblParserFacade {
         collectErrorNodes(tree, errors, uri)
 
         LOG.debug("Parsing CABL $uri : ${tokens.size()} tokens, ${errors.size} erreurs")
-        return AblParseResult(tree, tokens, errors, uri)
+        return AblParseResult(tree, tokens, errors, uri, content, session)
     }
 
     // ─── Niveau 2 : analyse sémantique complète (ParseUnit + treeParser01) ───
 
     /**
-     * Analyse sémantique complète : symboles, types, références résolus.
-     * Plus lente que [parse] — à appeler en arrière-plan.
-     *
-     * Utilise [ParseUnit] de proparse avec [ParseUnit.treeParser01] pour obtenir :
-     *   - JPNode tree avec [JPNode.getSymbol] résolu
-     *   - [TreeParserSymbolScope] avec variables, routines, buffers typés
-     *   - Signatures complètes des routines
+     * Analyse sémantique : réutilise le [ParseUnit] stocké dans [parseResult]
+     * (initialisé lazily par [AblParseResult.parseUnit]) — aucun re-parse.
+     * À appeler en arrière-plan.
      */
-    fun analyze(content: String, uri: String): AblSemanticResult {
+    fun analyze(parseResult: AblParseResult): AblSemanticResult {
+        val pu = parseResult.parseUnit
+            ?: return AblSemanticResult(null, null, parseResult.syntaxErrors, parseResult.uri)
         return try {
-            analyzeInternal(content, uri)
+            pu.treeParser01()
+            val topNode = getTopNodeSafely(pu)
+            val scope   = getRootScopeSafely(pu)
+            LOG.debug("Analyse sémantique ${parseResult.uri} : scope=${scope != null}")
+            AblSemanticResult(topNode, scope, emptyList(), parseResult.uri)
         } catch (e: Exception) {
-            LOG.warn("Erreur analyse sémantique $uri : ${e.message}")
-            // Fallback sur le parsing syntaxique simple
-            val parseResult = parse(content, uri)
-            AblSemanticResult(null, null, parseResult.syntaxErrors, uri)
+            LOG.warn("Erreur analyse sémantique ${parseResult.uri} : ${e.message}")
+            AblSemanticResult(null, null, parseResult.syntaxErrors, parseResult.uri)
         }
     }
 
-    private fun analyzeInternal(content: String, uri: String): AblSemanticResult {
-        val bytes = content.toByteArray(StandardCharsets.UTF_8)
-        val errors = mutableListOf<SyntaxError>()
+    /** Surcharge de compatibilité : parse puis analyse en une passe. */
+    fun analyze(content: String, uri: String): AblSemanticResult =
+        analyze(parse(content, uri))
 
-        // ParseUnit est le point d'entrée de l'analyse sémantique complète CABL
-        // Constructeur : ParseUnit(InputStream, String fileName, IProparseEnvironment)
-        val pu = object : ParseUnit(content, uri, session) {}
+    // ─── Helpers reflection scope/topNode ────────────────────────────────────
 
-        // Parsing syntaxique — collecte les erreurs via le listener ANTLR4 interne
-        pu.parse()
-
-        // Analyse sémantique : résolution de symboles, types, références
-        // Remplit getSymbol() sur chaque JPNode référence
-        pu.treeParser01()
-
-        val scope = runCatching {
+    private fun getRootScopeSafely(pu: ParseUnit): TreeParserSymbolScope? =
+        runCatching {
             pu.javaClass.getMethod("getRootScope").invoke(pu) as? TreeParserSymbolScope
         }.getOrNull() ?: runCatching {
-            val getTopNode = pu.javaClass.getMethod("getTopNode")
-            val tNode = getTopNode.invoke(pu)
+            val tNode = pu.javaClass.getMethod("getTopNode").invoke(pu)
             tNode?.javaClass?.getMethod("getSymbolScope")?.invoke(tNode) as? TreeParserSymbolScope
         }.getOrNull()
 
-        val topNode = runCatching { 
-            pu.javaClass.getMethod("getTopNode").invoke(pu) as? org.prorefactor.core.JPNode 
+    private fun getTopNodeSafely(pu: ParseUnit): JPNode? =
+        runCatching {
+            pu.javaClass.getMethod("getTopNode").invoke(pu) as? JPNode
         }.getOrNull()
-
-        LOG.debug("Analyse sémantique $uri : scope=${runCatching{scope?.javaClass?.getMethod("getVariables")?.invoke(scope) as? Collection<*>}?.getOrNull()?.size ?: 0} variables")
-        return AblSemanticResult(topNode, scope, errors, uri)
-    }
 
     // ─── Erreurs ErrorNode (récupération ANTLR4) ─────────────────────────────
 
