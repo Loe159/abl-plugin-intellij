@@ -11,8 +11,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.components.service
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.util.ProcessingContext
-import org.prorefactor.treeparser.symbols.Routine
-import org.prorefactor.treeparser.symbols.Variable
 import javax.swing.Icon
 
 /**
@@ -86,6 +84,9 @@ private class AblCompletionProvider : CompletionProvider<CompletionParameters>()
                 )
             }
         }
+
+        val s: String? = null
+        s.length
     }
 
     // ─── Complétion depuis le TreeParserSymbolScope (types résolus) ───────────
