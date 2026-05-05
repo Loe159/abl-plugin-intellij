@@ -14,7 +14,7 @@ object AblBuiltinDocs {
 
         // ── Fonctions de chaînes ──────────────────────────────────────────────
 
-        put("LENGTH", """
+        put("LENGTHs", """
             **LENGTH** `(string [, type])` → `INTEGER`
 
             Retourne le nombre de caractères dans une chaîne.
