@@ -45,10 +45,10 @@ class AblMissingSchemaPrefixInspection : LocalInspectionTool() {
 
                 for (recordNode in topNode.query(ABLNodeType.RECORD_NAME)) {
                     if (recordNode.getStatement().hasProparseDirective("NOANALYSIS")) continue
-                    val hasPrefix = recordNode.directChildren.any { it.nodeType == ABLNodeType.NAMEDOT }
-                    if (hasPrefix) continue
-
+                    // proparse does not expose NAMEDOT as a direct child of RECORD_NAME for
+                    // qualified references (e.g. sports.Customer). Use text content instead.
                     val name = recordNode.text?.takeIf { it.isNotBlank() && it.first().isLetter() } ?: continue
+                    if (name.contains('.')) continue  // already has a database prefix
                     val range  = AblInspectionHelper.toRange(doc, recordNode.line, recordNode.column, name.length)
                     val dbHint = if (dbNames.size <= 3) " (${dbNames.joinToString(", ")})" else ""
                     holder.registerProblem(
