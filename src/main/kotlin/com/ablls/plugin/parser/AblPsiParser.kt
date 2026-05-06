@@ -29,13 +29,13 @@ class AblFile(viewProvider: FileViewProvider) : PsiFileBase(viewProvider, AblLan
 /**
  * Parser PSI minimal — crée un arbre plat de tokens.
  *
- * Pour un support complet (rename, find usages au niveau PSI sans LSP),
+ * Pour un support complet (rename, find usages au niveau PSI),
  * il faudrait implémenter un vrai arbre hiérarchique ici en utilisant
  * le parser CABL (ProParser) et en mappant ses nœuds AST vers des
  * IElementType IntelliJ.
  *
- * Dans notre architecture, le LSP server gère la sémantique ;
- * le parser PSI sert surtout à la coloration et au folding.
+ * Dans notre architecture, la sémantique est gérée par AblParserFacade
+ * (proparse natif) ; le parser PSI sert surtout à la coloration et au folding.
  */
 class AblPsiParser : PsiParser, LightPsiParser {
 
