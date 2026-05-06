@@ -27,4 +27,5 @@ oBuilder = NEW System.Text.StringBuilder().
         result.syntaxErrors.forEach { println("${it.line + 1}:${it.column} ${it.message}") }
         println("=== END ERRORS ===")
     }
+
 }

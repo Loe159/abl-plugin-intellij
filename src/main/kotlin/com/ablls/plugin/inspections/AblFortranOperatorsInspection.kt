@@ -45,6 +45,9 @@ class AblFortranOperatorsInspection : LocalInspectionTool() {
                     if (node.getStatement().hasProparseDirective("NOANALYSIS")) continue
                     val old    = FORTRAN_TEXT[node.nodeType] ?: continue
                     val modern = MODERN_MAP[node.nodeType]   ?: continue
+                    // proparse assigns the same ABLNodeType to both the keyword (EQ, GT…)
+                    // and the modern symbol (=, >…). Filter on source text to avoid false positives.
+                    if (!node.text.equals(old, ignoreCase = true)) continue
                     val range  = AblInspectionHelper.toRange(doc, node.line, node.column, old.length)
                     holder.registerProblem(
                         file,
