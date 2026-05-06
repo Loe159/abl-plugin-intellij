@@ -43,7 +43,7 @@ class AblAnnotator : ExternalAnnotator<AblAnnotator.Input, AblAnnotator.Annotato
         if (input == null) return null
         val service = input.project.service<AblProjectAnalysisService>()
         val result = service.analyzeFile(input.content, input.uri)
-        return AnnotatorResult(result.syntaxErrors, result.preprocessorMessages)
+        return AnnotatorResult(result.syntaxErrors, emptyList())
     }
 
     override fun apply(file: PsiFile, annotatorResult: AnnotatorResult?, holder: AnnotationHolder) {

@@ -85,8 +85,6 @@ private class AblCompletionProvider : CompletionProvider<CompletionParameters>()
             }
         }
 
-        val s: String? = null
-        s.length
     }
 
     // ─── Complétion depuis le TreeParserSymbolScope (types résolus) ───────────
