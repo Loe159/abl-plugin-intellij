@@ -4,16 +4,7 @@ import com.intellij.lexer.LexerBase
 import com.intellij.psi.tree.IElementType
 import org.prorefactor.core.ABLNodeType
 
-/**
- * Lexer léger pour la coloration syntaxique ABL dans IntelliJ.
- *
- * Stratégie : scanner de caractères avec reconnaissance des patterns ABL.
- * N'utilise PAS ABLLexer (proparse) directement — ce composant est conçu
- * pour le pipeline de parsing complet, pas pour le streaming IntelliJ.
- *
- * Garantit que le stream couvre exactement [startOffset, endOffset]
- * sans offset négatif ni gap, conformément au contrat IntelliJ Lexer.
- */
+// N'utilise pas ABLLexer directement — conçu pour le pipeline complet, pas le streaming IntelliJ.
 class AblLexerAdapter : LexerBase() {
 
     // ─── État courant ─────────────────────────────────────────────────────────
@@ -166,80 +157,8 @@ class AblLexerAdapter : LexerBase() {
         return AblTokenTypes.OPERATOR to pos + 1
     }
 
-    // ─── Classification des mots-clés ─────────────────────────────────────────
-
-    private fun classifyWord(word: String): IElementType = when (word) {
-
-        // Flux de contrôle
-        "IF", "THEN", "ELSE", "DO", "END", "REPEAT",
-        "FOR", "EACH", "FIRST", "LAST",
-        "CASE", "WHEN", "OTHERWISE",
-        "RETURN", "LEAVE", "NEXT", "UNDO",
-        "CATCH", "FINALLY", "THROW",
-        "BY", "WHILE", "TO", "FROM",
-        "BREAK"
-            -> AblTokenTypes.KEYWORD_FLOW
-
-        // Définitions / structure
-        "DEFINE", "DEF", "VARIABLE", "VAR",
-        "PARAMETER", "PARAM",
-        "TEMP-TABLE", "WORKFILE",
-        "PROCEDURE", "FUNCTION",
-        "CLASS", "INTERFACE", "ENUM",
-        "METHOD", "PROPERTY", "EVENT",
-        "CONSTRUCTOR", "DESTRUCTOR",
-        "DATASET", "QUERY", "BUFFER",
-        "USING", "FIELD", "FIELDS", "INDEX",
-        "INHERITS", "IMPLEMENTS",
-        "NAMESPACE-URI", "NAMESPACE-PREFIX"
-            -> AblTokenTypes.KEYWORD_DEF
-
-        // Types primitifs
-        "CHARACTER", "CHAR",
-        "INTEGER", "INT",
-        "INT64",
-        "DECIMAL", "DEC",
-        "LOGICAL",
-        "DATE", "DATETIME", "DATETIME-TZ",
-        "HANDLE",
-        "LONGCHAR",
-        "MEMPTR",
-        "RAW",
-        "ROWID", "RECID",
-        "VOID", "OBJECT",
-        "PROGRESS.LANG.OBJECT"
-            -> AblTokenTypes.KEYWORD_TYPE
-
-        // Modificateurs d'accès / qualificateurs
-        "PUBLIC", "PRIVATE", "PROTECTED", "PACKAGE-PRIVATE",
-        "STATIC", "ABSTRACT", "OVERRIDE", "FINAL",
-        "NEW", "EXTENT",
-        "NO-UNDO",
-        "INPUT", "OUTPUT", "INPUT-OUTPUT"
-            -> AblTokenTypes.KEYWORD_MOD
-
-        // Accès base de données
-        "FIND", "CREATE", "DELETE",
-        "WHERE", "AND", "OR", "NOT",
-        "EXCLUSIVE-LOCK", "SHARE-LOCK", "NO-LOCK",
-        "AVAILABLE", "TRANSACTION",
-        "OPEN", "CLOSE", "GET", "NEXT-PROMPT",
-        "TABLE", "OF", "USE-INDEX",
-        "PRESELECT"
-            -> AblTokenTypes.KEYWORD_DB
-
-        // Littéraux booléens / inconnu
-        "TRUE", "FALSE", "YES", "NO",
-        "YES-NO", "YES-NO-CANCEL",
-        "UNKNOWN"
-            -> AblTokenTypes.LOGICAL_LITERAL
-
-        // Vérifie via ABLNodeType (source de vérité RSSW) :
-        // si c'est un mot-clé connu → KEYWORD, sinon → IDENTIFIER (variable/procédure utilisateur)
-        else -> {
-            val nodeType = ABLNodeType.getLiteral(word.lowercase())
-            if (nodeType != null && nodeType.isKeyword()) AblTokenTypes.KEYWORD
-            else AblTokenTypes.IDENTIFIER
-        }
-    }
+    private fun classifyWord(word: String): IElementType =
+        ABLNodeType.getLiteral(word.lowercase())
+            ?.let { AblTokenTypes.mapAblNodeType(it) }
+            ?: AblTokenTypes.IDENTIFIER
 }
