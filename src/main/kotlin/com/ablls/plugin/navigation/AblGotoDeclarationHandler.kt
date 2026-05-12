@@ -12,6 +12,8 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiManager
+import org.prorefactor.core.JPNode
+import org.prorefactor.treeparser.TreeParserSymbolScope
 import java.io.File
 import java.nio.file.Paths
 
@@ -42,13 +44,35 @@ class AblGotoDeclarationHandler : GotoDeclarationHandler {
         }
 
         // ── Cas 2 : symbole défini par l'utilisateur ──────────────────────────
-        val word = sourceElement.text?.trim() ?: return null
+        val word        = sourceElement.text?.trim() ?: return null
         if (word.isBlank() || word.length < 2) return null
 
-        val uri     = sourceElement.containingFile?.virtualFile?.url ?: return null
-        val service = project.service<AblProjectAnalysisService>()
-        val symbols = service.symbolIndex.findByName(word, uri)
+        val currentFile = sourceElement.containingFile ?: return null
+        val uri         = currentFile.virtualFile?.url ?: return null
+        val service     = project.service<AblProjectAnalysisService>()
 
+        // ── Résolution sémantique via TreeParserSymbolScope ───────────────────
+        val rootScope = service.getSemanticResult(uri)?.rootScope
+        if (rootScope != null) {
+            val doc = PsiDocumentManager.getInstance(project).getDocument(currentFile)
+            if (doc != null) {
+                val elemOffset = sourceElement.textOffset
+                val lineIdx    = doc.getLineNumber(elemOffset)
+                val cursorLine = lineIdx + 1  // proparse est 1-based
+
+                val defNode = findNearestDefinition(rootScope, word, cursorLine)
+                if (defNode?.token != null) {
+                    val defLineIdx = (defNode.token.line - 1).coerceIn(0, doc.lineCount - 1)
+                    val defCol     = defNode.token.charPositionInLine
+                    val defOffset  = (doc.getLineStartOffset(defLineIdx) + defCol).coerceAtMost(doc.textLength)
+                    val target     = currentFile.findElementAt(defOffset)
+                    if (target != null) return arrayOf(target)
+                }
+            }
+        }
+
+        // ── Fallback : recherche par nom dans l'index ─────────────────────────
+        val symbols = service.symbolIndex.findByName(word, uri)
         if (symbols.isEmpty()) return null
 
         val targets = symbols.mapNotNull { symbol ->
@@ -70,6 +94,51 @@ class AblGotoDeclarationHandler : GotoDeclarationHandler {
         }
 
         return if (targets.isEmpty()) null else targets.toTypedArray()
+    }
+
+    // ─── Résolution de définition par scope ──────────────────────────────────
+
+    /**
+     * Among all symbols named [word] in [scope] (recursively including child scopes),
+     * returns the define-node of the one with the highest definition line ≤ [cursorLine].
+     *
+     * Approximates scope-aware resolution by preferring the nearest preceding definition.
+     * Handles the common case (local variable shadowing a global in a nested procedure)
+     * correctly. Known limitation: walks ALL child scopes, so a variable in a sibling
+     * procedure can win over the global when the cursor is in a different procedure that
+     * refers to the global. Full correctness would require bounding the recursion to
+     * the routine that contains the cursor line.
+     */
+    private fun findNearestDefinition(
+        scope: TreeParserSymbolScope,
+        word: String,
+        cursorLine: Int
+    ): JPNode? {
+        var best: JPNode? = null
+        var bestLine = 0
+
+        fun checkNode(node: JPNode?) {
+            val line = node?.token?.line ?: return
+            if (line in 1..cursorLine && line > bestLine) {
+                best = node
+                bestLine = line
+            }
+        }
+
+        for (v in runCatching { scope.variables }.getOrNull() ?: emptyList()) {
+            if (v.name.equals(word, ignoreCase = true))
+                checkNode(runCatching { v.getDefineNode() }.getOrNull())
+        }
+        for (r in runCatching { scope.routines }.getOrNull() ?: emptyList()) {
+            if (r.name.equals(word, ignoreCase = true))
+                checkNode(runCatching { r.getDefineNode() }.getOrNull())
+        }
+        for (child in runCatching { scope.childScopes }.getOrNull() ?: emptyList()) {
+            val childBest = findNearestDefinition(child, word, cursorLine)
+            val childLine = childBest?.token?.line ?: 0
+            if (childLine > bestLine) { best = childBest; bestLine = childLine }
+        }
+        return best
     }
 
     // ─── Résolution d'include ────────────────────────────────────────────────
