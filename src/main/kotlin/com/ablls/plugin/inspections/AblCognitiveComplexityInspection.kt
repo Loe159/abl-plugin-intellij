@@ -35,7 +35,7 @@ class AblCognitiveComplexityInspection : LocalInspectionTool() {
                 if (file.language != AblLanguage) return
                 val uri     = file.virtualFile?.url ?: return
                 val service = file.project.service<AblProjectAnalysisService>()
-                val result  = service.analyzeFile(file.text, uri)
+                val result  = service.analyzeFileSemantic(file.text, uri)
                 val topNode = result.topNode ?: return
                 if (!topNode.isIStatementBlock) return
                 val doc = PsiDocumentManager.getInstance(file.project).getDocument(file) ?: return

@@ -9,6 +9,9 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.prorefactor.treeparser.TreeParserSymbolScope
+import org.prorefactor.treeparser.symbols.Routine
+import org.prorefactor.treeparser.symbols.Variable
 
 /**
  * Documentation hover pour les symboles ABL (Ctrl+Q et mouse hover).
@@ -53,6 +56,14 @@ class AblDocumentationProvider : AbstractDocumentationProvider() {
         // S'assurer que le fichier est analysé (l'annotateur peut ne pas encore avoir tourné)
         service.analyzeFile(file.text, uri)
 
+        // Chemin sémantique — Routine.ideSignature et Variable.extent via TreeParserSymbolScope
+        val scope = service.getSemanticResult(uri)?.rootScope
+        if (scope != null) {
+            buildRoutineDoc(word, scope, uri)?.let { return it }
+            buildVariableDoc(word, scope, uri)?.let { return it }
+        }
+
+        // Fallback sur l'index AblSymbol (analyse syntaxique uniquement)
         val symbols = service.symbolIndex.findByName(word, uri)
         if (symbols.isNotEmpty()) {
             return buildSymbolDoc(symbols.first())
@@ -150,4 +161,54 @@ class AblDocumentationProvider : AbstractDocumentationProvider() {
         .replace("<", "&lt;")
         .replace(">", "&gt;")
         .replace("\"", "&quot;")
+
+    // ─── Accès direct aux objets RSSW ────────────────────────────────────────
+
+    private fun buildRoutineDoc(name: String, scope: TreeParserSymbolScope, uri: String): String? {
+        val routine = findRoutineInScope(name, scope) ?: return null
+        // Prefer ideSignature (full sig with params); fall back to nodeType + name
+        val sig = runCatching { routine.getIDESignature() }.getOrNull()?.takeIf { it.isNotBlank() }
+            ?: runCatching {
+                val nodeType = routine.getNodeType()?.text?.uppercase() ?: "PROCEDURE"
+                "$nodeType ${routine.name}"
+            }.getOrElse { routine.name }
+        val sb = StringBuilder()
+        sb.append("<pre><code>").append(escapeHtml(sig)).append("</code></pre>")
+        val line = runCatching { routine.getDefineNode()?.token?.line ?: 0 }.getOrNull() ?: 0
+        if (line > 0) sb.append("<p><i>Défini dans <code>${uri.substringAfterLast('/')}</code> ligne $line</i></p>")
+        return sb.toString()
+    }
+
+    private fun buildVariableDoc(name: String, scope: TreeParserSymbolScope, uri: String): String? {
+        val variable = findVariableInScope(name, scope) ?: return null
+        val dataType = runCatching { variable.dataType?.toString() }.getOrNull() ?: return null
+        val extent   = runCatching { variable.extent }.getOrNull() ?: 0
+        val extentPart = if (extent > 0) " EXTENT $extent" else ""
+        val sig = "DEFINE VARIABLE ${variable.name} AS $dataType$extentPart NO-UNDO"
+        val sb = StringBuilder()
+        sb.append("<pre><code>").append(escapeHtml(sig)).append("</code></pre>")
+        val line = runCatching { variable.getDefineNode()?.token?.line ?: 0 }.getOrNull() ?: 0
+        if (line > 0) sb.append("<p><i>Défini dans <code>${uri.substringAfterLast('/')}</code> ligne $line</i></p>")
+        return sb.toString()
+    }
+
+    private fun findRoutineInScope(name: String, scope: TreeParserSymbolScope): Routine? {
+        runCatching { scope.routines }.getOrNull()
+            ?.find { it.name.equals(name, ignoreCase = true) }
+            ?.let { return it }
+        for (child in runCatching { scope.childScopes }.getOrNull() ?: emptyList()) {
+            findRoutineInScope(name, child)?.let { return it }
+        }
+        return null
+    }
+
+    private fun findVariableInScope(name: String, scope: TreeParserSymbolScope): Variable? {
+        runCatching { scope.variables }.getOrNull()
+            ?.find { it.name.equals(name, ignoreCase = true) }
+            ?.let { return it }
+        for (child in runCatching { scope.childScopes }.getOrNull() ?: emptyList()) {
+            findVariableInScope(name, child)?.let { return it }
+        }
+        return null
+    }
 }

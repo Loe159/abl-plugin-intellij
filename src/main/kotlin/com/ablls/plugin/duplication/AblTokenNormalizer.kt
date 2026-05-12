@@ -2,6 +2,7 @@ package com.ablls.plugin.duplication
 
 import org.antlr.v4.runtime.Token
 import org.antlr.v4.runtime.TokenStream
+import org.prorefactor.core.ABLNodeType
 
 /**
  * Normalise le TokenStream ABL pour la détection de duplicats.
@@ -19,6 +20,9 @@ object AblTokenNormalizer {
         val index: Int
     )
 
+    private val QSTRING_TYPE = ABLNodeType.QSTRING.getType()
+    private val NUMBER_TYPE  = ABLNodeType.NUMBER.getType()
+
     fun normalize(tokens: TokenStream): List<NormalToken> {
         val result = mutableListOf<NormalToken>()
         val size   = tokens.size()
@@ -27,23 +31,13 @@ object AblTokenNormalizer {
             if (t.channel != Token.DEFAULT_CHANNEL) continue
             if (t.type == Token.EOF) break
 
-            val normalized = when {
-                isStringLiteral(t)  -> "<STR>"
-                isNumericLiteral(t) -> "<NUM>"
-                else                -> t.text?.uppercase() ?: continue
+            val normalized = when (t.type) {
+                QSTRING_TYPE -> "<STR>"
+                NUMBER_TYPE  -> "<NUM>"
+                else         -> t.text?.uppercase() ?: continue
             }
             result += NormalToken(normalized, t.type, t.line, i)
         }
         return result
-    }
-
-    private fun isStringLiteral(t: Token): Boolean {
-        val text = t.text ?: return false
-        return text.startsWith("\"") || text.startsWith("'")
-    }
-
-    private fun isNumericLiteral(t: Token): Boolean {
-        val text = t.text ?: return false
-        return text.matches(Regex("-?\\d+(\\.\\d+)?"))
     }
 }
