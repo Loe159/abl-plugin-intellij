@@ -4,6 +4,7 @@ import com.ablls.plugin.core.AblProjectAnalysisService
 import com.ablls.plugin.language.AblLanguage
 import com.ablls.plugin.parser.AblLexerAdapter
 import com.ablls.plugin.parser.AblTokenTypes
+import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.components.service
@@ -13,10 +14,10 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.refactoring.rename.PsiElementRenameHandler
 import com.intellij.refactoring.rename.RenameHandler
 import org.prorefactor.core.JPNode
 import org.prorefactor.treeparser.TreeParserSymbolScope
+import org.prorefactor.treeparser.symbols.TableBuffer
 
 /**
  * Handler de renommage sémantique pour les symboles ABL (Shift+F6).
@@ -34,7 +35,8 @@ import org.prorefactor.treeparser.TreeParserSymbolScope
  * Limitation connue : toutes les variantes de casse sont remplacées par le nouveau nom
  * exact fourni par l'utilisateur (ABL est insensible à la casse).
  *
- * Si la sémantique n'est pas en cache, délègue au renommage textuel IntelliJ standard.
+ * Si la sémantique n'est pas en cache, ou si le symbole n'est pas résolu (temp-table field…),
+ * effectue un renommage textuel lexer-based de toutes les occurrences IDENTIFIER dans le fichier.
  */
 class AblRenameHandler : RenameHandler {
 
@@ -42,9 +44,11 @@ class AblRenameHandler : RenameHandler {
     internal var testNewName: String? = null
 
     override fun isAvailableOnDataContext(dataContext: DataContext): Boolean {
-        val editor  = dataContext.getData(com.intellij.openapi.actionSystem.CommonDataKeys.EDITOR) ?: return false
-        val psiFile = dataContext.getData(com.intellij.openapi.actionSystem.CommonDataKeys.PSI_FILE) ?: return false
-        return psiFile.language == AblLanguage
+        val editor  = dataContext.getData(CommonDataKeys.EDITOR) ?: return false
+        val psiFile = dataContext.getData(CommonDataKeys.PSI_FILE) ?: return false
+        if (psiFile.language != AblLanguage) return false
+        val element = psiFile.findElementAt(editor.caretModel.offset) ?: return false
+        return element.node?.elementType == AblTokenTypes.IDENTIFIER
     }
 
     override fun invoke(project: Project, editor: Editor, file: PsiFile, dataContext: DataContext) {
@@ -73,12 +77,19 @@ class AblRenameHandler : RenameHandler {
             ?: return
         if (newName.isBlank() || newName == word) return
 
-        if (targetDef != null && rootScope != null) {
-            performScopeAwareRename(project, file, word, newName, rootScope, targetDef)
+        if (targetDef != null) {
+            // rootScope non-null is guaranteed: targetDef comes from rootScope?.let { ... }
+            performScopeAwareRename(project, file, word, newName, rootScope!!, targetDef)
         } else {
-            val symbols = service.symbolIndex.findByName(word, uri)
-            if (symbols.isNotEmpty())
-                PsiElementRenameHandler.invoke(element, project, element, editor)
+            // Pas de résolution sémantique (temp-table field, sémantique non disponible, etc.)
+            // → renommage lexer-based de toutes les occurrences IDENTIFIER dans le fichier
+            val tokenRanges = findIdentifierTokenRanges(doc.text, word)
+                .sortedByDescending { it.first }
+            if (tokenRanges.isEmpty()) return
+            WriteCommandAction.runWriteCommandAction(project, "Rename '$word' → '$newName'", null, {
+                tokenRanges.forEach { range -> doc.replaceString(range.first, range.last + 1, newName) }
+                PsiDocumentManager.getInstance(project).commitDocument(doc)
+            }, file)
         }
     }
 
@@ -173,6 +184,14 @@ class AblRenameHandler : RenameHandler {
         for (r in runCatching { scope.routines }.getOrNull() ?: emptyList()) {
             if (r.name.equals(word, ignoreCase = true))
                 check(runCatching { r.getDefineNode() }.getOrNull())
+        }
+        @Suppress("UNCHECKED_CAST")
+        val buffers = runCatching {
+            scope.javaClass.getMethod("getBufferList").invoke(scope) as? Collection<TableBuffer>
+        }.getOrNull() ?: emptyList()
+        for (b in buffers) {
+            if (b.name.equals(word, ignoreCase = true))
+                check(runCatching { b.getDefineNode() }.getOrNull())
         }
         for (child in runCatching { scope.childScopes }.getOrNull() ?: emptyList()) {
             val childBest = findNearestDef(child, word, line)
