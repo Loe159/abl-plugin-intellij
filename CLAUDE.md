@@ -974,3 +974,168 @@ class AblParserFacadeTest {
 - [sonar-openedge GitHub](https://github.com/Riverside-Software/sonar-openedge)
 - [vscode-abl (utilise le même LSP)](https://github.com/vscode-abl/vscode-abl)
 - [JetBrains Plugin Template](https://github.com/JetBrains/intellij-platform-plugin-template)
+
+---
+
+## Audit technique (2026-05-13)
+
+> Audit complet de l'intégration IntelliJ (extension points, RSSW, architecture).
+> Légende verdicts : ✅ OK · 🟡 Mineur · 🔴 Refaire · ❌ Absent
+
+### Dette architecturale : PSI plat
+
+`AblPsiParser` produit un arbre PSI **plat** — tous les tokens sont enfants directs de `AblFile`.
+Cause racine de plusieurs limitations qui ne peuvent pas être corrigées sans restructurer le PSI :
+
+- **Breadcrumbs** : `getParent()` retourne null → aucune hiérarchie réelle
+- **Formatter** : impossible de distinguer "token dans un bloc DO" de "token hors bloc"
+- **Find Usages** : pas de `PsiReference` possible → fallback textuel permanent
+- **Surround With** : `getElementsToSurround()` ne peut pas sélectionner des blocs complets
+
+Si le PSI plat est conservé, documenter ces limitations comme "by design" plutôt que les contourner
+individuellement. Sinon, migrer vers un PSI structuré en adaptant `AblPsiParser` pour construire
+des nœuds composites (via `PsiBuilder` + markers pour PROCEDURE/CLASS/DO blocks).
+
+### Bloc 1 — Bases du langage
+
+| Feature | Fichier | EP correct | RSSW | Verdict |
+|---|---|---|---|---|
+| FileType | `AblFileType.kt` | ✅ `fileType` | n/a | ✅ OK |
+| Lexer | `AblLexerAdapter.kt` | ✅ `lang.parserDefinition` | ⚠️ `ABLNodeType.getLiteral()` seulement — scanner maison complet | 🟡 Risque divergence RSSW |
+| Parser/PSI | `AblParserDefinition.kt` | ✅ `lang.parserDefinition` | ❌ PSI plat | 🟡 Limite nav/formatter/breadcrumbs |
+| Syntax Highlighting | `AblSyntaxHighlighter.kt` | ✅ `lang.syntaxHighlighterFactory` | n/a | ✅ OK |
+| Color Settings | `AblColorSettingsPage.kt` | ✅ `colorSettingsPage` | n/a | ✅ OK |
+| Bracket Matching | `AblBracketMatcher` | ✅ `lang.bracketMatcher` | n/a | 🟡 `()` seulement |
+| Commenter | `AblCommenter` | ✅ `lang.commenter` | n/a | ✅ OK |
+| Folding | `AblFoldingBuilder.kt` | ✅ `lang.foldingBuilder` | ⚠️ `ABLNodeType` pour classification, scan linéaire | ✅ OK |
+
+### Bloc 2 — Éditeur enrichi
+
+| Feature | Fichier | EP correct | RSSW | Verdict |
+|---|---|---|---|---|
+| Formatter | `AblFormattingModelBuilder.kt` | ✅ `lang.formatter` | ❌ | 🟡 Indentation basique uniquement |
+| Code Style Settings | ❌ absent | `langCodeStyleSettingsProvider` | — | ❌ Absent → ajouté en tâche 9 |
+| Surround With | `AblSurroundDescriptor.kt` | ✅ `lang.surroundDescriptor` | n/a | ✅ OK |
+| Postfix Templates | `AblPostfixTemplateProvider.kt` | ✅ `postfixTemplateProvider` | n/a | ✅ OK |
+| Live Templates | `abl.xml` + `AblTemplateContextType.kt` | ✅ | n/a | ✅ OK |
+| Spell Checking | `AblSpellcheckingStrategy.kt` | ✅ `spellchecker.support` | n/a | ✅ OK |
+| Sticky Lines | ❌ absent | `com.intellij.ui.stickyLines` | — | ❌ Absent (optionnel) |
+
+### Bloc 3 — Complétion
+
+| Feature | Fichier | EP correct | RSSW | Verdict |
+|---|---|---|---|---|
+| Keyword + symboles | `AblCompletionContributor.kt` | ✅ `completion.contributor` | ✅ `TreeParserSymbolScope` | ✅ OK |
+| OO member (myObj:) | `AblCompletionContributor.kt` | ✅ | ✅ scope + index | ✅ OK |
+| Parameter completion | `AblCompletionContributor.kt` | ⚠️ dans contributor, pas `ParameterInfoHandler` (Ctrl+P absent) | ✅ `Routine.parameters` | 🟡 → tâche 5 |
+| Inlay hints | `AblParameterInlayHintsProvider.kt` | ✅ `codeInsight.inlayProvider` | ✅ | ✅ OK |
+
+### Bloc 4 — Navigation
+
+| Feature | Fichier | EP correct | RSSW | Verdict |
+|---|---|---|---|---|
+| Go to Declaration | `AblGotoDeclarationHandler.kt` | ✅ `gotoDeclarationHandler` | ✅ `TreeParserSymbolScope` | ✅ OK |
+| Go to Symbol | `AblGotoSymbolContributor.kt` | ✅ `gotoSymbolContributor` | ✅ | ✅ OK |
+| Go to Class | `AblGotoClassContributor` | ✅ `gotoClassContributor` | ✅ | ✅ OK |
+| Go to Related | `AblGotoRelatedProvider.kt` | ✅ `gotoRelatedProvider` | — | ✅ OK |
+| Super class (Ctrl+U) | `AblSuperClassNavigator.kt` | ✅ `codeInsight.gotoSuper` | ⚠️ scan textuel INHERITS | 🟡 |
+| Overriding Methods | `AblOverridingMethodsProvider.kt` | ✅ `codeInsight.lineMarkerProvider` | ❌ index textuel | 🟡 Faux positifs possibles |
+| Breadcrumbs | `AblBreadcrumbProvider.kt` | ✅ `breadcrumbsInfoProvider` | ❌ | 🟡 `getParent()` → null (PSI plat) |
+| Find Usages | `AblFindUsagesProvider.kt` | ✅ `lang.findUsagesProvider` | ⚠️ `DefaultWordsScanner` textuel, pas `JPNode.getSymbol()` | 🟡 Textuel |
+
+### Bloc 5 — Inspections
+
+| Feature | EP correct | RSSW | Verdict |
+|---|---|---|---|
+| 17 inspections | ✅ `localInspection` + `LocalInspectionTool` | ✅ `topNode.query*()` | ✅ OK |
+| groupPath | `groupPath="ABL"` ⚠️ doit être `"OpenEdge ABL"` | — | 🟡 → tâche 2 |
+
+### Bloc 6 — Refactoring
+
+| Feature | Fichier | EP correct | RSSW | Verdict |
+|---|---|---|---|---|
+| Rename | `AblRenameHandler.kt` | ✅ `renameHandler` | ✅ scope-aware | 🟡 Dialogue custom (pas `RenameDialog`) |
+| Safe Delete | `AblSafeDeleteHandler.kt` | ❌ `AblSafeDeleteAction` non enregistrée dans plugin.xml | ⚠️ | 🔴 Inaccessible → tâche 3 |
+| Extract/Inline/Introduce/ChangeSignature | `intentions/*.kt` | ⚠️ `intentionAction` (Alt+Enter), pas Ctrl+Alt+Shift+T | ❌ | 🟡 UX non native |
+
+### Bloc 7 — Structure
+
+| Feature | EP correct | RSSW | Verdict |
+|---|---|---|---|
+| Structure View | ✅ `lang.psiStructureViewFactory` | ✅ | ✅ OK |
+| Class/Call Hierarchy | ❌ absent | — | ❌ Absent |
+
+### Bloc 8 — Documentation
+
+| Feature | EP correct | RSSW | Verdict |
+|---|---|---|---|
+| Quick doc (Ctrl+Q) | ✅ `lang.documentationProvider` | ✅ `Routine.getIDESignature()`, `Variable.*` | ✅ OK |
+| External doc link | `getUrlFor()` non implémenté | — | ❌ Absent (optionnel) |
+
+### Bloc 9 — Run / Build
+
+| Feature | EP correct | RSSW | Verdict |
+|---|---|---|---|
+| Run Configuration | ✅ `configurationType` + `runConfigurationProducer` | n/a | ✅ OK |
+| Build / PCT | ❌ absent | — | ❌ Absent |
+| Gutter Compile | ✅ `codeInsight.lineMarkerProvider` | n/a | ✅ OK |
+
+### Bloc 10 — Tests ABLUnit
+
+| Feature | EP correct | RSSW | Verdict |
+|---|---|---|---|
+| Gutter @Test | ✅ `codeInsight.lineMarkerProvider` | ❌ | 🔴 Action null (clic ne fait rien) → supprimé tâche 7 |
+| Test Runner | ❌ absent | — | 🔴 Absent — nécessite `SMTRunnerConsoleProperties` + protocole ABLUnit |
+| Coverage | ❌ `RangeHighlighter` custom | ❌ | 🔴 Doit utiliser `com.intellij.coverage.CoverageEngine` |
+
+### Bloc 11 — Profiler
+
+| Feature | EP correct | RSSW | Verdict |
+|---|---|---|---|
+| Vue Profiler | ❌ ToolWindow Swing custom | ❌ | 🔴 Doit utiliser `com.intellij.profiler.ProfilerExecutorGroup` |
+| Hot Spots | ✅ `codeInsight.inlayProvider` | ⚠️ Proxy incorrect (numéros de ligne ≠ counts) | 🟡 → tâche 6 (fix counts réels) |
+
+### Bloc 12 — Base de données
+
+| Feature | EP correct | RSSW | Verdict |
+|---|---|---|---|
+| Schema Explorer | ❌ ToolWindow JTree custom | ⚠️ Via `AblSymbolIndex` | 🔴 Doit utiliser `com.intellij.database` (Ultimate seulement) |
+
+### Bloc 13 — Project Wizard
+
+| Feature | EP correct | RSSW | Verdict |
+|---|---|---|---|
+| New Project | ❌ Non enregistré dans plugin.xml | — | 🔴 Inaccessible → tâche 4 |
+
+### Bloc 14 — Settings
+
+| Feature | EP correct | Verdict |
+|---|---|---|
+| Settings panel | ✅ `projectConfigurable` + `parentId="language"` | 🟡 UI read-only (`isModified()` always false) — délibéré |
+
+---
+
+### Plan de correction par priorité
+
+> Tâches réalisées en session (commit+push après chaque) :
+
+| Tâche | Bloc | Changement | Fichiers |
+|---|---|---|---|
+| 1 | CLAUDE.md | Rapport d'audit | `CLAUDE.md` |
+| 2 | Bloc 5 | `groupPath` → `"OpenEdge ABL"` dans plugin.xml | `plugin.xml` |
+| 3 | Bloc 6 | Enregistrer `AblSafeDeleteAction` dans `<actions>` | `plugin.xml` |
+| 4 | Bloc 13 | `AblModuleBuilder` + registration | nouveau + `plugin.xml` |
+| 5 | Bloc 3 | `AblParameterInfoHandler` (Ctrl+P) | nouveau + `plugin.xml` |
+| 6 | Bloc 11 | Fix hot spots — vrais counts depuis `AblProfilerParser` | `AblProfilerParser.kt`, `AblCoverageService.kt`, `AblHotSpotAnnotator.kt` |
+| 7 | Bloc 10 | Supprimer gutter @Test (action null = UX trompeuse) | `AblTestRunLineMarkerProvider.kt`, `plugin.xml` |
+| 8 | Bloc 2 | `AblCodeStyleSettingsProvider` | nouveau + `plugin.xml` |
+
+> Chantiers multi-jours (documentés, non implémentés en session) :
+
+| Chantier | Effort estimé | Blocker |
+|---|---|---|
+| Coverage via `CoverageEngine` | 3-5 jours | API complexe : `CoverageEngine`, `CoverageSuite`, `CoverageAnnotator`, `CoverageRunner` |
+| Profiler via `ProfilerExecutorGroup` | 3-5 jours | API expérimentale IntelliJ, dépend du format .prof RSSW |
+| Database via `com.intellij.database` | 5+ jours | Dépend d'IntelliJ **Ultimate** — nécessite dépendance optionnelle (`<depends optional="true">com.intellij.database</depends>`) |
+| Test Runner ABLUnit (SMTestProxy) | 5+ jours | Nécessite protocole de communication avec ABLUnit + `SMTRunnerConsoleProperties` |
+| PSI structuré (non-plat) | 3-5 jours | Débloquerait Find Usages sémantique, Formatter complet, Breadcrumbs réels |
