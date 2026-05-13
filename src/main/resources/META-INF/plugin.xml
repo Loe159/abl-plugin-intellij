@@ -315,6 +315,11 @@
             <className>com.ablls.plugin.intentions.AblInlineVariableIntention</className>
             <category>ABL Refactor</category>
         </intentionAction>
+        <intentionAction>
+            <language>ABL</language>
+            <className>com.ablls.plugin.intentions.AblChangeSignatureIntention</className>
+            <category>ABL Change Signature</category>
+        </intentionAction>
 
         <!-- ── Bracket Matcher ───────────────────────────────────────────────── -->
         <lang.bracketMatcher
