@@ -418,12 +418,12 @@ ou `AblSemanticResult`. Ne jamais appeler ces classes directement ailleurs.
 | Inspection FIND sans lock | ✅ Opérationnel | `AblFindNoLockInspection.kt` |
 | Run Configuration (.p) | ✅ Opérationnel | `AblRunConfigurationType.kt` |
 | openedge-project.json | ✅ Opérationnel | `OpenEdgeProjectService.kt` |
-| Find Usages (Alt+F7) | 🔧 Textuel (sans scope) | `AblFindUsagesProvider.kt` |
-| Rename (Shift+F6) | 🔧 Textuel (sans scope) | `AblRenameHandler.kt` |
-| Complétion tables/champs DB | 🔧 TODO | `AblSymbolCollector.kt` |
-| Chargement schéma .df | 🔧 TODO | `OpenEdgeProjectService.kt` |
-| Find References sémantique | 🔧 TODO (JPNode.getSymbol) | `AblFindUsagesProvider.kt` |
-| Rename sémantique | 🔧 TODO (JPNode.getSymbol) | `AblRenameHandler.kt` |
+| Find Usages (Alt+F7) | ✅ Scope-aware (TreeParserSymbolScope) | `AblFindUsagesProvider.kt` |
+| Rename (Shift+F6) | ✅ Scope-aware (TreeParserSymbolScope) | `AblRenameHandler.kt` |
+| Complétion tables/champs DB | ✅ Opérationnel (dot-notation + index) | `AblCompletionContributor.kt` |
+| Chargement schéma .df | ✅ Opérationnel (DfSchemaParser + Schema RSSW) | `AblProjectAnalysisService.kt` |
+| Inspection complexité cognitive | ✅ Opérationnel (CognitiveComplexityListener) | `AblCognitiveComplexityInspection.kt` |
+| Find References sémantique | 🔧 Partiel (index textuel + scope kind) | `AblFindUsagesProvider.kt` |
 | Complétion membres OO (TYPE:method) | 🔧 TODO | `AblCompletionContributor.kt` |
 
 ---
@@ -476,6 +476,174 @@ typeInfo?.methods?.forEach { method ->
         .withTypeText(method.returnType.toString()))
 }
 ```
+
+---
+
+## Roadmap complète
+
+> Légende : ✅ Opérationnel · 🔧 Partiel / en cours · 📋 À implémenter · 🔴 Priorité haute · 🟠 Priorité moyenne · 🟡 Priorité basse · 🟢 Priorité faible
+
+### Complétion avancée
+
+| Priorité | Feature | État | Fichier clé |
+|---|---|---|---|
+| 🔴 | Complétion membres OO (`myObject:<caret>` → méthodes/propriétés) | 📋 | `AblCompletionContributor.kt` |
+| 🔴 | Complétion tables et champs DB (après chargement `.df`) | ✅ | `AblCompletionContributor.kt` |
+| 🟠 | Complétion des paramètres de procédure/fonction | 📋 | `AblCompletionContributor.kt` |
+| 🟠 | Complétion des includes `{<caret>` → fichiers `.i` dans le PROPATH | 📋 | `AblCompletionContributor.kt` |
+| 🟠 | Complétion des préprocesseurs (`&` → `&IF`, `&DEFINE`, `&SCOPED-DEFINE`…) | 📋 | `AblCompletionContributor.kt` |
+| 🟡 | Postfix completion (`x.message` → `MESSAGE x.`) | 📋 | `AblCompletionContributor.kt` |
+
+### Navigation
+
+| Priorité | Feature | État | Fichier clé |
+|---|---|---|---|
+| 🔴 | Find Usages sémantique (`JPNode.getSymbol()`) | ✅ | `AblFindUsagesProvider.kt` |
+| 🔴 | Rename sémantique (scope-aware) | ✅ | `AblRenameHandler.kt` |
+| 🟠 | Go to Symbol (`Ctrl+Alt+Shift+N`) — procédures, classes, méthodes dans tout le projet | 📋 | nouveau |
+| 🟠 | Go to Class (`Ctrl+N`) — classes ABL OO | 📋 | nouveau |
+| 🟡 | Go to Related Symbol — naviguer entre `.cls` et son `.i` d'interface | 📋 | nouveau |
+| 🟡 | Breadcrumb navigation (classe → méthode → bloc courant) | 📋 | nouveau |
+| 🟡 | Navigate to Super Class / implementation (`Ctrl+U`) | 📋 | nouveau |
+| 🟡 | Navigate to Overriding Methods | 📋 | nouveau |
+
+### Hints et annotations inline
+
+| Priorité | Feature | État | Fichier clé |
+|---|---|---|---|
+| 🟠 | Inlay hints de type sur les variables (`DEFINE VARIABLE x` → hint `: INTEGER`) | 📋 | nouveau |
+| 🟠 | Inlay hints sur les paramètres d'appel (`foo(/* INPUT */ 42, /* OUTPUT */ result)`) | 📋 | nouveau |
+| 🟠 | Inlay hints de valeur de retour | 📋 | nouveau |
+| 🟡 | Code Vision (nombre d'usages au-dessus de chaque déclaration) | 📋 | nouveau |
+
+### Analyse et inspections supplémentaires
+
+| Priorité | Feature | État | Fichier clé |
+|---|---|---|---|
+| 🟠 | Dead code detection (procédures jamais appelées) | 📋 | nouveau |
+| 🟠 | Variables déclarées mais jamais utilisées (extension `AblUnusedVariableInspection`) | 📋 | `AblUnusedVariableInspection.kt` |
+| 🟠 | `FIND FIRST` sans `NO-ERROR` dans un bloc `IF AVAIL` | 📋 | nouveau |
+| 🟡 | Complexité cyclomatique (warning au-delà d'un seuil) | 📋 | nouveau |
+| 🟡 | Longueur de procédure excessive | 📋 | nouveau |
+| 🟡 | Nommage non conforme à la convention (préfixes `l`, `i`, `c`…) | 📋 | nouveau |
+| 🟡 | Utilisation de `INTEGER` au lieu de `INT64` pour les grands nombres | 📋 | nouveau |
+| 🟡 | Détection des `LEAVE`/`NEXT` sans étiquette dans des boucles imbriquées | 📋 | nouveau |
+| 🟢 | Spell checking dans les strings et commentaires | 📋 | nouveau |
+
+### Refactoring
+
+| Priorité | Feature | État | Fichier clé |
+|---|---|---|---|
+| 🟡 | Extract Procedure (sélection → nouvelle `PROCEDURE`) | 📋 | nouveau |
+| 🟡 | Extract Method (dans une classe ABL) | 📋 | nouveau |
+| 🟡 | Inline Variable | 📋 | nouveau |
+| 🟡 | Introduce Variable (`DEFINE VARIABLE` à partir d'une expression) | 📋 | nouveau |
+| 🟡 | Change Signature (renommer/réordonner les paramètres) | 📋 | nouveau |
+| 🟡 | Safe Delete (vérifie qu'aucun usage avant de supprimer) | 📋 | nouveau |
+
+### Formatter
+
+| Priorité | Feature | État | Fichier clé |
+|---|---|---|---|
+| 🟠 | Code formatter complet (indentation, espaces, casse des mots-clés) | 📋 | nouveau |
+| 🟡 | Import optimizer (trier/nettoyer les `USING` dans les classes OO) | 📋 | nouveau |
+
+### Debugger
+
+> Package `debug/` existant : `AblDebugProcess`, `AblDebugConnection`, `AblDebugConfigurationType`.
+
+| Priorité | Feature | État | Fichier clé |
+|---|---|---|---|
+| 🟠 | Breakpoints : ligne, conditionnel (`WHEN myVar > 0`), exception (`CATCH`) | 📋 | `AblDebugProcess.kt` |
+| 🟠 | Variables watch : affichage des variables locales dans la fenêtre Debugger | 📋 | `AblDebugProcess.kt` |
+| 🟠 | Step Over / Step Into / Step Out complets | 📋 | `AblDebugProcess.kt` |
+| 🟠 | Call Stack avec navigation vers le source | 📋 | `AblDebugProcess.kt` |
+| 🟠 | Attach to process (`-debugReady`) | 📋 | `AblDebugConnection.kt` |
+| 🟠 | Remote debug via socket (AppServer distant) | 📋 | `AblDebugConnection.kt` |
+| 🟡 | Evaluate Expression (expression ABL à la volée pendant le debug) | 📋 | `AblDebugProcess.kt` |
+| 🟡 | Conditional Breakpoints sur les champs de tables (`WHEN Customer.Balance > 1000`) | 📋 | `AblDebugProcess.kt` |
+| 🟢 | Hot Swap (rechargement de code à chaud pendant une session debug) | 📋 | `AblDebugProcess.kt` |
+| 🟢 | Memory view : inspection des handles ABL (`WIDGET-HANDLE`, `QUERY-HANDLE`) | 📋 | nouveau |
+
+### Database / DataSource
+
+| Priorité | Feature | État | Fichier clé |
+|---|---|---|---|
+| 🔴 | Chargement automatique du `.df` comme schéma | ✅ | `AblProjectAnalysisService.kt` |
+| 🔴 | Complétion DB dans le code (noms de tables et champs) | ✅ | `AblCompletionContributor.kt` |
+| 🔴 | Validation des requêtes (champs référencés existent dans le schéma) | 📋 | nouveau |
+| 🟠 | Enregistrement d'une DataSource ABL dans la fenêtre "Database" d'IntelliJ | 📋 | nouveau |
+| 🟠 | Exploration du schéma : tables, champs, index, séquences | 📋 | nouveau |
+| 🟡 | SQL Console ABL : requêtes `FOR EACH` avec complétion depuis le schéma | 📋 | nouveau |
+| 🟢 | ER Diagram généré depuis le `.df` | 📋 | nouveau |
+| 🟢 | DB Connection live pour inspecter les données réelles | 📋 | nouveau |
+
+### Profiler
+
+> Package `coverage/` existant : `AblCoverageService`, `AblProfilerParser`, `LoadCoverageAction`.
+
+| Priorité | Feature | État | Fichier clé |
+|---|---|---|---|
+| 🟠 | Vue Profiler : temps CPU, nombre d'appels, par procédure/méthode | 📋 | `AblProfilerParser.kt` |
+| 🟠 | Coverage : lignes couvertes/non couvertes dans la gouttière | 📋 | `AblCoverageService.kt` |
+| 🟠 | Hot Spots : mise en évidence des lignes coûteuses dans l'éditeur | 📋 | nouveau |
+| 🟠 | Intégration avec les Run Configurations (lancer avec profiling en un clic) | 📋 | `AblRunConfigurationType.kt` |
+| 🟡 | Flame Graph : visualisation de la pile d'appels avec les temps | 📋 | nouveau |
+| 🟡 | Coverage diff : comparaison de deux runs | 📋 | nouveau |
+
+### Build
+
+| Priorité | Feature | État | Fichier clé |
+|---|---|---|---|
+| 🟠 | Compilation ABL via PCT (Apache Ant tasks de Riverside Software) | 📋 | nouveau |
+| 🟠 | Compilation incrémentale (recompiler uniquement les fichiers modifiés) | 📋 | nouveau |
+| 🟠 | Rapport d'erreurs de compilation dans le panneau "Problems" | 📋 | nouveau |
+| 🟠 | Intégration du fichier XREF (`.xref` / `.xref-xml`) | 📋 | `xref/XrefParser.kt` |
+| 🟡 | Build Configuration (équivalent `build.xml` / PCT) | 📋 | nouveau |
+| 🟡 | Gutter icon "compile this file" sur les `.p` | 📋 | nouveau |
+| 🟡 | Pre-compile checks (lancer les inspections avant la compilation) | 📋 | nouveau |
+
+### Tests ABLUnit
+
+| Priorité | Feature | État | Fichier clé |
+|---|---|---|---|
+| 🔴 | Test Runner ABL (ABLUnit framework de Progress) | 📋 | nouveau |
+| 🔴 | Reconnaissance des classes de test (`@Test`, `@Before`…) | 📋 | nouveau |
+| 🟠 | Gutter icon "Run test" sur chaque méthode de test | 📋 | nouveau |
+| 🟠 | Fenêtre Test Results (pass/fail/error avec détail) | 📋 | nouveau |
+| 🟠 | Re-run failed tests | 📋 | nouveau |
+| 🟡 | Coverage depuis les tests (couverture mesurée par ABLUnit) | 📋 | `AblCoverageService.kt` |
+
+### Gestion de projet
+
+| Priorité | Feature | État | Fichier clé |
+|---|---|---|---|
+| 🟡 | Project Wizard : template "New OpenEdge ABL Project" | 📋 | nouveau |
+| 🟡 | Project Settings UI : panneau Settings → OpenEdge | 📋 | `OpenEdgeProjectService.kt` |
+| 🟡 | PROPATH explorer : visualiser et éditer le PROPATH depuis l'IDE | 📋 | `OpenEdgeProjectService.kt` |
+| 🟢 | Module system : support des projets multi-modules ABL | 📋 | nouveau |
+| 🟢 | Dependency management (OE Package Manager ?) | 📋 | nouveau |
+
+### Intégrations externes
+
+| Priorité | Feature | État | Fichier clé |
+|---|---|---|---|
+| 🟡 | SonarLint integration (règles CABL de sonar-openedge dans IntelliJ) | 📋 | nouveau |
+| 🟡 | PCT Ant tasks (exécution de tâches PCT depuis l'IDE) | 📋 | nouveau |
+| 🟢 | OpenEdge AppServer : déploiement et invocation de procédures | 📋 | nouveau |
+| 🟢 | PASOE : déploiement avec logs en temps réel | 📋 | nouveau |
+| 🟢 | Docker : container OpenEdge pour tests et compilation | 📋 | nouveau |
+
+### UX / Ergonomie
+
+| Priorité | Feature | État | Fichier clé |
+|---|---|---|---|
+| 🟠 | Intention Actions (ampoule jaune) : suggestions contextuelles | 📋 | nouveau |
+| 🟡 | Sticky lines : signature de la procédure courante en haut de l'éditeur | 📋 | nouveau |
+| 🟡 | Rainbow brackets : coloration des blocs `DO/END` imbriqués | 📋 | nouveau |
+| 🟡 | Color Settings avancés : thème sombre/clair bien différencié | 📋 | `AblColorSettingsPage.kt` |
+| 🟢 | Editor tabs : icône distincte par type (`.cls` vs `.p` vs `.i`) | 📋 | `AblIcons.kt` |
+| 🟢 | Scratch files : support ABL dans les fichiers temporaires | 📋 | nouveau |
 
 ---
 

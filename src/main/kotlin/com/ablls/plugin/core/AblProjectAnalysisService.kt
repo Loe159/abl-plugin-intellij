@@ -6,6 +6,8 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
+import org.prorefactor.core.schema.Schema
+import java.io.File
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.concurrent.ConcurrentHashMap
@@ -116,7 +118,7 @@ class AblProjectAnalysisService(private val project: Project) {
         symbolIndex.removeFile(uri)
     }
 
-    // ─── Environnement PROPATH ────────────────────────────────────────────────
+    // ─── Environnement PROPATH + schéma DB ───────────────────────────────────
 
     fun updateEnvironment() {
         try {
@@ -134,16 +136,52 @@ class AblProjectAnalysisService(private val project: Project) {
                 } catch (_: Exception) { null }
             }.filter { Files.isDirectory(it) }
 
-            if (propath.isNotEmpty()) {
-                val env = AblParserFacade.createProjectEnvironment(propath, config.version)
-                parserFacade.updateEnvironment(env)
-                parseCache.clear()
-                semanticCache.clear()
-                LOG.info("Environnement PROPATH mis à jour : ${propath.size} entrées")
+            // Chargement des fichiers .df déclarés dans openedge-project.json
+            val schema = buildSchema(config.databases, basePath)
+
+            // Les alias doivent être enregistrés avant createProjectEnvironment
+            config.aliases.forEach { alias ->
+                runCatching { schema.createAlias(alias.alias, alias.database) }
             }
+
+            // Enregistrement des tables/champs dans l'index de symboles
+            val dbSymbols = AblSymbolCollector.collectFromSchema(schema)
+            if (dbSymbols.isNotEmpty()) {
+                symbolIndex.updateFile("db://schema", dbSymbols)
+                LOG.info("Schéma DB : ${dbSymbols.size} symboles (tables + champs)")
+            }
+
+            val env = AblParserFacade.createProjectEnvironment(propath, config.version, schema)
+            parserFacade.updateEnvironment(env)
+            parseCache.clear()
+            semanticCache.clear()
+            LOG.info("Environnement mis à jour : ${propath.size} entrées PROPATH, ${config.databases.size} DB(s)")
         } catch (e: Exception) {
-            LOG.warn("Impossible de mettre à jour PROPATH : ${e.message}")
+            LOG.warn("Impossible de mettre à jour l'environnement : ${e.message}")
         }
+    }
+
+    private fun buildSchema(
+        databases: List<com.ablls.plugin.project.DatabaseConnection>,
+        basePath: String
+    ): Schema {
+        val dbList = databases.mapNotNull { dbConn ->
+            val schemaPath = dbConn.schemaFile ?: return@mapNotNull null
+            val file = File(schemaPath).let {
+                if (it.isAbsolute) it else File(basePath, schemaPath)
+            }
+            if (!file.exists()) {
+                LOG.warn("Fichier .df introuvable pour '${dbConn.logicalName}' : ${file.absolutePath}")
+                return@mapNotNull null
+            }
+            try {
+                DfSchemaParser.parse(file, dbConn.logicalName)
+            } catch (e: Exception) {
+                LOG.warn("Erreur chargement schéma '${dbConn.logicalName}' : ${e.message}")
+                null
+            }
+        }
+        return if (dbList.isEmpty()) Schema() else Schema(*dbList.toTypedArray())
     }
 
     // ─── Indexation initiale ──────────────────────────────────────────────────

@@ -228,14 +228,18 @@ class AblParserFacade {
         }
 
         /**
-         * Environnement enrichi avec le PROPATH et la version OpenEdge du projet.
-         * Permet la résolution des `{include.i}` et des types issus des .r/.cls compilés.
+         * Environnement enrichi avec PROPATH, version OpenEdge et schéma DB optionnel.
+         * Permet la résolution des `{include.i}` et la validation sémantique des tables/champs.
          */
-        fun createProjectEnvironment(propath: List<Path>, oeVersion: String): IProparseEnvironment {
+        fun createProjectEnvironment(
+            propath: List<Path>,
+            oeVersion: String,
+            schema: Schema = Schema()
+        ): IProparseEnvironment {
             val propathStr = propath.joinToString(",") { it.toString() }
             val settings = ProparseSettings(propathStr)
             settings.setCustomProversion(oeVersion.ifBlank { "12.2.0" })
-            return object : RefactorSession(settings, Schema()) {
+            return object : RefactorSession(settings, schema) {
                 override fun findFile3(fileName: String?): java.io.File? {
                     if (fileName == null) return null
                     val f = super.findFile3(fileName)

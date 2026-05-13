@@ -5,6 +5,7 @@ import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.Token
 import org.antlr.v4.runtime.TokenStream
 import org.prorefactor.core.JPNode
+import org.prorefactor.core.schema.Schema
 import org.prorefactor.proparse.antlr4.Proparse
 import org.prorefactor.proparse.antlr4.ProparseBaseVisitor
 import org.prorefactor.treeparser.TreeParserSymbolScope
@@ -37,6 +38,48 @@ object AblSymbolCollector {
             visitor.visit(result.tree)
         } catch (e: Exception) {
             LOG.warn("Erreur collecte symboles (${result.uri}) : ${e.message}")
+        }
+        return symbols
+    }
+
+    // ─── Source 3 : Schema DB (tables et champs depuis fichiers .df) ────────────
+
+    /**
+     * Extrait les symboles TABLE et FIELD depuis un [Schema] RSSW.
+     *
+     * Les symboles produits utilisent `"db:${dbName}"` comme URI fictif
+     * (pas rattachés à un fichier source). Cela les range dans la section "global"
+     * de [AblSymbolIndex] et les rend disponibles dans toute complétion.
+     */
+    fun collectFromSchema(schema: Schema): List<AblSymbol> {
+        val symbols = mutableListOf<AblSymbol>()
+        try {
+            for (db in schema.databases) {
+                val dbUri = "db://${db.name}"
+                for (table in db.tableSet) {
+                    symbols.add(AblSymbol(
+                        name = table.name,
+                        kind = AblSymbol.Kind.TABLE,
+                        uri  = dbUri,
+                        definitionRange = null,
+                        dataType = "TABLE (${db.name})",
+                        documentation = null
+                    ))
+                    for (field in runCatching { table.fieldSet }.getOrNull() ?: emptySet()) {
+                        val typeStr = runCatching { field.dataType?.toString() }.getOrNull() ?: "UNKNOWN"
+                        symbols.add(AblSymbol(
+                            name = "${table.name}.${field.name}",
+                            kind = AblSymbol.Kind.FIELD,
+                            uri  = dbUri,
+                            definitionRange = null,
+                            dataType = typeStr,
+                            documentation = null
+                        ))
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            LOG.warn("Erreur collecte schéma DB : ${e.message}")
         }
         return symbols
     }

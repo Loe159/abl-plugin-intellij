@@ -58,10 +58,17 @@ private class AblCompletionProvider : CompletionProvider<CompletionParameters>()
             addScopeCompletions(semanticResult.rootScope, prefix, result)
         }
 
+        // ── 1b. Complétion contextuelle Table.Field (dot notation) ───────────────
+        val textBefore = file.text.take(parameters.offset)
+        val dotCandidate = extractTableBeforeDot(textBefore, prefix)
+        if (dotCandidate != null) {
+            addFieldCompletions(dotCandidate, prefix, service, result)
+            return  // champs uniquement dans ce contexte
+        }
+
         // ── 2. Symboles de l'index du projet ─────────────────────────────────
         val upperPrefix = prefix.uppercase()
         service.symbolIndex.findByPrefix(prefix, uri).forEach { symbol ->
-            // Éviter les doublons avec les suggestions sémantiques
             result.addElement(
                 LookupElementBuilder.create(symbol.name)
                     .withTypeText(symbol.dataType ?: "", true)
@@ -85,6 +92,57 @@ private class AblCompletionProvider : CompletionProvider<CompletionParameters>()
             }
         }
 
+    }
+
+    // ─── Complétion contextuelle : Table.Field ────────────────────────────────
+
+    /**
+     * Détecte si on est dans un contexte `Table.Field`.
+     *
+     * Le point doit être au caractère immédiatement avant [prefix] dans [textBefore] :
+     * cela évite de confondre les terminateurs d'instruction (`.` de fin de ligne).
+     *
+     * Exemples :
+     *   textBefore = "...Customer."  prefix = ""      → "Customer"
+     *   textBefore = "...Customer.Cust" prefix = "Cust" → "Customer"
+     *   textBefore = "...NO-UNDO.\n" prefix = "MESS"  → null  (terminateur, pas de dot adjacent)
+     */
+    private fun extractTableBeforeDot(textBefore: String, prefix: String): String? {
+        // Position dans textBefore où commence le prefix (= juste après le dot si dot-context)
+        val afterDotPos = textBefore.length - prefix.length
+        val dotPos = afterDotPos - 1
+        if (dotPos < 0 || textBefore[dotPos] != '.') return null
+
+        // Extraire l'identifiant qui précède le point
+        var i = dotPos - 1
+        while (i >= 0 && (textBefore[i].isLetterOrDigit() || textBefore[i] == '-' || textBefore[i] == '_')) i--
+        val name = textBefore.substring(i + 1, dotPos)
+        return name.ifBlank { null }
+    }
+
+    /** Ajoute les champs de [tableName] au résultat de complétion. */
+    private fun addFieldCompletions(
+        tableName: String,
+        prefix: String,
+        service: com.ablls.plugin.core.AblProjectAnalysisService,
+        result: CompletionResultSet
+    ) {
+        val prefixUpper    = prefix.uppercase()
+        val tableNameUpper = tableName.uppercase()
+        val qualifiedPrefix = "$tableNameUpper.$prefixUpper"
+
+        service.symbolIndex.findByPrefix("$tableName.", "").forEach { symbol ->
+            if (symbol.kind != AblSymbol.Kind.FIELD) return@forEach
+            // symbol.name = "Customer.CustNum" → proposer "CustNum"
+            val fieldName = symbol.name.substringAfterLast('.')
+            if (!fieldName.startsWith(prefixUpper, ignoreCase = true)) return@forEach
+            result.addElement(
+                LookupElementBuilder.create(fieldName)
+                    .withTypeText(symbol.dataType ?: "", true)
+                    .withIcon(AllIcons.Nodes.Field)
+                    .withTailText(" field of $tableName", true)
+            )
+        }
     }
 
     // ─── Complétion depuis le TreeParserSymbolScope (types résolus) ───────────
