@@ -243,6 +243,11 @@
         <renameHandler
             implementation="com.ablls.plugin.refactor.AblRenameHandler"/>
 
+        <!-- ── Hot Spots Inlay ──────────────────────────────────────────────── -->
+        <codeInsight.inlayProvider
+            language="ABL"
+            implementationClass="com.ablls.plugin.coverage.AblHotSpotInlayProvider"/>
+
         <!-- ── Inlay Hints ──────────────────────────────────────────────────── -->
         <codeInsight.inlayProvider
             language="ABL"
