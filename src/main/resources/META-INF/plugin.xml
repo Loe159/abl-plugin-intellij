@@ -333,6 +333,11 @@
             <className>com.ablls.plugin.intentions.AblChangeSignatureIntention</className>
             <category>ABL Change Signature</category>
         </intentionAction>
+        <intentionAction>
+            <language>ABL</language>
+            <className>com.ablls.plugin.intentions.AblAddUsingIntention</className>
+            <category>ABL USING</category>
+        </intentionAction>
 
         <!-- ── Bracket Matcher ───────────────────────────────────────────────── -->
         <lang.bracketMatcher
