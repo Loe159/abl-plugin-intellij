@@ -89,79 +89,79 @@
             implementationClass="com.ablls.plugin.annotator.AblAnnotator"/>
 
         <!-- ── Inspections (Best Practices & Linting) ────────────────────────── -->
-        <localInspection language="ABL" groupPath="ABL" groupName="Best Practices"
+        <localInspection language="ABL" groupPath="OpenEdge ABL" groupName="Best Practices"
                          displayName="Missing NO-UNDO modifier" shortName="AblMissingNoUndo"
                          enabledByDefault="true" level="WARNING"
                          implementationClass="com.ablls.plugin.inspections.AblNoUndoInspection"/>
-        <localInspection language="ABL" groupPath="ABL" groupName="Best Practices"
+        <localInspection language="ABL" groupPath="OpenEdge ABL" groupName="Best Practices"
                          displayName="Missing Lock mode on FIND" shortName="AblFindNoLock"
                          enabledByDefault="true" level="WARNING"
                          implementationClass="com.ablls.plugin.inspections.AblFindNoLockInspection"/>
-        <localInspection language="ABL" groupPath="ABL" groupName="Best Practices"
+        <localInspection language="ABL" groupPath="OpenEdge ABL" groupName="Best Practices"
                          displayName="NO-ERROR without error check" shortName="AblNoErrorWithoutCheck"
                          enabledByDefault="true" level="WARNING"
                          implementationClass="com.ablls.plugin.inspections.AblNoErrorWithoutCheckInspection"/>
-        <localInspection language="ABL" groupPath="ABL" groupName="Best Practices"
+        <localInspection language="ABL" groupPath="OpenEdge ABL" groupName="Best Practices"
                          displayName="Variable defined but never read" shortName="AblUnusedVariable"
                          enabledByDefault="true" level="WARNING"
                          implementationClass="com.ablls.plugin.inspections.AblUnusedVariableInspection"/>
-        <localInspection language="ABL" groupPath="ABL" groupName="Best Practices"
+        <localInspection language="ABL" groupPath="OpenEdge ABL" groupName="Best Practices"
                          displayName="Fortran-style comparison operator" shortName="AblFortranOperators"
                          enabledByDefault="true" level="WARNING"
                          implementationClass="com.ablls.plugin.inspections.AblFortranOperatorsInspection"/>
-        <localInspection language="ABL" groupPath="ABL" groupName="Best Practices"
+        <localInspection language="ABL" groupPath="OpenEdge ABL" groupName="Best Practices"
                          displayName="String concatenation in WHERE clause" shortName="AblStringConcatInWhere"
                          enabledByDefault="true" level="WARNING"
                          implementationClass="com.ablls.plugin.inspections.AblStringConcatInWhereInspection"/>
-        <localInspection language="ABL" groupPath="ABL" groupName="Best Practices"
+        <localInspection language="ABL" groupPath="OpenEdge ABL" groupName="Best Practices"
                          displayName="Empty or return-only CATCH block" shortName="AblEmptyCatch"
                          enabledByDefault="true" level="WARNING"
                          implementationClass="com.ablls.plugin.inspections.AblEmptyCatchInspection"/>
-        <localInspection language="ABL" groupPath="ABL" groupName="Security"
+        <localInspection language="ABL" groupPath="OpenEdge ABL" groupName="Security"
                          displayName="Table reference without database prefix (multi-db)"
                          shortName="AblMissingSchemaPrefix"
                          enabledByDefault="true" level="WARNING"
                          implementationClass="com.ablls.plugin.inspections.AblMissingSchemaPrefixInspection"/>
-        <localInspection language="ABL" groupPath="ABL" groupName="Best Practices"
+        <localInspection language="ABL" groupPath="OpenEdge ABL" groupName="Best Practices"
                          displayName="High cognitive complexity (RSSW)"
                          shortName="AblCognitiveComplexity"
                          enabledByDefault="true" level="WEAK WARNING"
                          implementationClass="com.ablls.plugin.inspections.AblCognitiveComplexityInspection"/>
-        <localInspection language="ABL" groupPath="ABL" groupName="Best Practices"
+        <localInspection language="ABL" groupPath="OpenEdge ABL" groupName="Best Practices"
                          displayName="FIND FIRST/LAST without NO-ERROR" shortName="AblFindFirstNoError"
                          enabledByDefault="true" level="WARNING"
                          implementationClass="com.ablls.plugin.inspections.AblFindFirstNoErrorInspection"/>
-        <localInspection language="ABL" groupPath="ABL" groupName="Best Practices"
+        <localInspection language="ABL" groupPath="OpenEdge ABL" groupName="Best Practices"
                          displayName="Internal procedure or function never referenced in file"
                          shortName="AblDeadCode"
                          enabledByDefault="true" level="WEAK WARNING"
                          implementationClass="com.ablls.plugin.inspections.AblDeadCodeInspection"/>
-        <localInspection language="ABL" groupPath="ABL" groupName="Best Practices"
+        <localInspection language="ABL" groupPath="OpenEdge ABL" groupName="Best Practices"
                          displayName="Overly long procedure or function (&gt; 150 lines)"
                          shortName="AblProcedureLength"
                          enabledByDefault="true" level="WEAK WARNING"
                          implementationClass="com.ablls.plugin.inspections.AblProcedureLengthInspection"/>
-        <localInspection language="ABL" groupPath="ABL" groupName="Best Practices"
+        <localInspection language="ABL" groupPath="OpenEdge ABL" groupName="Best Practices"
                          displayName="LEAVE/NEXT without label in nested loop"
                          shortName="AblUnlabeledLoopControl"
                          enabledByDefault="true" level="WARNING"
                          implementationClass="com.ablls.plugin.inspections.AblUnlabeledLoopControlInspection"/>
-        <localInspection language="ABL" groupPath="ABL" groupName="ABL Database"
+        <localInspection language="ABL" groupPath="OpenEdge ABL" groupName="Database"
                          displayName="Table or field not found in loaded schema"
                          shortName="AblSchemaValidation"
                          enabledByDefault="true" level="WARNING"
                          implementationClass="com.ablls.plugin.inspections.AblSchemaValidationInspection"/>
-        <localInspection language="ABL" groupPath="ABL" groupName="Best Practices"
+        <localInspection language="ABL" groupPath="OpenEdge ABL" groupName="Best Practices"
                          displayName="INTEGER variable may overflow — consider INT64"
                          shortName="AblIntegerOverflow"
                          enabledByDefault="true" level="WEAK WARNING"
                          implementationClass="com.ablls.plugin.inspections.AblIntegerOverflowInspection"/>
-        <localInspection language="ABL" groupPath="ABL" groupName="Best Practices"
+        <localInspection language="ABL" groupPath="OpenEdge ABL" groupName="Best Practices"
                          displayName="High cyclomatic complexity (McCabe CC &gt; 10)"
                          shortName="AblCyclomaticComplexity"
                          enabledByDefault="true" level="WEAK WARNING"
                          implementationClass="com.ablls.plugin.inspections.AblCyclomaticComplexityInspection"/>
-        <localInspection language="ABL" groupPath="ABL" groupName="ABL Naming"
+        <localInspection language="ABL" groupPath="OpenEdge ABL" groupName="Naming"
                          displayName="Variable name does not follow ABL naming conventions"
                          shortName="AblNamingConvention"
                          enabledByDefault="false" level="WEAK WARNING"
