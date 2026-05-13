@@ -420,6 +420,14 @@
             <add-to-group group-id="ToolsMenu" anchor="last"/>
         </action>
 
+        <action id="ABL.SafeDelete"
+                class="com.ablls.plugin.refactor.AblSafeDeleteAction"
+                text="ABL Safe Delete"
+                description="Delete symbol after checking for usages in project">
+            <keyboard-shortcut keymap="$default" first-keystroke="alt DELETE"/>
+            <add-to-group group-id="RefactoringMenu" anchor="last"/>
+        </action>
+
     </actions>
 
     <!-- ── Listeners ───────────────────────────────────────────────────────── -->
