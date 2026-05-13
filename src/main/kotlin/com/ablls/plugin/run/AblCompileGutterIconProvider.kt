@@ -1,14 +1,14 @@
 package com.ablls.plugin.run
 
-import com.ablls.plugin.language.AblFileType
 import com.ablls.plugin.language.AblLanguage
 import com.ablls.plugin.project.OpenEdgeProjectService
-import com.intellij.execution.lineMarker.RunLineMarkerContributor
+import com.intellij.codeInsight.daemon.LineMarkerInfo
+import com.intellij.codeInsight.daemon.LineMarkerProvider
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
@@ -24,9 +24,9 @@ import com.intellij.psi.PsiFile
  *   - `dlcPath` ou variable `DLC` doit être défini
  *   - Le fichier doit être un `.p` ou `.cls`
  */
-class AblCompileGutterIconProvider : RunLineMarkerContributor() {
+class AblCompileGutterIconProvider : LineMarkerProvider {
 
-    override fun getInfo(element: PsiElement): Info? {
+    override fun getLineMarkerInfo(element: PsiElement): LineMarkerInfo<*>? {
         if (element.language != AblLanguage) return null
         val file = element.containingFile ?: return null
         val vf   = file.virtualFile ?: return null
@@ -40,11 +40,19 @@ class AblCompileGutterIconProvider : RunLineMarkerContributor() {
         val dlcPath = config.dlcPath ?: System.getenv("DLC")
 
         val action = CompileAblFileAction(vf, dlcPath)
-        return Info(
+        return LineMarkerInfo(
+            element,
+            element.textRange,
             AllIcons.Actions.Compile,
             { "Compile ${vf.name}" },
-            action
-        )
+            { _, elt -> action.actionPerformed(
+                com.intellij.openapi.actionSystem.AnActionEvent.createFromDataContext(
+                    "gutter", null,
+                    com.intellij.openapi.actionSystem.impl.SimpleDataContext.getProjectContext(elt.project)
+                )
+            )},
+            GutterIconRenderer.Alignment.RIGHT
+        ) { "Compile ${vf.name}" }
     }
 }
 
