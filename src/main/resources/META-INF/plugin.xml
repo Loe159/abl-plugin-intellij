@@ -265,6 +265,11 @@
             language="ABL"
             implementationClass="com.ablls.plugin.highlight.AblSpellcheckingStrategy"/>
 
+        <!-- ── Overriding Methods Gutter ───────────────────────────────────── -->
+        <codeInsight.lineMarkerProvider
+            language="ABL"
+            implementationClass="com.ablls.plugin.navigation.AblOverridingMethodsProvider"/>
+
         <!-- ── Coverage Gutter ──────────────────────────────────────────────── -->
         <codeInsight.lineMarkerProvider
             language="ABL"

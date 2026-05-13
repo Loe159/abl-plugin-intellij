@@ -508,7 +508,7 @@ typeInfo?.methods?.forEach { method ->
 | 🟡 | Go to Related Symbol — naviguer entre `.cls` et son `.i` d'interface | ✅ | `AblGotoRelatedProvider.kt` |
 | 🟡 | Breadcrumb navigation (classe → méthode → bloc courant) | ✅ | `AblBreadcrumbProvider.kt` |
 | 🟡 | Navigate to Super Class / implementation (`Ctrl+U`) | ✅ | `AblSuperClassNavigator.kt` |
-| 🟡 | Navigate to Overriding Methods | 📋 | nouveau |
+| 🟡 | Navigate to Overriding Methods | ✅ | `AblOverridingMethodsProvider.kt` |
 
 ### Hints et annotations inline
 
