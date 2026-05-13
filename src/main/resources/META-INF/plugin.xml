@@ -272,6 +272,15 @@
             language="ABL"
             implementationClass="com.ablls.plugin.navigation.AblSuperClassNavigator"/>
 
+        <!-- ── Go to Related Symbol (Ctrl+Alt+Home) ──────────────────────── -->
+        <gotoRelatedProvider
+            implementation="com.ablls.plugin.navigation.AblGotoRelatedProvider"/>
+
+        <!-- ── Safe Delete ───────────────────────────────────────────────────── -->
+        <lang.refactoringSupport
+            language="ABL"
+            implementationClass="com.ablls.plugin.refactor.AblRefactoringSupportProvider"/>
+
         <!-- ── Intention Actions ─────────────────────────────────────────────── -->
         <intentionAction>
             <language>ABL</language>

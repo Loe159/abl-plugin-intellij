@@ -505,7 +505,7 @@ typeInfo?.methods?.forEach { method ->
 | 🔴 | Rename sémantique (scope-aware) | ✅ | `AblRenameHandler.kt` |
 | 🟠 | Go to Symbol (`Ctrl+Alt+Shift+N`) — procédures, classes, méthodes dans tout le projet | ✅ | `AblGotoSymbolContributor.kt` |
 | 🟠 | Go to Class (`Ctrl+N`) — classes ABL OO | ✅ | `AblGotoClassContributor.kt` |
-| 🟡 | Go to Related Symbol — naviguer entre `.cls` et son `.i` d'interface | 📋 | nouveau |
+| 🟡 | Go to Related Symbol — naviguer entre `.cls` et son `.i` d'interface | ✅ | `AblGotoRelatedProvider.kt` |
 | 🟡 | Breadcrumb navigation (classe → méthode → bloc courant) | ✅ | `AblBreadcrumbProvider.kt` |
 | 🟡 | Navigate to Super Class / implementation (`Ctrl+U`) | ✅ | `AblSuperClassNavigator.kt` |
 | 🟡 | Navigate to Overriding Methods | 📋 | nouveau |
@@ -542,7 +542,7 @@ typeInfo?.methods?.forEach { method ->
 | 🟡 | Inline Variable | 📋 | nouveau |
 | 🟡 | Introduce Variable (`DEFINE VARIABLE` à partir d'une expression) | 📋 | nouveau |
 | 🟡 | Change Signature (renommer/réordonner les paramètres) | 📋 | nouveau |
-| 🟡 | Safe Delete (vérifie qu'aucun usage avant de supprimer) | 📋 | nouveau |
+| 🟡 | Safe Delete (vérifie qu'aucun usage avant de supprimer) | ✅ | `AblSafeDeleteHandler.kt` + `AblRefactoringSupportProvider` |
 
 ### Formatter
 
