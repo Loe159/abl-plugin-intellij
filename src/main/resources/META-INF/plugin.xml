@@ -60,6 +60,11 @@
             language="ABL"
             implementationClass="com.ablls.plugin.parser.AblParserDefinition"/>
 
+        <!-- ── AST Factory — AblNamedLeafElement pour IDENTIFIER tokens ────── -->
+        <lang.ast.factory
+            language="ABL"
+            implementationClass="com.ablls.plugin.parser.AblAstFactory"/>
+
         <!-- ── Folding (DO...END, PROCEDURE...END, CLASS...END) ────────────── -->
         <lang.foldingBuilder
             language="ABL"
