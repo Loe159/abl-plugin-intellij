@@ -91,6 +91,13 @@ private class AblCompletionProvider : CompletionProvider<CompletionParameters>()
             return  // membres OO uniquement dans ce contexte
         }
 
+        // ── 1e. Complétion des paramètres de procédure : RUN proc(<caret>) ────
+        val paramContext = detectRunCallContext(textBefore, prefix)
+        if (paramContext != null) {
+            val semanticScope = semanticResult?.rootScope
+            addProcedureParameterCompletions(paramContext, prefix, service, uri, semanticScope, result)
+        }
+
         // ── 2. Symboles de l'index du projet ─────────────────────────────────
         val upperPrefix = prefix.uppercase()
         service.symbolIndex.findByPrefix(prefix, uri).forEach { symbol ->
@@ -277,6 +284,97 @@ private class AblCompletionProvider : CompletionProvider<CompletionParameters>()
                     .withTailText(" field of $tableName", true)
             )
         }
+    }
+
+    // ─── Complétion des paramètres de procédure : RUN proc(<caret>) ──────────
+
+    /**
+     * Détecte si le curseur est à l'intérieur d'un appel RUN procName(...).
+     * Retourne le nom de la procédure si c'est le cas.
+     */
+    private fun detectRunCallContext(textBefore: String, prefix: String): String? {
+        val beforePrefix = textBefore.dropLast(prefix.length)
+        // Chercher le dernier "(" non fermé
+        var parenDepth = 0
+        var i = beforePrefix.length - 1
+        while (i >= 0) {
+            when (beforePrefix[i]) {
+                ')' -> parenDepth++
+                '(' -> {
+                    parenDepth--
+                    if (parenDepth < 0) {
+                        // On est dans une parenthèse non fermée — extraire le nom avant
+                        val beforeParen = beforePrefix.substring(0, i).trimEnd()
+                        val nameEnd = beforeParen.length
+                        var nameStart = nameEnd - 1
+                        while (nameStart >= 0 && (beforeParen[nameStart].isLetterOrDigit() ||
+                               beforeParen[nameStart] == '-' || beforeParen[nameStart] == '_')) {
+                            nameStart--
+                        }
+                        val name = beforeParen.substring(nameStart + 1)
+                        // Vérifier que c'est après RUN ou une invocation directe
+                        val afterRun = beforeParen.substring(0, nameStart + 1).trimEnd()
+                        if (afterRun.isBlank() || afterRun.uppercase().endsWith("RUN")) {
+                            return name.takeIf { it.isNotBlank() }
+                        }
+                        return name.takeIf { it.isNotBlank() && name[0].isLetter() }
+                    }
+                }
+            }
+            i--
+        }
+        return null
+    }
+
+    /**
+     * Propose les paramètres de [procName] au curseur (direction : INPUT/OUTPUT/INPUT-OUTPUT).
+     */
+    private fun addProcedureParameterCompletions(
+        procName: String,
+        prefix: String,
+        service: com.ablls.plugin.core.AblProjectAnalysisService,
+        uri: String,
+        scope: org.prorefactor.treeparser.TreeParserSymbolScope?,
+        result: CompletionResultSet
+    ) {
+        // Chercher la routine dans le scope sémantique
+        val routine = findRoutineInScope(scope, procName) ?: return
+        val params = runCatching { routine.parameters }.getOrNull() ?: return
+        if (params.isEmpty()) return
+
+        // Compter les virgules avant le curseur pour savoir quel paramètre on complète
+        // Cette information n'est pas facilement disponible ici, donc on propose tous les paramètres
+
+        for (param in params) {
+            val name = runCatching { param.javaClass.getMethod("getName").invoke(param) as? String }
+                .getOrNull() ?: continue
+            val dir = runCatching {
+                param.javaClass.methods.firstOrNull { it.name == "getDirectionILB" || it.name == "getDirection" }
+                    ?.invoke(param)?.toString()
+            }.getOrNull() ?: "INPUT"
+
+            result.addElement(
+                LookupElementBuilder.create("$dir $name")
+                    .withTypeText("param", true)
+                    .withIcon(AllIcons.Nodes.Parameter)
+                    .withTailText(" of $procName", true)
+            )
+        }
+    }
+
+    private fun findRoutineInScope(
+        scope: org.prorefactor.treeparser.TreeParserSymbolScope?,
+        name: String
+    ): org.prorefactor.treeparser.symbols.Routine? {
+        if (scope == null) return null
+        for (r in runCatching { scope.routines }.getOrNull() ?: emptyList()) {
+            if (r.name.equals(name, ignoreCase = true)) return r
+        }
+        for (child in runCatching { scope.childScopes }.getOrNull() ?: emptyList()) {
+            val found = findRoutineInScope(child, name)
+            if (found != null) return found
+        }
+        return null
     }
 
     // ─── Complétion membres OO : myObj:<caret> ────────────────────────────────
