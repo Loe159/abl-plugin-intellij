@@ -75,7 +75,13 @@ class AblUnusedVariableInspection : LocalInspectionTool() {
 
             if (readCount == 0 && defLine > 0) {
                 val range = AblInspectionHelper.toRange(doc, defLine, defCol, name.length)
-                holder.registerProblem(file, "Variable '$name' is defined but never read", ProblemHighlightType.WARNING, range)
+                holder.registerProblem(
+                    file,
+                    "Variable '$name' is defined but never read",
+                    ProblemHighlightType.WARNING,
+                    range,
+                    DeleteUnusedVariableFix(defLine)
+                )
             }
         }
     }
@@ -148,8 +154,24 @@ class AblUnusedVariableInspection : LocalInspectionTool() {
             }
             if (count == 0 && nameTok.line > 0) {
                 val range = AblInspectionHelper.toRange(doc, nameTok.line, nameTok.charPositionInLine, name.length)
-                holder.registerProblem(file, "Variable '$name' is defined but never read", ProblemHighlightType.WARNING, range)
+                holder.registerProblem(file, "Variable '$name' is defined but never read", ProblemHighlightType.WARNING, range,
+                    DeleteUnusedVariableFix(nameTok.line))
             }
         }
+    }
+}
+
+// ─── Quick Fix : supprimer la ligne de définition ────────────────────────────
+
+private class DeleteUnusedVariableFix(private val defineLine: Int) : LocalQuickFix {
+    override fun getFamilyName() = "Delete unused variable"
+
+    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+        val file = descriptor.psiElement as? PsiFile ?: return
+        val doc  = PsiDocumentManager.getInstance(project).getDocument(file) ?: return
+        val line = (defineLine - 1).coerceIn(0, doc.lineCount - 1)
+        val lineStart = doc.getLineStartOffset(line)
+        val lineEnd   = if (line + 1 < doc.lineCount) doc.getLineStartOffset(line + 1) else doc.textLength
+        doc.deleteString(lineStart, lineEnd)
     }
 }

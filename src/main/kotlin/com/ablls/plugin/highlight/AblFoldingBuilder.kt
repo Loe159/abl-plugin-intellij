@@ -140,6 +140,12 @@ class AblFoldingBuilder : FoldingBuilderEx() {
                         stack.addLast(BlockStart(tok.node, tok.start, "FINALLY: ..."))
                     }
                 }
+                "CASE" -> {
+                    if (hasBlockColon(tokens, i)) {
+                        val expr = nameAfter(tokens, i).trimEnd()
+                        stack.addLast(BlockStart(tok.node, tok.start, "CASE $expr: ..."))
+                    }
+                }
                 "END" -> {
                     if (stack.isNotEmpty()) {
                         val block = stack.removeLast()
@@ -204,7 +210,8 @@ class AblFoldingBuilder : FoldingBuilderEx() {
         private val END_QUALIFIER_TYPES: Set<ABLNodeType> = java.util.EnumSet.of(
             ABLNodeType.PROCEDURE, ABLNodeType.FUNCTION, ABLNodeType.CLASS,
             ABLNodeType.INTERFACE, ABLNodeType.METHOD, ABLNodeType.CONSTRUCTOR,
-            ABLNodeType.DESTRUCTOR, ABLNodeType.CATCH, ABLNodeType.FINALLY
+            ABLNodeType.DESTRUCTOR, ABLNodeType.CATCH, ABLNodeType.FINALLY,
+            ABLNodeType.CASE
         )
     }
 }
