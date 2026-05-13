@@ -256,6 +256,11 @@
             language="ABL"
             implementationClass="com.ablls.plugin.hints.AblParameterInlayHintsProvider"/>
 
+        <!-- ── Parameter Info (Ctrl+P) ──────────────────────────────────────── -->
+        <codeInsight.parameterInfo
+            language="ABL"
+            implementationClass="com.ablls.plugin.completion.AblParameterInfoHandler"/>
+
         <!-- ── Postfix Completion ───────────────────────────────────────────── -->
         <codeInsight.template.postfixTemplateProvider
             language="ABL"
