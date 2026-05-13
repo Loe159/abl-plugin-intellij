@@ -511,7 +511,7 @@ typeInfo?.methods?.forEach { method ->
 
 | Priorité | Feature | État | Fichier clé |
 |---|---|---|---|
-| 🟠 | Inlay hints de type sur les variables (`DEFINE VARIABLE x` → hint `: INTEGER`) | 📋 | nouveau |
+| 🟠 | Inlay hints de type sur les variables (`DEFINE VARIABLE x` → hint `: INTEGER`) | ✅ | `AblTypeInlayHintsProvider.kt` |
 | 🟠 | Inlay hints sur les paramètres d'appel (`foo(/* INPUT */ 42, /* OUTPUT */ result)`) | 📋 | nouveau |
 | 🟠 | Inlay hints de valeur de retour | 📋 | nouveau |
 | 🟡 | Code Vision (nombre d'usages au-dessus de chaque déclaration) | 📋 | nouveau |

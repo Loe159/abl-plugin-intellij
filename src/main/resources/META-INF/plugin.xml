@@ -187,6 +187,11 @@
         <renameHandler
             implementation="com.ablls.plugin.refactor.AblRenameHandler"/>
 
+        <!-- ── Inlay Hints de type ──────────────────────────────────────────── -->
+        <codeInsight.inlayProvider
+            language="ABL"
+            implementationClass="com.ablls.plugin.hints.AblTypeInlayHintsProvider"/>
+
         <!-- ── Bracket Matcher ───────────────────────────────────────────────── -->
         <lang.bracketMatcher
             language="ABL"
