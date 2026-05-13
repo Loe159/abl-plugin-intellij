@@ -111,6 +111,22 @@ class AblSymbolReference(element: PsiElement)
 
     override fun getVariants(): Array<Any> = emptyArray()
 
+    /**
+     * Appliqué par IntelliJ sur chaque référence lors d'un rename en masse
+     * (natif Shift+F6 via RenameProcessor).
+     * Remplace le texte du token par [newElementName] dans son document.
+     */
+    override fun handleElementRename(newElementName: String): com.intellij.psi.PsiElement {
+        val el  = myElement
+        val doc = com.intellij.psi.PsiDocumentManager.getInstance(el.project)
+            .getDocument(el.containingFile) ?: return el
+        com.intellij.openapi.command.WriteCommandAction.runWriteCommandAction(el.project) {
+            doc.replaceString(el.textRange.startOffset, el.textRange.endOffset, newElementName)
+            com.intellij.psi.PsiDocumentManager.getInstance(el.project).commitDocument(doc)
+        }
+        return el.containingFile.findElementAt(el.textRange.startOffset) ?: el
+    }
+
     // ─── Utilitaire scope ─────────────────────────────────────────────────────
 
     private fun findNearestDefinition(

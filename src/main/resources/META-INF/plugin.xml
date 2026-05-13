@@ -252,8 +252,13 @@
             implementationClass="com.ablls.plugin.navigation.AblFindUsagesProvider"/>
 
         <!-- ── Rename ────────────────────────────────────────────────────────── -->
-        <renameHandler
-            implementation="com.ablls.plugin.refactor.AblRenameHandler"/>
+        <!--
+             AblRenameHandler (custom dialog) désactivé :
+             AblNamedLeafElement implémente PsiNamedElement + AblSymbolReference
+             fournit isReferenceTo() + handleElementRename() → le RenameDialog
+             natif IntelliJ (avec preview multi-fichiers) fonctionne désormais.
+             AblRenameHandler.kt conservé pour référence et tests unitaires directs.
+        -->
 
         <!-- ── Hot Spots Inlay ──────────────────────────────────────────────── -->
         <codeInsight.inlayProvider
