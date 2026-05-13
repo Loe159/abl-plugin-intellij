@@ -60,12 +60,35 @@
         <context><option name="ABL" value="true"/></context>
     </template>
 
+    <template name="repeat" value="REPEAT:&#10;    $END$&#10;END." description="REPEAT block" toReformat="true" toShortenFQNames="true">
+        <context><option name="ABL" value="true"/></context>
+    </template>
+
+    <template name="defbuf" value="DEFINE BUFFER b$TABLE$ FOR $TABLE$." description="Define Buffer" toReformat="true" toShortenFQNames="true">
+        <variable name="TABLE" expression="" defaultValue="&quot;table&quot;" alwaysStopAt="true"/>
+        <context><option name="ABL" value="true"/></context>
+    </template>
+
+    <template name="defquery" value="DEFINE QUERY q$NAME$ FOR $TABLE$ SCROLLING." description="Define Query" toReformat="true" toShortenFQNames="true">
+        <variable name="NAME" expression="" defaultValue="&quot;Query&quot;" alwaysStopAt="true"/>
+        <variable name="TABLE" expression="" defaultValue="&quot;table&quot;" alwaysStopAt="true"/>
+        <context><option name="ABL" value="true"/></context>
+    </template>
+
     <!-- ERROR HANDLING -->
     <template name="catch" value="CATCH e AS Progress.Lang.Error:&#10;    MESSAGE &quot;Error: &quot; e:GetMessage(1) VIEW-AS ALERT-BOX ERROR.&#10;    $END$&#10;END CATCH." description="CATCH block" toReformat="true" toShortenFQNames="true">
         <context><option name="ABL" value="true"/></context>
     </template>
 
     <template name="finally" value="FINALLY:&#10;    $END$&#10;END FINALLY." description="FINALLY block" toReformat="true" toShortenFQNames="true">
+        <context><option name="ABL" value="true"/></context>
+    </template>
+
+    <template name="trycatch" value="DO ON ERROR UNDO, THROW:&#10;    $END$&#10;CATCH e AS Progress.Lang.Error:&#10;    UNDO, THROW e.&#10;END CATCH." description="DO block with CATCH" toReformat="true" toShortenFQNames="true">
+        <context><option name="ABL" value="true"/></context>
+    </template>
+
+    <template name="dotransaction" value="DO TRANSACTION ON ERROR UNDO, THROW:&#10;    $END$&#10;CATCH e AS Progress.Lang.Error:&#10;    UNDO, THROW e.&#10;END CATCH." description="Transactional DO block" toReformat="true" toShortenFQNames="true">
         <context><option name="ABL" value="true"/></context>
     </template>
 
@@ -92,6 +115,26 @@
     <template name="prop" value="DEFINE PUBLIC PROPERTY $PROP_NAME$ AS $TYPE$ NO-UNDO&#10;    GET.&#10;    SET.&#10;$END$" description="Define Property" toReformat="true" toShortenFQNames="true">
         <variable name="PROP_NAME" expression="" defaultValue="&quot;MyProperty&quot;" alwaysStopAt="true"/>
         <variable name="TYPE" expression="" defaultValue="&quot;CHARACTER&quot;" alwaysStopAt="true"/>
+        <context><option name="ABL" value="true"/></context>
+    </template>
+
+    <template name="class" value="CLASS $CLASS_NAME$ $INHERITS$:&#10;&#10;    DEFINE PUBLIC PROPERTY $PROP$ AS CHARACTER NO-UNDO&#10;        GET. SET.&#10;&#10;    CONSTRUCTOR PUBLIC $CLASS_NAME$():&#10;        $END$&#10;    END CONSTRUCTOR.&#10;&#10;END CLASS." description="Class skeleton" toReformat="true" toShortenFQNames="true">
+        <variable name="CLASS_NAME" expression="" defaultValue="&quot;MyClass&quot;" alwaysStopAt="true"/>
+        <variable name="INHERITS" expression="" defaultValue="&quot;&quot;" alwaysStopAt="true"/>
+        <variable name="PROP" expression="" defaultValue="&quot;Name&quot;" alwaysStopAt="true"/>
+        <context><option name="ABL" value="true"/></context>
+    </template>
+
+    <!-- ABLUNIT TESTING -->
+    <template name="testmethod" value="@Test&#10;METHOD PUBLIC VOID $TEST_NAME$():&#10;    $END$&#10;    Assert:Equals($EXPECTED$, $ACTUAL$).&#10;END METHOD." description="ABLUnit test method" toReformat="true" toShortenFQNames="true">
+        <variable name="TEST_NAME" expression="" defaultValue="&quot;testSomething&quot;" alwaysStopAt="true"/>
+        <variable name="EXPECTED" expression="" defaultValue="&quot;expected&quot;" alwaysStopAt="true"/>
+        <variable name="ACTUAL" expression="" defaultValue="&quot;actual&quot;" alwaysStopAt="true"/>
+        <context><option name="ABL" value="true"/></context>
+    </template>
+
+    <template name="testclass" value="USING OpenEdge.Core.Assert.&#10;&#10;CLASS $CLASS_NAME$ INHERITS OpenEdge.ABLUnit.Runner.TestRunner:&#10;&#10;    @Before&#10;    METHOD PUBLIC VOID setUp():&#10;        $END$&#10;    END METHOD.&#10;&#10;    @Test&#10;    METHOD PUBLIC VOID testSomething():&#10;        Assert:Equals(&quot;expected&quot;, &quot;actual&quot;).&#10;    END METHOD.&#10;&#10;END CLASS." description="ABLUnit test class" toReformat="true" toShortenFQNames="true">
+        <variable name="CLASS_NAME" expression="" defaultValue="&quot;MyTestClass&quot;" alwaysStopAt="true"/>
         <context><option name="ABL" value="true"/></context>
     </template>
 </templateSet>
