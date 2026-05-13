@@ -641,7 +641,7 @@ typeInfo?.methods?.forEach { method ->
 
 | Priorité | Feature | État | Fichier clé |
 |---|---|---|---|
-| 🟠 | Intention Actions (ampoule jaune) : suggestions contextuelles | 📋 | nouveau |
+| 🟠 | Intention Actions (ampoule jaune) : suggestions contextuelles | ✅ | `AblAddNoUndoToAllIntention.kt`, `AblSurroundDescriptor.kt` |
 | 🟡 | Sticky lines : signature de la procédure courante en haut de l'éditeur | 📋 | nouveau |
 | 🟡 | Rainbow brackets : coloration des blocs `DO/END` imbriqués | 📋 | nouveau |
 | 🟡 | Color Settings avancés : thème sombre/clair bien différencié | 📋 | `AblColorSettingsPage.kt` |

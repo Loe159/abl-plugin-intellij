@@ -204,6 +204,18 @@
             language="ABL"
             implementationClass="com.ablls.plugin.hints.AblParameterInlayHintsProvider"/>
 
+        <!-- ── Surround With (Ctrl+Alt+T) ──────────────────────────────────── -->
+        <lang.surroundDescriptor
+            language="ABL"
+            implementationClass="com.ablls.plugin.intentions.AblSurroundDescriptor"/>
+
+        <!-- ── Intention Actions ─────────────────────────────────────────────── -->
+        <intentionAction>
+            <language>ABL</language>
+            <className>com.ablls.plugin.intentions.AblAddNoUndoToAllIntention</className>
+            <category>ABL Best Practices</category>
+        </intentionAction>
+
         <!-- ── Bracket Matcher ───────────────────────────────────────────────── -->
         <lang.bracketMatcher
             language="ABL"
