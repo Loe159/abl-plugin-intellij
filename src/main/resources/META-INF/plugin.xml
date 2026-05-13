@@ -128,6 +128,16 @@
                          shortName="AblDeadCode"
                          enabledByDefault="true" level="WEAK WARNING"
                          implementationClass="com.ablls.plugin.inspections.AblDeadCodeInspection"/>
+        <localInspection language="ABL" groupPath="ABL" groupName="Best Practices"
+                         displayName="Overly long procedure or function (&gt; 150 lines)"
+                         shortName="AblProcedureLength"
+                         enabledByDefault="true" level="WEAK WARNING"
+                         implementationClass="com.ablls.plugin.inspections.AblProcedureLengthInspection"/>
+        <localInspection language="ABL" groupPath="ABL" groupName="Best Practices"
+                         displayName="LEAVE/NEXT without label in nested loop"
+                         shortName="AblUnlabeledLoopControl"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="com.ablls.plugin.inspections.AblUnlabeledLoopControlInspection"/>
 
         <!-- ── Avertissements compilateur ──────────────────────────────────────────── -->
         <externalAnnotator language="ABL"

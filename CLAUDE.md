@@ -527,10 +527,10 @@ typeInfo?.methods?.forEach { method ->
 | 🟠 | Variables déclarées mais jamais utilisées (extension `AblUnusedVariableInspection`) | 📋 | `AblUnusedVariableInspection.kt` |
 | 🟠 | `FIND FIRST` sans `NO-ERROR` dans un bloc `IF AVAIL` | ✅ | `AblFindFirstNoErrorInspection.kt` |
 | 🟡 | Complexité cyclomatique (warning au-delà d'un seuil) | 📋 | nouveau |
-| 🟡 | Longueur de procédure excessive | 📋 | nouveau |
+| 🟡 | Longueur de procédure excessive | ✅ | `AblProcedureLengthInspection.kt` |
 | 🟡 | Nommage non conforme à la convention (préfixes `l`, `i`, `c`…) | 📋 | nouveau |
 | 🟡 | Utilisation de `INTEGER` au lieu de `INT64` pour les grands nombres | 📋 | nouveau |
-| 🟡 | Détection des `LEAVE`/`NEXT` sans étiquette dans des boucles imbriquées | 📋 | nouveau |
+| 🟡 | Détection des `LEAVE`/`NEXT` sans étiquette dans des boucles imbriquées | ✅ | `AblUnlabeledLoopControlInspection.kt` |
 | 🟢 | Spell checking dans les strings et commentaires | 📋 | nouveau |
 
 ### Refactoring
