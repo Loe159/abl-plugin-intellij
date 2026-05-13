@@ -214,6 +214,11 @@
             language="ABL"
             implementationClass="com.ablls.plugin.hints.AblParameterInlayHintsProvider"/>
 
+        <!-- ── Postfix Completion ───────────────────────────────────────────── -->
+        <codeInsight.template.postfixTemplateProvider
+            language="ABL"
+            implementationClass="com.ablls.plugin.completion.AblPostfixTemplateProvider"/>
+
         <!-- ── Surround With (Ctrl+Alt+T) ──────────────────────────────────── -->
         <lang.surroundDescriptor
             language="ABL"
