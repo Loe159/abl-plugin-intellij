@@ -14,17 +14,18 @@ import javax.swing.JPanel
 /**
  * Hot Spots — inlay hints sur les lignes les plus exécutées après profilage.
  *
- * Après chargement d'un fichier .prof, affiche le nombre d'exécutions
- * (ex: "× 5 432") à droite des lignes fortement exécutées.
+ * Après chargement d'un fichier .prof, affiche le count d'exécution réel
+ * (ex: "× 5 432") à droite des lignes dans le top 20% des exécutions du fichier.
  *
- * Seuil d'affichage : uniquement les lignes dans le top 20% des exécutions.
+ * Utilise [AblCoverageService.topHotLines] qui s'appuie sur les counts réels
+ * issus de [AblProfilerParser.parseWithCounts] — pas un proxy par numéro de ligne.
  */
 @Suppress("UnstableApiUsage")
 class AblHotSpotInlayProvider : InlayHintsProvider<NoSettings> {
 
     override val key: SettingsKey<NoSettings> = SettingsKey("abl.hotspot.hints")
     override val name: String                  = "Profiler hot spot hints"
-    override val previewText: String           = "FOR EACH Customer NO-LOCK:  /* × 10,432 */"
+    override val previewText: String           = "FOR EACH Customer NO-LOCK:  /* × 10 432 */"
 
     override fun createSettings(): NoSettings = NoSettings()
 
@@ -44,29 +45,27 @@ class AblHotSpotInlayProvider : InlayHintsProvider<NoSettings> {
         val svc = file.project.service<AblCoverageService>()
         if (!svc.hasCoverage()) return null
 
-        // Récupérer les données de couverture
-        val data = svc.getCoverageData()
-        val covered = data[vf.path]
-            ?: data.entries.firstOrNull { (k, _) ->
-                vf.path.endsWith(k.replace('\\', '/'))
-            }?.value
-            ?: return null
+        // Top 20% des lignes par count d'exécution réel (au maximum 50 hints par fichier)
+        val hotPairs = svc.topHotLines(vf.path, 50)
+        if (hotPairs.isEmpty()) return null
 
-        if (covered.isEmpty()) return null
+        // Calcul du seuil : top 20% = au moins count > max/5
+        val maxCount = hotPairs.first().second
+        val threshold = maxCount / 5
+        val hotMap = hotPairs
+            .filter { (_, count) -> count >= threshold }
+            .toMap()
 
-        // Seuil : lignes avec beaucoup d'exécutions (dans le cas simple : toutes les couvertes)
-        // On utilise le numéro de ligne comme proxy pour le nombre d'exécutions
-        // (Pour un vrai profiler, on aurait les counts d'exécution)
-        val topLines = covered.sortedDescending().take(covered.size / 5 + 1).toSet()
-
-        return AblHotSpotCollector(editor, topLines)
+        if (hotMap.isEmpty()) return null
+        return AblHotSpotCollector(editor, hotMap)
     }
 }
 
 @Suppress("UnstableApiUsage")
 private class AblHotSpotCollector(
     editor: Editor,
-    private val hotLines: Set<Int>
+    /** numéro de ligne (1-based) → count d'exécution */
+    private val hotMap: Map<Int, Int>
 ) : FactoryInlayHintsCollector(editor) {
 
     private val presentationFactory = PresentationFactory(editor)
@@ -75,21 +74,20 @@ private class AblHotSpotCollector(
         val type = element.node?.elementType ?: return true
         if (type != AblTokenTypes.KEYWORD && type != AblTokenTypes.IDENTIFIER) return true
 
-        // Premier token de la ligne → ajouter le hint à la fin de la ligne
-        val doc = editor.document
-        val offset = element.textRange.startOffset
+        val doc     = editor.document
+        val offset  = element.textRange.startOffset
         val lineNum = doc.getLineNumber(offset) + 1  // 1-based
+        val count   = hotMap[lineNum] ?: return true
 
-        if (lineNum !in hotLines) return true
-
-        // Vérifier que c'est le premier non-whitespace de la ligne
+        // Uniquement le premier token non-whitespace de la ligne
         val lineStart = doc.getLineStartOffset(lineNum - 1)
-        if (element.textRange.startOffset != lineStart &&
-            doc.text.substring(lineStart, element.textRange.startOffset).isNotBlank()) return true
+        if (offset != lineStart &&
+            doc.text.substring(lineStart, offset).isNotBlank()) return true
 
-        val lineEnd = doc.getLineEndOffset(lineNum - 1)
+        val label    = "× %,d".format(count)
+        val lineEnd  = doc.getLineEndOffset(lineNum - 1)
         val presentation = presentationFactory.roundWithBackgroundAndSmallInset(
-            presentationFactory.smallText("hot spot")
+            presentationFactory.smallText(label)
         )
         sink.addInlineElement(lineEnd, true, presentation, false)
         return true

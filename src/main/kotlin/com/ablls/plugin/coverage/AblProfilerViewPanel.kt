@@ -38,7 +38,7 @@ class AblProfilerViewFactory : ToolWindowFactory {
 class AblProfilerViewPanel(private val project: Project) : JPanel(BorderLayout()) {
 
     private val tableModel = DefaultTableModel(
-        arrayOf("File", "Covered Lines", "Total Lines", "Coverage %"), 0
+        arrayOf("File", "Covered Lines", "Total Executions", "Coverage"), 0
     )
     private val table = JTable(tableModel)
 
@@ -92,17 +92,16 @@ class AblProfilerViewPanel(private val project: Project) : JPanel(BorderLayout()
         val service = project.service<AblCoverageService>()
         service.loadProfFile(profFile)
 
-        // Refresh table
+        // Parse directement pour avoir les counts d'exécution complets
+        val data = AblProfilerParser.parseWithCounts(profFile)
+
         tableModel.rowCount = 0
-        val data = service.getCoverageData()
-        data.forEach { (file, covered) ->
-            val fileName = file.substringAfterLast('/').substringAfterLast('\\')
-            tableModel.addRow(arrayOf(
-                fileName,
-                covered.size,
-                covered.size,  // total not directly available from coverage data
-                if (covered.isNotEmpty()) "100%" else "0%"
-            ))
+        data.forEach { (filePath, counts) ->
+            val fileName    = filePath.substringAfterLast('/').substringAfterLast('\\')
+            val coveredLines = counts.size
+            val totalExecs   = counts.values.sum()
+            val pct          = if (coveredLines > 0) "$coveredLines lines" else "0%"
+            tableModel.addRow(arrayOf(fileName, coveredLines, totalExecs, pct))
         }
     }
 
@@ -128,13 +127,3 @@ class AblProfilerViewPanel(private val project: Project) : JPanel(BorderLayout()
     }
 }
 
-/**
- * Extension de AblCoverageService pour exposer les données de couverture brutes.
- */
-fun AblCoverageService.getCoverageData(): Map<String, Set<Int>> =
-    runCatching {
-        val field = this.javaClass.getDeclaredField("coverageData")
-        field.isAccessible = true
-        @Suppress("UNCHECKED_CAST")
-        field.get(this) as? Map<String, Set<Int>> ?: emptyMap()
-    }.getOrDefault(emptyMap())
