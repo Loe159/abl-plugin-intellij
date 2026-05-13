@@ -57,6 +57,8 @@ object AblTokenTypes {
     @JvmField val COMMA          = AblTokenType("COMMA")
     @JvmField val LPAREN         = AblTokenType("LPAREN")
     @JvmField val RPAREN         = AblTokenType("RPAREN")
+    @JvmField val LBRACKET       = AblTokenType("LBRACKET")
+    @JvmField val RBRACKET       = AblTokenType("RBRACKET")
 
     // ── Identifiants ──────────────────────────────────────────────────────────
     @JvmField val IDENTIFIER     = AblTokenType("IDENTIFIER")

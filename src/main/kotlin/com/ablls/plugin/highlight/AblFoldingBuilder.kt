@@ -231,7 +231,8 @@ class AblCommenter : Commenter {
 class AblBracketMatcher : PairedBraceMatcher {
 
     private val PAIRS = arrayOf(
-        BracePair(AblTokenTypes.LPAREN, AblTokenTypes.RPAREN, false)
+        BracePair(AblTokenTypes.LPAREN,   AblTokenTypes.RPAREN,   false),
+        BracePair(AblTokenTypes.LBRACKET, AblTokenTypes.RBRACKET, false)
     )
 
     override fun getPairs(): Array<BracePair> = PAIRS

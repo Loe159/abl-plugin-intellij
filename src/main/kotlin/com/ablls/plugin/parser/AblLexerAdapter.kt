@@ -147,11 +147,13 @@ class AblLexerAdapter : LexerBase() {
         }
 
         // ── Ponctuations ──────────────────────────────────────────────────────
-        if (c == '.') return AblTokenTypes.DOT    to pos + 1
-        if (c == ':') return AblTokenTypes.COLON  to pos + 1
-        if (c == ',') return AblTokenTypes.COMMA  to pos + 1
-        if (c == '(') return AblTokenTypes.LPAREN to pos + 1
-        if (c == ')') return AblTokenTypes.RPAREN to pos + 1
+        if (c == '.') return AblTokenTypes.DOT      to pos + 1
+        if (c == ':') return AblTokenTypes.COLON    to pos + 1
+        if (c == ',') return AblTokenTypes.COMMA    to pos + 1
+        if (c == '(') return AblTokenTypes.LPAREN   to pos + 1
+        if (c == ')') return AblTokenTypes.RPAREN   to pos + 1
+        if (c == '[') return AblTokenTypes.LBRACKET to pos + 1
+        if (c == ']') return AblTokenTypes.RBRACKET to pos + 1
 
         // ── Opérateur ou caractère inconnu ────────────────────────────────────
         return AblTokenTypes.OPERATOR to pos + 1
