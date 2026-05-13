@@ -119,6 +119,15 @@
                          shortName="AblCognitiveComplexity"
                          enabledByDefault="true" level="WEAK WARNING"
                          implementationClass="com.ablls.plugin.inspections.AblCognitiveComplexityInspection"/>
+        <localInspection language="ABL" groupPath="ABL" groupName="Best Practices"
+                         displayName="FIND FIRST/LAST without NO-ERROR" shortName="AblFindFirstNoError"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="com.ablls.plugin.inspections.AblFindFirstNoErrorInspection"/>
+        <localInspection language="ABL" groupPath="ABL" groupName="Best Practices"
+                         displayName="Internal procedure or function never referenced in file"
+                         shortName="AblDeadCode"
+                         enabledByDefault="true" level="WEAK WARNING"
+                         implementationClass="com.ablls.plugin.inspections.AblDeadCodeInspection"/>
 
         <!-- ── Avertissements compilateur ──────────────────────────────────────────── -->
         <externalAnnotator language="ABL"
@@ -187,10 +196,13 @@
         <renameHandler
             implementation="com.ablls.plugin.refactor.AblRenameHandler"/>
 
-        <!-- ── Inlay Hints de type ──────────────────────────────────────────── -->
+        <!-- ── Inlay Hints ──────────────────────────────────────────────────── -->
         <codeInsight.inlayProvider
             language="ABL"
             implementationClass="com.ablls.plugin.hints.AblTypeInlayHintsProvider"/>
+        <codeInsight.inlayProvider
+            language="ABL"
+            implementationClass="com.ablls.plugin.hints.AblParameterInlayHintsProvider"/>
 
         <!-- ── Bracket Matcher ───────────────────────────────────────────────── -->
         <lang.bracketMatcher

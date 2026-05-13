@@ -423,6 +423,9 @@ ou `AblSemanticResult`. Ne jamais appeler ces classes directement ailleurs.
 | Complétion tables/champs DB | ✅ Opérationnel (dot-notation + index) | `AblCompletionContributor.kt` |
 | Chargement schéma .df | ✅ Opérationnel (DfSchemaParser + Schema RSSW) | `AblProjectAnalysisService.kt` |
 | Inspection complexité cognitive | ✅ Opérationnel (CognitiveComplexityListener) | `AblCognitiveComplexityInspection.kt` |
+| Inspection FIND FIRST sans NO-ERROR | ✅ Opérationnel | `AblFindFirstNoErrorInspection.kt` |
+| Dead code (procédures non référencées) | ✅ Opérationnel (file-local, WEAK_WARNING) | `AblDeadCodeInspection.kt` |
+| Inlay hints paramètres d'appel | ✅ Opérationnel | `AblParameterInlayHintsProvider.kt` |
 | Find References sémantique | 🔧 Partiel (index textuel + scope kind) | `AblFindUsagesProvider.kt` |
 | Complétion membres OO (TYPE:method) | 🔧 TODO | `AblCompletionContributor.kt` |
 
@@ -512,7 +515,7 @@ typeInfo?.methods?.forEach { method ->
 | Priorité | Feature | État | Fichier clé |
 |---|---|---|---|
 | 🟠 | Inlay hints de type sur les variables (`DEFINE VARIABLE x` → hint `: INTEGER`) | ✅ | `AblTypeInlayHintsProvider.kt` |
-| 🟠 | Inlay hints sur les paramètres d'appel (`foo(/* INPUT */ 42, /* OUTPUT */ result)`) | 📋 | nouveau |
+| 🟠 | Inlay hints sur les paramètres d'appel (`foo(/* INPUT */ 42, /* OUTPUT */ result)`) | ✅ | `AblParameterInlayHintsProvider.kt` |
 | 🟠 | Inlay hints de valeur de retour | 📋 | nouveau |
 | 🟡 | Code Vision (nombre d'usages au-dessus de chaque déclaration) | 📋 | nouveau |
 
@@ -520,9 +523,9 @@ typeInfo?.methods?.forEach { method ->
 
 | Priorité | Feature | État | Fichier clé |
 |---|---|---|---|
-| 🟠 | Dead code detection (procédures jamais appelées) | 📋 | nouveau |
+| 🟠 | Dead code detection (procédures jamais appelées) | ✅ | `AblDeadCodeInspection.kt` |
 | 🟠 | Variables déclarées mais jamais utilisées (extension `AblUnusedVariableInspection`) | 📋 | `AblUnusedVariableInspection.kt` |
-| 🟠 | `FIND FIRST` sans `NO-ERROR` dans un bloc `IF AVAIL` | 📋 | nouveau |
+| 🟠 | `FIND FIRST` sans `NO-ERROR` dans un bloc `IF AVAIL` | ✅ | `AblFindFirstNoErrorInspection.kt` |
 | 🟡 | Complexité cyclomatique (warning au-delà d'un seuil) | 📋 | nouveau |
 | 🟡 | Longueur de procédure excessive | 📋 | nouveau |
 | 🟡 | Nommage non conforme à la convention (préfixes `l`, `i`, `c`…) | 📋 | nouveau |
