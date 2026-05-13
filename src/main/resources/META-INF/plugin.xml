@@ -151,6 +151,11 @@
                          shortName="AblSchemaValidation"
                          enabledByDefault="true" level="WARNING"
                          implementationClass="com.ablls.plugin.inspections.AblSchemaValidationInspection"/>
+        <localInspection language="ABL" groupPath="ABL" groupName="Best Practices"
+                         displayName="INTEGER variable may overflow — consider INT64"
+                         shortName="AblIntegerOverflow"
+                         enabledByDefault="true" level="WEAK WARNING"
+                         implementationClass="com.ablls.plugin.inspections.AblIntegerOverflowInspection"/>
         <localInspection language="ABL" groupPath="ABL" groupName="ABL Naming"
                          displayName="Variable name does not follow ABL naming conventions"
                          shortName="AblNamingConvention"
@@ -254,11 +259,21 @@
             language="ABL"
             implementationClass="com.ablls.plugin.intentions.AblSurroundDescriptor"/>
 
+        <!-- ── Navigate to Super Class (Ctrl+U) ────────────────────────────── -->
+        <codeInsight.gotoSuper
+            language="ABL"
+            implementationClass="com.ablls.plugin.navigation.AblSuperClassNavigator"/>
+
         <!-- ── Intention Actions ─────────────────────────────────────────────── -->
         <intentionAction>
             <language>ABL</language>
             <className>com.ablls.plugin.intentions.AblAddNoUndoToAllIntention</className>
             <category>ABL Best Practices</category>
+        </intentionAction>
+        <intentionAction>
+            <language>ABL</language>
+            <className>com.ablls.plugin.intentions.AblOptimizeUsingsIntention</className>
+            <category>ABL Imports</category>
         </intentionAction>
 
         <!-- ── Bracket Matcher ───────────────────────────────────────────────── -->

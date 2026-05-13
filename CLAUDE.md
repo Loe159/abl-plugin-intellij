@@ -507,7 +507,7 @@ typeInfo?.methods?.forEach { method ->
 | 🟠 | Go to Class (`Ctrl+N`) — classes ABL OO | ✅ | `AblGotoClassContributor.kt` |
 | 🟡 | Go to Related Symbol — naviguer entre `.cls` et son `.i` d'interface | 📋 | nouveau |
 | 🟡 | Breadcrumb navigation (classe → méthode → bloc courant) | ✅ | `AblBreadcrumbProvider.kt` |
-| 🟡 | Navigate to Super Class / implementation (`Ctrl+U`) | 📋 | nouveau |
+| 🟡 | Navigate to Super Class / implementation (`Ctrl+U`) | ✅ | `AblSuperClassNavigator.kt` |
 | 🟡 | Navigate to Overriding Methods | 📋 | nouveau |
 
 ### Hints et annotations inline
@@ -529,7 +529,7 @@ typeInfo?.methods?.forEach { method ->
 | 🟡 | Complexité cyclomatique (warning au-delà d'un seuil) | 📋 | nouveau |
 | 🟡 | Longueur de procédure excessive | ✅ | `AblProcedureLengthInspection.kt` |
 | 🟡 | Nommage non conforme à la convention (préfixes `l`, `i`, `c`…) | ✅ | `AblNamingConventionInspection.kt` (disabled by default) |
-| 🟡 | Utilisation de `INTEGER` au lieu de `INT64` pour les grands nombres | 📋 | nouveau |
+| 🟡 | Utilisation de `INTEGER` au lieu de `INT64` pour les grands nombres | ✅ | `AblIntegerOverflowInspection.kt` |
 | 🟡 | Détection des `LEAVE`/`NEXT` sans étiquette dans des boucles imbriquées | ✅ | `AblUnlabeledLoopControlInspection.kt` |
 | 🟢 | Spell checking dans les strings et commentaires | 📋 | nouveau |
 
@@ -549,7 +549,7 @@ typeInfo?.methods?.forEach { method ->
 | Priorité | Feature | État | Fichier clé |
 |---|---|---|---|
 | 🟠 | Code formatter complet (indentation, espaces, casse des mots-clés) | 📋 | nouveau |
-| 🟡 | Import optimizer (trier/nettoyer les `USING` dans les classes OO) | 📋 | nouveau |
+| 🟡 | Import optimizer (trier/nettoyer les `USING` dans les classes OO) | ✅ | `AblOptimizeUsingsIntention.kt` |
 
 ### Debugger
 
