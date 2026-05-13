@@ -222,6 +222,13 @@
             language="ABL"
             implementationClass="com.ablls.plugin.documentation.AblDocumentationProvider"/>
 
+        <!-- ── PsiReference sémantique sur les identifiants ABL ────────────────── -->
+        <!-- Rend Find Usages (Alt+F7) scope-aware : les homonymes dans d'autres scopes -->
+        <!-- ne résolvent pas vers la même déclaration et sont filtrés par IntelliJ.    -->
+        <psi.referenceContributor
+            language="ABL"
+            implementation="com.ablls.plugin.parser.AblReferenceContributor"/>
+
         <!-- ── Go to Definition ───────────────────────────────────────────────── -->
         <gotoDeclarationHandler
             implementationClass="com.ablls.plugin.navigation.AblGotoDeclarationHandler"/>
