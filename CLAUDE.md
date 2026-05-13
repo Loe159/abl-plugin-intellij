@@ -603,7 +603,7 @@ typeInfo?.methods?.forEach { method ->
 | 🟠 | Rapport d'erreurs de compilation dans le panneau "Problems" | 📋 | nouveau |
 | 🟠 | Intégration du fichier XREF (`.xref` / `.xref-xml`) | 📋 | `xref/XrefParser.kt` |
 | 🟡 | Build Configuration (équivalent `build.xml` / PCT) | 📋 | nouveau |
-| 🟡 | Gutter icon "compile this file" sur les `.p` | 📋 | nouveau |
+| 🟡 | Gutter icon "compile this file" sur les `.p` | ✅ | `AblCompileGutterIconProvider.kt` |
 | 🟡 | Pre-compile checks (lancer les inspections avant la compilation) | 📋 | nouveau |
 
 ### Tests ABLUnit

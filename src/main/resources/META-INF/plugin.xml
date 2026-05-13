@@ -257,7 +257,10 @@
         <breadcrumbsInfoProvider
             implementation="com.ablls.plugin.navigation.AblBreadcrumbProvider"/>
 
-        <!-- ── Gutter Icons (test runner, procédures) ──────────────────────── -->
+        <!-- ── Gutter Icons (compile, test runner) ─────────────────────────── -->
+        <codeInsight.lineMarkerProvider
+            language="ABL"
+            implementationClass="com.ablls.plugin.run.AblCompileGutterIconProvider"/>
         <codeInsight.lineMarkerProvider
             language="ABL"
             implementationClass="com.ablls.plugin.highlight.AblTestRunLineMarkerProvider"/>
