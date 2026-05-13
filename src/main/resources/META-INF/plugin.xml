@@ -39,6 +39,14 @@
             language="ABL"
             extensions="p;cls;i;w;t"/>
 
+        <!-- ── Settings ─────────────────────────────────────────────────────── -->
+        <projectConfigurable
+            parentId="language"
+            displayName="OpenEdge ABL"
+            id="com.ablls.plugin.settings.openedge"
+            implementationClass="com.ablls.plugin.project.AblProjectSettingsConfigurable"
+            instance="true"/>
+
         <!-- ── Coloration syntaxique ────────────────────────────────────────── -->
         <lang.syntaxHighlighterFactory
             language="ABL"
