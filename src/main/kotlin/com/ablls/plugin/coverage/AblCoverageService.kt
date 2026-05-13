@@ -80,4 +80,18 @@ class AblCoverageService(private val project: Project) {
     }
 
     fun hasCoverage(): Boolean = coverageData.isNotEmpty()
+
+    /**
+     * Retourne true/false si la ligne [lineNum] (1-based) est couverte,
+     * ou null si aucune donnée n'est disponible pour ce fichier.
+     */
+    fun isLineCovered(filePath: String, lineNum: Int): Boolean? {
+        if (coverageData.isEmpty()) return null
+        val covered = coverageData[filePath]
+            ?: coverageData.entries.firstOrNull { (k, _) ->
+                filePath.endsWith(k.replace('\\', '/'))
+            }?.value
+            ?: return null
+        return lineNum in covered
+    }
 }

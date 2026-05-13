@@ -262,6 +262,11 @@
             language="ABL"
             implementationClass="com.ablls.plugin.highlight.AblSpellcheckingStrategy"/>
 
+        <!-- ── Coverage Gutter ──────────────────────────────────────────────── -->
+        <codeInsight.lineMarkerProvider
+            language="ABL"
+            implementationClass="com.ablls.plugin.coverage.AblCoverageLineMarkerProvider"/>
+
         <!-- ── Gutter Icons (compile, test runner) ─────────────────────────── -->
         <codeInsight.lineMarkerProvider
             language="ABL"
