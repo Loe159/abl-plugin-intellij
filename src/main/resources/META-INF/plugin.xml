@@ -354,6 +354,9 @@
             language="ABL"
             implementationClass="com.ablls.plugin.highlight.AblBracketMatcher"/>
 
+        <!-- ── Project Wizard — File → New → Project → OpenEdge ABL ───────────── -->
+        <moduleBuilder builderClass="com.ablls.plugin.project.AblModuleBuilder"/>
+
         <!-- ── Activité de démarrage : indexation du projet ──────────────────── -->
         <postStartupActivity
             implementation="com.ablls.plugin.startup.AblStartupActivity"/>
