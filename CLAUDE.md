@@ -621,7 +621,7 @@ typeInfo?.methods?.forEach { method ->
 
 | Priorité | Feature | État | Fichier clé |
 |---|---|---|---|
-| 🟡 | Project Wizard : template "New OpenEdge ABL Project" | 📋 | nouveau |
+| 🟡 | Project Wizard : template "New OpenEdge ABL Project" | ✅ | `AblNewProjectWizard.kt` |
 | 🟡 | Project Settings UI : panneau Settings → OpenEdge | ✅ | `AblProjectSettingsConfigurable.kt` |
 | 🟡 | PROPATH explorer : visualiser et éditer le PROPATH depuis l'IDE | ✅ | `AblPropathExplorerPanel.kt` (ToolWindow "ABL PROPATH") |
 | 🟢 | Module system : support des projets multi-modules ABL | 📋 | nouveau |
