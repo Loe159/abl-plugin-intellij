@@ -73,4 +73,7 @@ class AblSymbolIndex {
 
     /** Nombre total de symboles indexés. */
     val symbolCount: Int get() = byFile.values.sumOf { it.size }
+
+    /** Tous les symboles de l'index (toutes sources confondues). */
+    fun allSymbols(): List<AblSymbol> = byFile.values.flatten()
 }

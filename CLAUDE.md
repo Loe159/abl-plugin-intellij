@@ -500,8 +500,8 @@ typeInfo?.methods?.forEach { method ->
 |---|---|---|---|
 | 🔴 | Find Usages sémantique (`JPNode.getSymbol()`) | ✅ | `AblFindUsagesProvider.kt` |
 | 🔴 | Rename sémantique (scope-aware) | ✅ | `AblRenameHandler.kt` |
-| 🟠 | Go to Symbol (`Ctrl+Alt+Shift+N`) — procédures, classes, méthodes dans tout le projet | 📋 | nouveau |
-| 🟠 | Go to Class (`Ctrl+N`) — classes ABL OO | 📋 | nouveau |
+| 🟠 | Go to Symbol (`Ctrl+Alt+Shift+N`) — procédures, classes, méthodes dans tout le projet | ✅ | `AblGotoSymbolContributor.kt` |
+| 🟠 | Go to Class (`Ctrl+N`) — classes ABL OO | ✅ | `AblGotoClassContributor.kt` |
 | 🟡 | Go to Related Symbol — naviguer entre `.cls` et son `.i` d'interface | 📋 | nouveau |
 | 🟡 | Breadcrumb navigation (classe → méthode → bloc courant) | 📋 | nouveau |
 | 🟡 | Navigate to Super Class / implementation (`Ctrl+U`) | 📋 | nouveau |

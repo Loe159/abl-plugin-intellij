@@ -170,6 +170,14 @@
         <gotoDeclarationHandler
             implementationClass="com.ablls.plugin.navigation.AblGotoDeclarationHandler"/>
 
+        <!-- ── Go to Symbol (Ctrl+Alt+Shift+N) ─────────────────────────────── -->
+        <gotoSymbolContributor
+            implementation="com.ablls.plugin.navigation.AblGotoSymbolContributor"/>
+
+        <!-- ── Go to Class (Ctrl+N) ──────────────────────────────────────────── -->
+        <gotoClassContributor
+            implementation="com.ablls.plugin.navigation.AblGotoClassContributor"/>
+
         <!-- ── Find Usages ───────────────────────────────────────────────────── -->
         <lang.findUsagesProvider
             language="ABL"
