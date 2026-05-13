@@ -548,7 +548,7 @@ typeInfo?.methods?.forEach { method ->
 
 | Priorité | Feature | État | Fichier clé |
 |---|---|---|---|
-| 🟠 | Code formatter complet (indentation, espaces, casse des mots-clés) | 📋 | nouveau |
+| 🟠 | Code formatter complet (indentation, espaces, casse des mots-clés) | ✅ | `AblFormattingModelBuilder.kt` (indentation de base) |
 | 🟡 | Import optimizer (trier/nettoyer les `USING` dans les classes OO) | ✅ | `AblOptimizeUsingsIntention.kt` |
 
 ### Debugger

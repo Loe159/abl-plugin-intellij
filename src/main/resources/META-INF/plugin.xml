@@ -256,6 +256,11 @@
             language="ABL"
             implementationClass="com.ablls.plugin.completion.AblPostfixTemplateProvider"/>
 
+        <!-- ── Code Formatter ───────────────────────────────────────────────── -->
+        <lang.formatter
+            language="ABL"
+            implementationClass="com.ablls.plugin.highlight.AblFormattingModelBuilder"/>
+
         <!-- ── Breadcrumb navigation ────────────────────────────────────────── -->
         <breadcrumbsInfoProvider
             implementation="com.ablls.plugin.navigation.AblBreadcrumbProvider"/>
