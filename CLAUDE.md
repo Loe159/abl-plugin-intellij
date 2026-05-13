@@ -506,7 +506,7 @@ typeInfo?.methods?.forEach { method ->
 | 🟠 | Go to Symbol (`Ctrl+Alt+Shift+N`) — procédures, classes, méthodes dans tout le projet | ✅ | `AblGotoSymbolContributor.kt` |
 | 🟠 | Go to Class (`Ctrl+N`) — classes ABL OO | ✅ | `AblGotoClassContributor.kt` |
 | 🟡 | Go to Related Symbol — naviguer entre `.cls` et son `.i` d'interface | 📋 | nouveau |
-| 🟡 | Breadcrumb navigation (classe → méthode → bloc courant) | 📋 | nouveau |
+| 🟡 | Breadcrumb navigation (classe → méthode → bloc courant) | ✅ | `AblBreadcrumbProvider.kt` |
 | 🟡 | Navigate to Super Class / implementation (`Ctrl+U`) | 📋 | nouveau |
 | 🟡 | Navigate to Overriding Methods | 📋 | nouveau |
 

@@ -240,6 +240,10 @@
             language="ABL"
             implementationClass="com.ablls.plugin.completion.AblPostfixTemplateProvider"/>
 
+        <!-- ── Breadcrumb navigation ────────────────────────────────────────── -->
+        <breadcrumbsInfoProvider
+            implementation="com.ablls.plugin.navigation.AblBreadcrumbProvider"/>
+
         <!-- ── Gutter Icons (test runner, procédures) ──────────────────────── -->
         <codeInsight.lineMarkerProvider
             language="ABL"
