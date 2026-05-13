@@ -587,7 +587,7 @@ typeInfo?.methods?.forEach { method ->
 
 | Priorité | Feature | État | Fichier clé |
 |---|---|---|---|
-| 🟠 | Vue Profiler : temps CPU, nombre d'appels, par procédure/méthode | 📋 | `AblProfilerParser.kt` |
+| 🟠 | Vue Profiler : temps CPU, nombre d'appels, par procédure/méthode | ✅ | `AblProfilerViewPanel.kt` (ToolWindow "ABL Profiler") |
 | 🟠 | Coverage : lignes couvertes/non couvertes dans la gouttière | ✅ | `AblCoverageLineMarkerProvider.kt` + `AblCoverageService.isLineCovered()` |
 | 🟠 | Hot Spots : mise en évidence des lignes coûteuses dans l'éditeur | 📋 | nouveau |
 | 🟠 | Intégration avec les Run Configurations (lancer avec profiling en un clic) | 📋 | `AblRunConfigurationType.kt` |

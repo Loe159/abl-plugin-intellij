@@ -173,6 +173,9 @@
 
         <!-- ── Couverture de code (profiler) ───────────────────────────────────── -->
         <projectService serviceImplementation="com.ablls.plugin.coverage.AblCoverageService"/>
+        <toolWindow id="ABL Profiler" secondary="true" icon="/icons/abl-file.svg"
+                    anchor="bottom" factoryClass="com.ablls.plugin.coverage.AblProfilerViewFactory"
+                    doNotActivateOnStart="true"/>
 
         <!-- ── Tool windows ──────────────────────────────────────────────────────────── -->
         <toolWindow id="ABL Schema" secondary="true" icon="/icons/abl-file.svg"
