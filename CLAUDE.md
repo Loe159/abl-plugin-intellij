@@ -1041,7 +1041,7 @@ des nœuds composites (via `PsiBuilder` + markers pour PROCEDURE/CLASS/DO blocks
 | Super class (Ctrl+U) | `AblSuperClassNavigator.kt` | ✅ `codeInsight.gotoSuper` | ⚠️ scan textuel INHERITS | 🟡 |
 | Overriding Methods | `AblOverridingMethodsProvider.kt` | ✅ `codeInsight.lineMarkerProvider` | ❌ index textuel | 🟡 Faux positifs possibles |
 | Breadcrumbs | `AblBreadcrumbProvider.kt` | ✅ `breadcrumbsInfoProvider` | ❌ | 🟡 `getParent()` → null (PSI plat) |
-| Find Usages | `AblFindUsagesProvider.kt` | ✅ `lang.findUsagesProvider` | ⚠️ `DefaultWordsScanner` textuel, pas `JPNode.getSymbol()` | 🟡 Textuel |
+| Find Usages | `AblFindUsagesProvider.kt` + `AblReferenceContributor.kt` | ✅ `lang.findUsagesProvider` + `psi.referenceContributor` | ✅ `AblSymbolReference.isReferenceTo()` via RSSW scope | ✅ Sémantique |
 
 ### Bloc 5 — Inspections
 
@@ -1136,6 +1136,11 @@ des nœuds composites (via `PsiBuilder` + markers pour PROCEDURE/CLASS/DO blocks
 | 13 | Bloc 6 | 4 AnActions refactoring dans le menu Refactor (Ctrl+Alt+Shift+T) | nouveau + `plugin.xml` |
 | 14 | Bloc 4 | `AblOverridingMethodsProvider` scope-aware (INHERITS, deux directions) | `AblOverridingMethodsProvider.kt` |
 | 15 | Bloc 4 | `AblSuperClassNavigator` utilise l'index au lieu du scan textuel | `AblSuperClassNavigator.kt` |
+| 16 | Bloc 4 | `AblReferenceContributor` — PsiReference sémantique sur les identifiants | nouveau + `plugin.xml` |
+| 17 | Bloc 2 | `AblFormattingModelBuilder` — indentation structurelle en O(n) via depth tracking | `AblFormattingModelBuilder.kt` |
+| 18 | Bloc 1 | BracketMatcher — ajout de `[` `]` + `LBRACKET`/`RBRACKET` dans lexer | `AblFoldingBuilder.kt`, `AblLexerAdapter.kt`, `AblTokenTypes.kt` |
+| 19 | PSI | `AblAstFactory` + `AblNamedLeafElement` — `PsiNamedElement` sur les IDENTIFIER tokens | nouveau + `plugin.xml` |
+| 20 | Bloc 6 | Migration vers `RenameDialog` natif via `PsiNamedElement` + `handleElementRename()` | `AblIdentifierElement.kt`, `plugin.xml` |
 
 > Chantiers multi-jours (documentés, non implémentés en session) :
 
