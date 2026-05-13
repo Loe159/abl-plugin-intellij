@@ -301,7 +301,14 @@ private class AblSymbolVisitor(
 
     override fun visitClassStatement(ctx: Proparse.ClassStatementContext): Void? {
         val name = ctx.typeName2()?.text ?: return visitChildren(ctx)
-        addSymbol(name, AblSymbol.Kind.CLASS, "CLASS", ctx)
+        // Extraire INHERITS/IMPLEMENTS depuis le texte de la déclaration (avant le premier ':')
+        val declText = ctx.text ?: ""
+        val colonIdx = declText.indexOf(':').takeIf { it > 0 } ?: declText.length
+        val declHead = declText.substring(0, colonIdx).uppercase()
+        val inherits  = extractKeywordArg(declHead, "INHERITS")
+        val implements = extractKeywordArgs(declHead, "IMPLEMENTS")
+        val dataType = buildClassDataType("CLASS", inherits, implements)
+        addSymbol(name, AblSymbol.Kind.CLASS, dataType, ctx)
         scopeStack.addLast(name)
         visitChildren(ctx)
         scopeStack.removeLastOrNull()
@@ -310,7 +317,12 @@ private class AblSymbolVisitor(
 
     override fun visitInterfaceStatement(ctx: Proparse.InterfaceStatementContext): Void? {
         val name = ctx.typeName2()?.text ?: return visitChildren(ctx)
-        addSymbol(name, AblSymbol.Kind.CLASS, "INTERFACE", ctx)
+        val declText = ctx.text ?: ""
+        val colonIdx = declText.indexOf(':').takeIf { it > 0 } ?: declText.length
+        val declHead = declText.substring(0, colonIdx).uppercase()
+        val inherits  = extractKeywordArg(declHead, "INHERITS")
+        val dataType  = buildClassDataType("INTERFACE", inherits, emptyList())
+        addSymbol(name, AblSymbol.Kind.CLASS, dataType, ctx)
         scopeStack.addLast(name)
         visitChildren(ctx)
         scopeStack.removeLastOrNull()
@@ -400,6 +412,29 @@ private class AblSymbolVisitor(
     }
 
     private fun currentScope(): String = scopeStack.lastOrNull() ?: ""
+
+    /** Ex: "CLASS Foo INHERITS Bar IMPLEMENTS IFoo" → extractKeywordArg("INHERITS") → "Bar" */
+    private fun extractKeywordArg(text: String, keyword: String): String? {
+        val idx = text.indexOf(keyword)
+        if (idx < 0) return null
+        return text.substring(idx + keyword.length)
+            .trimStart()
+            .takeWhile { it.isLetterOrDigit() || it == '.' || it == '_' || it == '-' }
+            .takeIf { it.isNotBlank() }
+    }
+
+    /** Ex: "IMPLEMENTS IFoo,IBar" → ["IFoo", "IBar"] */
+    private fun extractKeywordArgs(text: String, keyword: String): List<String> {
+        val first = extractKeywordArg(text, keyword) ?: return emptyList()
+        return first.split(',').map { it.trim() }.filter { it.isNotBlank() }
+    }
+
+    private fun buildClassDataType(base: String, inherits: String?, implements: List<String>): String {
+        val sb = StringBuilder(base)
+        if (!inherits.isNullOrBlank()) sb.append(" INHERITS ").append(inherits)
+        if (implements.isNotEmpty()) sb.append(" IMPLEMENTS ").append(implements.joinToString(","))
+        return sb.toString()
+    }
 
     private fun toRange(ctx: ParserRuleContext): AblRange {
         val start = ctx.start

@@ -72,6 +72,17 @@ class AblDocumentationProvider : AbstractDocumentationProvider() {
         return AblBuiltinDocs.get(word).map { markdownToHtml(it) }.orElse(null)
     }
 
+    /**
+     * Lien vers la documentation Progress (Shift+F1 ou icône "External docs").
+     * Disponible pour les built-ins ABL documentés dans [AblBuiltinDocs].
+     */
+    override fun getUrlFor(element: PsiElement?, originalElement: PsiElement?): List<String> {
+        val word = (originalElement ?: element)?.text?.trim()?.uppercase() ?: return emptyList()
+        if (!AblBuiltinDocs.has(word)) return emptyList()
+        val slug = word.lowercase().replace("-", "")
+        return listOf("https://docs.progress.com/bundle/openedge-abl-reference/page/${slug}.html")
+    }
+
     override fun getDocumentationElementForLookupItem(
         psiManager: com.intellij.psi.PsiManager,
         `object`: Any?,

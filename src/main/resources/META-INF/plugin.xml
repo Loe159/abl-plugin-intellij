@@ -311,6 +311,16 @@
             language="ABL"
             implementationClass="com.ablls.plugin.intentions.AblSurroundDescriptor"/>
 
+        <!-- ── Type Hierarchy (Ctrl+H) ──────────────────────────────────────── -->
+        <lang.typeHierarchyProvider
+            language="ABL"
+            implementationClass="com.ablls.plugin.navigation.AblTypeHierarchyProvider"/>
+
+        <!-- ── Call Hierarchy (Ctrl+Alt+H) ──────────────────────────────────── -->
+        <lang.callHierarchyProvider
+            language="ABL"
+            implementationClass="com.ablls.plugin.navigation.AblCallHierarchyProvider"/>
+
         <!-- ── Navigate to Super Class (Ctrl+U) ────────────────────────────── -->
         <codeInsight.gotoSuper
             language="ABL"
@@ -434,6 +444,32 @@
                 text="Load ABL Coverage (.prof)"
                 description="Load an OpenEdge profiler file to display code coverage">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </action>
+
+        <!-- ── Refactoring ABL dans le menu Refactor ───────────────────────── -->
+        <action id="ABL.ExtractProcedure"
+                class="com.ablls.plugin.refactor.AblExtractProcedureAction"
+                text="Extract ABL PROCEDURE"
+                description="Extract selected code into a new PROCEDURE">
+            <add-to-group group-id="RefactoringMenu" anchor="last"/>
+        </action>
+        <action id="ABL.IntroduceVariable"
+                class="com.ablls.plugin.refactor.AblIntroduceVariableAction"
+                text="Introduce ABL Variable"
+                description="Introduce a DEFINE VARIABLE for the selected expression">
+            <add-to-group group-id="RefactoringMenu" anchor="last"/>
+        </action>
+        <action id="ABL.InlineVariable"
+                class="com.ablls.plugin.refactor.AblInlineVariableAction"
+                text="Inline ABL Variable"
+                description="Replace variable usages with its initializer value">
+            <add-to-group group-id="RefactoringMenu" anchor="last"/>
+        </action>
+        <action id="ABL.ChangeSignature"
+                class="com.ablls.plugin.refactor.AblChangeSignatureAction"
+                text="Change ABL Signature"
+                description="Add a parameter to the current PROCEDURE or FUNCTION">
+            <add-to-group group-id="RefactoringMenu" anchor="last"/>
         </action>
 
         <action id="ABL.SafeDelete"
