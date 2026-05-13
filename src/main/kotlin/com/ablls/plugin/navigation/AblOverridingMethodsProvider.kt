@@ -14,12 +14,14 @@ import com.intellij.psi.PsiElement
 /**
  * Navigate to Overriding Methods — icône dans la gouttière.
  *
- * Sur les méthodes d'une classe ABL (METHOD PUBLIC ...) qui sont
- * OVERRIDE, affiche une icône de flèche vers le bas indiquant qu'on peut
- * naviguer vers l'implémentation dans une sous-classe.
+ * Deux cas gérés :
+ *   1. La méthode courante OVERRIDE une méthode parente (flèche ↑ vers superclasse)
+ *      → icône "implements" — clic navigue vers la méthode parente
+ *   2. La méthode courante EST overridée par des sous-classes (flèche ↓)
+ *      → icône "overriding" — clic navigue vers le premier override
  *
- * Détection : cherche d'autres classes dans l'index qui définissent
- * une méthode avec le même nom (qualifiée par `::`).
+ * La détection est scope-aware : utilise les INHERITS stockés dans [AblSymbol.dataType]
+ * par [AblSymbolCollector] pour ne marquer que les méthodes réellement liées par héritage.
  */
 class AblOverridingMethodsProvider : LineMarkerProvider {
 
@@ -30,13 +32,9 @@ class AblOverridingMethodsProvider : LineMarkerProvider {
         val text = element.text.trim().uppercase()
         if (text != "METHOD" && text != "OVERRIDE") return null
 
-        // Trouver le nom de la méthode (token IDENTIFIER qui suit)
         val file = element.containingFile ?: return null
-        val offset = element.textRange.startOffset
-        val sourceText = file.text
-        val afterKeyword = sourceText.substring(offset).substringAfter(text)
-            .trim()
-        // Extraire le nom de la méthode : le dernier identifiant avant "("
+        val afterKeyword = file.text.substring(element.textRange.startOffset)
+            .substringAfter(text).trim()
         val methodNameMatch = Regex("""(\w+)\s*\(""").find(afterKeyword) ?: return null
         val methodName = methodNameMatch.groupValues[1]
 
@@ -44,30 +42,73 @@ class AblOverridingMethodsProvider : LineMarkerProvider {
         val service = project.service<AblProjectAnalysisService>()
         val uri     = file.virtualFile?.url ?: return null
 
-        // Chercher des classes qui ont une méthode avec ce nom dans l'index
-        val overrides = service.symbolIndex.allSymbols()
-            .filter { sym ->
-                sym.kind == AblSymbol.Kind.METHOD &&
-                sym.name.substringAfterLast(':').equals(methodName, ignoreCase = true) &&
-                sym.uri != uri
-            }
+        // Trouver la classe courante (la classe dont ce fichier est l'implémentation)
+        val currentClassSym = service.symbolIndex.getSymbolsForFile(uri)
+            .firstOrNull { it.kind == AblSymbol.Kind.CLASS }
 
+        // ── Cas 1 : méthode parente dans la superclasse ───────────────────────
+        if (currentClassSym != null) {
+            val parentName = extractInherits(currentClassSym.dataType)
+            if (parentName != null) {
+                val parentMethod = service.symbolIndex.findByName("$parentName:$methodName", "")
+                    .firstOrNull { it.kind == AblSymbol.Kind.METHOD }
+                    ?: service.symbolIndex.allSymbols().firstOrNull { sym ->
+                        sym.kind == AblSymbol.Kind.METHOD &&
+                        sym.name.substringAfterLast(':').equals(methodName, ignoreCase = true) &&
+                        sym.name.substringBefore(':').equals(parentName, ignoreCase = true)
+                    }
+                if (parentMethod != null) {
+                    return LineMarkerInfo(
+                        element, element.textRange,
+                        AllIcons.Gutter.ImplementingMethod,
+                        { "Overrides ${parentMethod.name} in $parentName" },
+                        { _, _ -> navigate(project, parentMethod) },
+                        GutterIconRenderer.Alignment.LEFT
+                    ) { "Overrides method in parent class" }
+                }
+            }
+        }
+
+        // ── Cas 2 : sous-classes qui overrident cette méthode ─────────────────
+        val currentClassName = currentClassSym?.name ?: return null
+        val subclasses = service.symbolIndex.allSymbols()
+            .filter { sym ->
+                sym.kind == AblSymbol.Kind.CLASS &&
+                extractInherits(sym.dataType).equals(currentClassName, ignoreCase = true)
+            }
+            .map { it.name.uppercase() }
+            .toSet()
+
+        val overrides = service.symbolIndex.allSymbols().filter { sym ->
+            sym.kind == AblSymbol.Kind.METHOD &&
+            sym.name.substringAfterLast(':').equals(methodName, ignoreCase = true) &&
+            sym.name.substringBefore(':').uppercase() in subclasses
+        }
         if (overrides.isEmpty()) return null
 
         return LineMarkerInfo(
-            element,
-            element.textRange,
+            element, element.textRange,
             AllIcons.Gutter.OverridenMethod,
-            { "Has ${overrides.size} override(s) in sub-classes" },
-            { _, _ ->
-                // Naviguer vers le premier override
-                val first = overrides.first()
-                val vf = com.intellij.openapi.vfs.VirtualFileManager.getInstance()
-                    .findFileByUrl(first.uri ?: return@LineMarkerInfo) ?: return@LineMarkerInfo
-                val line = (first.definitionRange?.startLine ?: 0).coerceAtLeast(0)
-                com.intellij.openapi.fileEditor.OpenFileDescriptor(project, vf, line, 0).navigate(true)
-            },
+            { "Overridden in ${overrides.size} sub-class(es)" },
+            { _, _ -> navigate(project, overrides.first()) },
             GutterIconRenderer.Alignment.LEFT
-        ) { "Has overrides" }
+        ) { "Method is overridden in sub-classes" }
+    }
+
+    private fun navigate(project: com.intellij.openapi.project.Project, symbol: AblSymbol) {
+        val vf = com.intellij.openapi.vfs.VirtualFileManager.getInstance()
+            .findFileByUrl(symbol.uri ?: return) ?: return
+        val line = (symbol.definitionRange?.startLine ?: 0).coerceAtLeast(0)
+        com.intellij.openapi.fileEditor.OpenFileDescriptor(project, vf, line, 0).navigate(true)
+    }
+
+    private fun extractInherits(dataType: String?): String? {
+        dataType ?: return null
+        val idx = dataType.indexOf("INHERITS", ignoreCase = true)
+        if (idx < 0) return null
+        return dataType.substring(idx + "INHERITS".length)
+            .trimStart()
+            .takeWhile { it.isLetterOrDigit() || it == '.' || it == '_' || it == '-' }
+            .takeIf { it.isNotBlank() }
     }
 }

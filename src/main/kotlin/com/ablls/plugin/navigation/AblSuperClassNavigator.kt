@@ -27,39 +27,62 @@ import com.intellij.psi.PsiFile
 class AblSuperClassNavigator : LanguageCodeInsightActionHandler {
 
     override fun isValidFor(editor: Editor, file: PsiFile): Boolean =
-        file.language == AblLanguage && findSuperClassName(editor, file) != null
+        file.language == AblLanguage && findSuperClassName(file) != null
 
     override fun invoke(project: Project, editor: Editor, file: PsiFile) {
-        val superName = findSuperClassName(editor, file) ?: return
+        val superName = findSuperClassName(file) ?: return
         val service   = project.service<AblProjectAnalysisService>()
 
-        // Chercher la super-classe dans l'index
+        // Priorité 1 : résolution depuis l'index (INHERITS stocké dans dataType)
         val symbol = service.symbolIndex.findByName(superName, file.virtualFile?.url ?: "")
             .firstOrNull { it.kind == AblSymbol.Kind.CLASS }
             ?: service.symbolIndex.allSymbols()
-                .firstOrNull { it.kind == AblSymbol.Kind.CLASS && it.name.endsWith(".$superName", ignoreCase = true) }
+                .firstOrNull { it.kind == AblSymbol.Kind.CLASS &&
+                    (it.name.equals(superName, ignoreCase = true) ||
+                     it.name.endsWith(".$superName", ignoreCase = true)) }
 
-        if (symbol != null) {
-            navigateTo(project, symbol)
-        }
+        if (symbol != null) navigateTo(project, symbol)
     }
 
     override fun startInWriteAction(): Boolean = false
 
     companion object {
         /**
-         * Recherche le nom de la super-classe dans le source du fichier.
-         * Scanne le texte avant le curseur pour trouver `INHERITS ClassName`.
+         * Trouve le nom de la superclasse depuis l'index du fichier (priorité) ou
+         * depuis le texte source (fallback) en cherchant INHERITS/IMPLEMENTS.
          */
-        fun findSuperClassName(editor: Editor, file: PsiFile): String? {
+        fun findSuperClassName(file: PsiFile): String? {
+            // Priorité 1 : lire depuis l'index (AblSymbolCollector encode INHERITS dans dataType)
+            val service = file.project.service<AblProjectAnalysisService>()
+            val uri     = file.virtualFile?.url ?: return null
+            val classSym = service.symbolIndex.getSymbolsForFile(uri)
+                .firstOrNull { it.kind == AblSymbol.Kind.CLASS }
+            if (classSym != null) {
+                val fromIndex = extractInherits(classSym.dataType)
+                if (fromIndex != null) return fromIndex
+            }
+
+            // Fallback : scan textuel pour les fichiers non encore indexés
             val text = file.text
             val inheritsIdx = text.indexOf("INHERITS", ignoreCase = true)
                 .takeIf { it >= 0 } ?: text.indexOf("IMPLEMENTS", ignoreCase = true)
                 .takeIf { it >= 0 } ?: return null
-
             val afterKeyword = text.substring(inheritsIdx).substringAfter(" ").trimStart()
-            val name = afterKeyword.takeWhile { it.isLetterOrDigit() || it == '.' || it == '-' || it == '_' }
-            return name.takeIf { it.isNotBlank() }
+            return afterKeyword.takeWhile { it.isLetterOrDigit() || it == '.' || it == '-' || it == '_' }
+                .takeIf { it.isNotBlank() }
+        }
+
+        // Kept for backward compat with AblSuperClassNavigator.Companion.findSuperClassName(editor, file)
+        fun findSuperClassName(editor: Editor, file: PsiFile): String? = findSuperClassName(file)
+
+        private fun extractInherits(dataType: String?): String? {
+            dataType ?: return null
+            val idx = dataType.indexOf("INHERITS", ignoreCase = true)
+            if (idx < 0) return null
+            return dataType.substring(idx + "INHERITS".length)
+                .trimStart()
+                .takeWhile { it.isLetterOrDigit() || it == '.' || it == '_' || it == '-' }
+                .takeIf { it.isNotBlank() }
         }
 
         fun navigateTo(project: Project, symbol: AblSymbol) {
