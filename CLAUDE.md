@@ -427,7 +427,7 @@ ou `AblSemanticResult`. Ne jamais appeler ces classes directement ailleurs.
 | Dead code (procédures non référencées) | ✅ Opérationnel (file-local, WEAK_WARNING) | `AblDeadCodeInspection.kt` |
 | Inlay hints paramètres d'appel | ✅ Opérationnel | `AblParameterInlayHintsProvider.kt` |
 | Find References sémantique | 🔧 Partiel (index textuel + scope kind) | `AblFindUsagesProvider.kt` |
-| Complétion membres OO (TYPE:method) | 🔧 TODO | `AblCompletionContributor.kt` |
+| Complétion membres OO (TYPE:method) | ✅ Opérationnel (index-based, scope-aware) | `AblCompletionContributor.kt` |
 
 ---
 
@@ -490,7 +490,7 @@ typeInfo?.methods?.forEach { method ->
 
 | Priorité | Feature | État | Fichier clé |
 |---|---|---|---|
-| 🔴 | Complétion membres OO (`myObject:<caret>` → méthodes/propriétés) | 📋 | `AblCompletionContributor.kt` |
+| 🔴 | Complétion membres OO (`myObject:<caret>` → méthodes/propriétés) | ✅ | `AblCompletionContributor.kt` |
 | 🔴 | Complétion tables et champs DB (après chargement `.df`) | ✅ | `AblCompletionContributor.kt` |
 | 🟠 | Complétion des paramètres de procédure/fonction | 📋 | `AblCompletionContributor.kt` |
 | 🟠 | Complétion des includes `{<caret>` → fichiers `.i` dans le PROPATH | ✅ | `AblCompletionContributor.kt` |

@@ -83,6 +83,14 @@ private class AblCompletionProvider : CompletionProvider<CompletionParameters>()
             return  // champs uniquement dans ce contexte
         }
 
+        // ── 1d. Complétion membres OO : myObj:<caret> ─────────────────────────
+        val colonCandidate = extractObjectBeforeColon(textBefore, prefix)
+        if (colonCandidate != null) {
+            val semanticScope = semanticResult?.rootScope
+            addOOMemberCompletions(colonCandidate, prefix, service, uri, semanticScope, result)
+            return  // membres OO uniquement dans ce contexte
+        }
+
         // ── 2. Symboles de l'index du projet ─────────────────────────────────
         val upperPrefix = prefix.uppercase()
         service.symbolIndex.findByPrefix(prefix, uri).forEach { symbol ->
@@ -137,6 +145,12 @@ private class AblCompletionProvider : CompletionProvider<CompletionParameters>()
     }
 
     companion object {
+        private val BLOCK_HEADER_KEYWORDS = setOf(
+            "PROCEDURE", "FUNCTION", "CLASS", "INTERFACE", "METHOD",
+            "CONSTRUCTOR", "DESTRUCTOR", "ENUM", "TRIGGER", "ON",
+            "CATCH", "FINALLY", "DO", "CASE", "WHEN"
+        )
+
         private val PREPROCESSOR_DIRECTIVES = listOf(
             "IF", "THEN", "ELSE", "ENDIF",
             "DEFINE", "UNDEFINE",
@@ -261,6 +275,90 @@ private class AblCompletionProvider : CompletionProvider<CompletionParameters>()
                     .withTypeText(symbol.dataType ?: "", true)
                     .withIcon(AllIcons.Nodes.Field)
                     .withTailText(" field of $tableName", true)
+            )
+        }
+    }
+
+    // ─── Complétion membres OO : myObj:<caret> ────────────────────────────────
+
+    /**
+     * Si le texte avant le curseur se termine par `IDENTIFIER:` (access OO),
+     * retourne l'identifiant (nom de la variable objet). Retourne null si le
+     * `:` appartient à une déclaration de bloc (PROCEDURE foo:, CLASS Bar:…).
+     */
+    private fun extractObjectBeforeColon(textBefore: String, prefix: String): String? {
+        val beforePrefix = textBefore.dropLast(prefix.length)
+        if (!beforePrefix.endsWith(':')) return null
+
+        var i = beforePrefix.length - 2  // juste avant le ':'
+        while (i >= 0 && (beforePrefix[i].isLetterOrDigit() ||
+                           beforePrefix[i] == '-' || beforePrefix[i] == '_' || beforePrefix[i] == '.')) i--
+        val name = beforePrefix.substring(i + 1, beforePrefix.length - 1)
+        if (name.isBlank()) return null
+
+        // Si le token précédant le nom est un mot-clé de déclaration → pas OO
+        val beforeName = beforePrefix.substring(0, i + 1).trimEnd()
+        val lastToken  = beforeName.split(Regex("\\s+")).lastOrNull()?.uppercase() ?: ""
+        if (lastToken in BLOCK_HEADER_KEYWORDS) return null
+
+        return name
+    }
+
+    /**
+     * Résout le type (nom de classe) d'une variable dans le scope sémantique.
+     * Parcourt le scope racine et ses enfants récursivement.
+     */
+    private fun resolveVariableType(
+        name: String,
+        scope: org.prorefactor.treeparser.TreeParserSymbolScope
+    ): String? {
+        for (v in runCatching { scope.variables }.getOrNull() ?: emptyList()) {
+            if (v.name.equals(name, ignoreCase = true)) {
+                return runCatching { v.dataType?.toString() }.getOrNull()
+                    ?.takeIf { it.isNotBlank() && it != "UNKNOWN" }
+            }
+        }
+        for (child in runCatching { scope.childScopes }.getOrNull() ?: emptyList()) {
+            val found = resolveVariableType(name, child)
+            if (found != null) return found
+        }
+        return null
+    }
+
+    /**
+     * Ajoute les membres (méthodes, propriétés, events) de la classe résolue depuis
+     * [objectName] au jeu de complétion. Utilise l'index de symboles où les membres
+     * sont stockés sous la forme `ClassName:memberName`.
+     */
+    private fun addOOMemberCompletions(
+        objectName: String,
+        prefix: String,
+        service: com.ablls.plugin.core.AblProjectAnalysisService,
+        uri: String,
+        scope: org.prorefactor.treeparser.TreeParserSymbolScope?,
+        result: CompletionResultSet
+    ) {
+        // Résoudre le type depuis le scope sémantique
+        val typeName = if (scope != null) resolveVariableType(objectName, scope) else null
+            // Fallback : chercher dans l'index par nom de variable
+            ?: service.symbolIndex.findByName(objectName, uri)
+                .firstOrNull { it.kind == AblSymbol.Kind.VARIABLE || it.kind == AblSymbol.Kind.PARAMETER }
+                ?.dataType?.takeIf { it.isNotBlank() && it != "UNKNOWN" }
+            ?: return
+
+        val memberPrefix  = "$typeName:"
+        val upperPrefix   = prefix.uppercase()
+        val customResult  = result.withPrefixMatcher(prefix)
+
+        service.symbolIndex.findByPrefix(memberPrefix, uri).forEach { symbol ->
+            val memberName = symbol.name.substringAfterLast(':').takeIf { it.isNotBlank() } ?: return@forEach
+            if (!memberName.startsWith(upperPrefix, ignoreCase = true)) return@forEach
+            customResult.addElement(
+                LookupElementBuilder.create(memberName)
+                    .withTypeText(symbol.dataType ?: "", true)
+                    .withIcon(iconFor(symbol.kind))
+                    .withTailText(kindLabel(symbol.kind), true)
+                    .withInsertHandler(insertHandlerFor(symbol))
             )
         }
     }
