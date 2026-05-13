@@ -138,6 +138,11 @@
                          shortName="AblUnlabeledLoopControl"
                          enabledByDefault="true" level="WARNING"
                          implementationClass="com.ablls.plugin.inspections.AblUnlabeledLoopControlInspection"/>
+        <localInspection language="ABL" groupPath="ABL" groupName="ABL Database"
+                         displayName="Table or field not found in loaded schema"
+                         shortName="AblSchemaValidation"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="com.ablls.plugin.inspections.AblSchemaValidationInspection"/>
         <localInspection language="ABL" groupPath="ABL" groupName="ABL Naming"
                          displayName="Variable name does not follow ABL naming conventions"
                          shortName="AblNamingConvention"
