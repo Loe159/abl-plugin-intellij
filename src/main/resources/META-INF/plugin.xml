@@ -290,13 +290,15 @@
             language="ABL"
             implementationClass="com.ablls.plugin.coverage.AblCoverageLineMarkerProvider"/>
 
-        <!-- ── Gutter Icons (compile, test runner) ─────────────────────────── -->
+        <!-- ── Gutter Icons (compile) ────────────────────────────────────────── -->
         <codeInsight.lineMarkerProvider
             language="ABL"
             implementationClass="com.ablls.plugin.run.AblCompileGutterIconProvider"/>
-        <codeInsight.lineMarkerProvider
-            language="ABL"
-            implementationClass="com.ablls.plugin.highlight.AblTestRunLineMarkerProvider"/>
+        <!--
+             AblTestRunLineMarkerProvider (gutter @Test ABLUnit) désactivé :
+             l'action de navigation était null → clic sans effet (UX trompeuse).
+             Ré-activer quand un vrai runner ABLUnit (SMTRunnerConsoleProperties) sera implémenté.
+        -->
 
         <!-- ── Surround With (Ctrl+Alt+T) ──────────────────────────────────── -->
         <lang.surroundDescriptor
