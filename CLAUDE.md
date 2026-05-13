@@ -526,7 +526,7 @@ typeInfo?.methods?.forEach { method ->
 | 🟠 | Dead code detection (procédures jamais appelées) | ✅ | `AblDeadCodeInspection.kt` |
 | 🟠 | Variables déclarées mais jamais utilisées (extension `AblUnusedVariableInspection`) | 📋 | `AblUnusedVariableInspection.kt` |
 | 🟠 | `FIND FIRST` sans `NO-ERROR` dans un bloc `IF AVAIL` | ✅ | `AblFindFirstNoErrorInspection.kt` |
-| 🟡 | Complexité cyclomatique (warning au-delà d'un seuil) | 📋 | nouveau |
+| 🟡 | Complexité cyclomatique (warning au-delà d'un seuil) | ✅ | `AblCyclomaticComplexityInspection.kt` (CC > 10) |
 | 🟡 | Longueur de procédure excessive | ✅ | `AblProcedureLengthInspection.kt` |
 | 🟡 | Nommage non conforme à la convention (préfixes `l`, `i`, `c`…) | ✅ | `AblNamingConventionInspection.kt` (disabled by default) |
 | 🟡 | Utilisation de `INTEGER` au lieu de `INT64` pour les grands nombres | ✅ | `AblIntegerOverflowInspection.kt` |
@@ -623,7 +623,7 @@ typeInfo?.methods?.forEach { method ->
 |---|---|---|---|
 | 🟡 | Project Wizard : template "New OpenEdge ABL Project" | 📋 | nouveau |
 | 🟡 | Project Settings UI : panneau Settings → OpenEdge | ✅ | `AblProjectSettingsConfigurable.kt` |
-| 🟡 | PROPATH explorer : visualiser et éditer le PROPATH depuis l'IDE | 📋 | `OpenEdgeProjectService.kt` |
+| 🟡 | PROPATH explorer : visualiser et éditer le PROPATH depuis l'IDE | ✅ | `AblPropathExplorerPanel.kt` (ToolWindow "ABL PROPATH") |
 | 🟢 | Module system : support des projets multi-modules ABL | 📋 | nouveau |
 | 🟢 | Dependency management (OE Package Manager ?) | 📋 | nouveau |
 

@@ -156,6 +156,11 @@
                          shortName="AblIntegerOverflow"
                          enabledByDefault="true" level="WEAK WARNING"
                          implementationClass="com.ablls.plugin.inspections.AblIntegerOverflowInspection"/>
+        <localInspection language="ABL" groupPath="ABL" groupName="Best Practices"
+                         displayName="High cyclomatic complexity (McCabe CC &gt; 10)"
+                         shortName="AblCyclomaticComplexity"
+                         enabledByDefault="true" level="WEAK WARNING"
+                         implementationClass="com.ablls.plugin.inspections.AblCyclomaticComplexityInspection"/>
         <localInspection language="ABL" groupPath="ABL" groupName="ABL Naming"
                          displayName="Variable name does not follow ABL naming conventions"
                          shortName="AblNamingConvention"
@@ -172,6 +177,9 @@
         <!-- ── Tool windows ──────────────────────────────────────────────────────────── -->
         <toolWindow id="ABL Schema" secondary="true" icon="/icons/abl-file.svg"
                     anchor="right" factoryClass="com.ablls.plugin.db.AblSchemaExplorerFactory"
+                    doNotActivateOnStart="true"/>
+        <toolWindow id="ABL PROPATH" secondary="true" icon="/icons/abl-file.svg"
+                    anchor="right" factoryClass="com.ablls.plugin.project.AblPropathExplorerFactory"
                     doNotActivateOnStart="true"/>
         <toolWindow id="ABL XREF" secondary="true" icon="/icons/abl-file.svg"
                     anchor="bottom" factoryClass="com.ablls.plugin.xref.XrefToolWindowFactory"/>
