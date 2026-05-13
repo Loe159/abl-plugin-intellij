@@ -528,7 +528,7 @@ typeInfo?.methods?.forEach { method ->
 | 🟠 | `FIND FIRST` sans `NO-ERROR` dans un bloc `IF AVAIL` | ✅ | `AblFindFirstNoErrorInspection.kt` |
 | 🟡 | Complexité cyclomatique (warning au-delà d'un seuil) | 📋 | nouveau |
 | 🟡 | Longueur de procédure excessive | ✅ | `AblProcedureLengthInspection.kt` |
-| 🟡 | Nommage non conforme à la convention (préfixes `l`, `i`, `c`…) | 📋 | nouveau |
+| 🟡 | Nommage non conforme à la convention (préfixes `l`, `i`, `c`…) | ✅ | `AblNamingConventionInspection.kt` (disabled by default) |
 | 🟡 | Utilisation de `INTEGER` au lieu de `INT64` pour les grands nombres | 📋 | nouveau |
 | 🟡 | Détection des `LEAVE`/`NEXT` sans étiquette dans des boucles imbriquées | ✅ | `AblUnlabeledLoopControlInspection.kt` |
 | 🟢 | Spell checking dans les strings et commentaires | 📋 | nouveau |
@@ -612,7 +612,7 @@ typeInfo?.methods?.forEach { method ->
 |---|---|---|---|
 | 🔴 | Test Runner ABL (ABLUnit framework de Progress) | 📋 | nouveau |
 | 🔴 | Reconnaissance des classes de test (`@Test`, `@Before`…) | 📋 | nouveau |
-| 🟠 | Gutter icon "Run test" sur chaque méthode de test | 📋 | nouveau |
+| 🟠 | Gutter icon "Run test" sur chaque méthode de test | ✅ | `AblTestRunLineMarkerProvider.kt` |
 | 🟠 | Fenêtre Test Results (pass/fail/error avec détail) | 📋 | nouveau |
 | 🟠 | Re-run failed tests | 📋 | nouveau |
 | 🟡 | Coverage depuis les tests (couverture mesurée par ABLUnit) | 📋 | `AblCoverageService.kt` |

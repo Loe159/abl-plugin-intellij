@@ -138,6 +138,11 @@
                          shortName="AblUnlabeledLoopControl"
                          enabledByDefault="true" level="WARNING"
                          implementationClass="com.ablls.plugin.inspections.AblUnlabeledLoopControlInspection"/>
+        <localInspection language="ABL" groupPath="ABL" groupName="ABL Naming"
+                         displayName="Variable name does not follow ABL naming conventions"
+                         shortName="AblNamingConvention"
+                         enabledByDefault="false" level="WEAK WARNING"
+                         implementationClass="com.ablls.plugin.inspections.AblNamingConventionInspection"/>
 
         <!-- ── Avertissements compilateur ──────────────────────────────────────────── -->
         <externalAnnotator language="ABL"
@@ -218,6 +223,11 @@
         <codeInsight.template.postfixTemplateProvider
             language="ABL"
             implementationClass="com.ablls.plugin.completion.AblPostfixTemplateProvider"/>
+
+        <!-- ── Gutter Icons (test runner, procédures) ──────────────────────── -->
+        <codeInsight.lineMarkerProvider
+            language="ABL"
+            implementationClass="com.ablls.plugin.highlight.AblTestRunLineMarkerProvider"/>
 
         <!-- ── Surround With (Ctrl+Alt+T) ──────────────────────────────────── -->
         <lang.surroundDescriptor
