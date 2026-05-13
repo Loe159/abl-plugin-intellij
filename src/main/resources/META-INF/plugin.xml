@@ -257,6 +257,11 @@
         <breadcrumbsInfoProvider
             implementation="com.ablls.plugin.navigation.AblBreadcrumbProvider"/>
 
+        <!-- ── Spell Checking ───────────────────────────────────────────────── -->
+        <spellchecker.support
+            language="ABL"
+            implementationClass="com.ablls.plugin.highlight.AblSpellcheckingStrategy"/>
+
         <!-- ── Gutter Icons (compile, test runner) ─────────────────────────── -->
         <codeInsight.lineMarkerProvider
             language="ABL"

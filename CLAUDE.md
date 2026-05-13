@@ -531,7 +531,7 @@ typeInfo?.methods?.forEach { method ->
 | 🟡 | Nommage non conforme à la convention (préfixes `l`, `i`, `c`…) | ✅ | `AblNamingConventionInspection.kt` (disabled by default) |
 | 🟡 | Utilisation de `INTEGER` au lieu de `INT64` pour les grands nombres | ✅ | `AblIntegerOverflowInspection.kt` |
 | 🟡 | Détection des `LEAVE`/`NEXT` sans étiquette dans des boucles imbriquées | ✅ | `AblUnlabeledLoopControlInspection.kt` |
-| 🟢 | Spell checking dans les strings et commentaires | 📋 | nouveau |
+| 🟢 | Spell checking dans les strings et commentaires | ✅ | `AblSpellcheckingStrategy.kt` |
 
 ### Refactoring
 
