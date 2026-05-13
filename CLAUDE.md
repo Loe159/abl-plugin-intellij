@@ -1129,6 +1129,13 @@ des nœuds composites (via `PsiBuilder` + markers pour PROCEDURE/CLASS/DO blocks
 | 6 | Bloc 11 | Fix hot spots — vrais counts depuis `AblProfilerParser` | `AblProfilerParser.kt`, `AblCoverageService.kt`, `AblHotSpotAnnotator.kt` |
 | 7 | Bloc 10 | Supprimer gutter @Test (action null = UX trompeuse) | `AblTestRunLineMarkerProvider.kt`, `plugin.xml` |
 | 8 | Bloc 2 | `AblCodeStyleSettingsProvider` | nouveau + `plugin.xml` |
+| 9 | Bloc 8 | `getUrlFor()` — external doc link vers docs.progress.com | `AblDocumentationProvider.kt` |
+| 10 | Bloc 1 | `AblSymbolCollector` capture INHERITS/IMPLEMENTS dans `dataType` | `AblSymbolCollector.kt` |
+| 11 | Bloc 7 | `AblTypeHierarchyProvider` (Ctrl+H) — sous/supertypes via INHERITS | nouveau + `plugin.xml` |
+| 12 | Bloc 7 | `AblCallHierarchyProvider` (Ctrl+Alt+H) — callers/callees via RUN | nouveau + `plugin.xml` |
+| 13 | Bloc 6 | 4 AnActions refactoring dans le menu Refactor (Ctrl+Alt+Shift+T) | nouveau + `plugin.xml` |
+| 14 | Bloc 4 | `AblOverridingMethodsProvider` scope-aware (INHERITS, deux directions) | `AblOverridingMethodsProvider.kt` |
+| 15 | Bloc 4 | `AblSuperClassNavigator` utilise l'index au lieu du scan textuel | `AblSuperClassNavigator.kt` |
 
 > Chantiers multi-jours (documentés, non implémentés en session) :
 
