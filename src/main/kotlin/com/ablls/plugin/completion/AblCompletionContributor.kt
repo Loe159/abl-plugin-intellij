@@ -70,6 +70,12 @@ private class AblCompletionProvider : CompletionProvider<CompletionParameters>()
             return  // includes uniquement dans ce contexte
         }
 
+        // ── 1c. Complétion des préprocesseurs &<caret> ────────────────────────
+        if (isPreprocessorContext(textBefore, prefix)) {
+            addPreprocessorCompletions(prefix, result)
+            return  // préprocesseurs uniquement dans ce contexte
+        }
+
         // ── 1c. Complétion contextuelle Table.Field (dot notation) ────────────
         val dotCandidate = extractTableBeforeDot(textBefore, prefix)
         if (dotCandidate != null) {
@@ -103,6 +109,43 @@ private class AblCompletionProvider : CompletionProvider<CompletionParameters>()
             }
         }
 
+    }
+
+    // ─── Complétion des préprocesseurs & ─────────────────────────────────────
+
+    /**
+     * Retourne true si le curseur est immédiatement après `&` (contexte préprocesseur ABL).
+     * Le `&` doit être le caractère juste avant le début du [prefix] dans [textBefore].
+     */
+    private fun isPreprocessorContext(textBefore: String, prefix: String): Boolean {
+        val beforePrefix = textBefore.dropLast(prefix.length)
+        return beforePrefix.endsWith('&')
+    }
+
+    private fun addPreprocessorCompletions(prefix: String, result: CompletionResultSet) {
+        val upper = prefix.uppercase()
+        PREPROCESSOR_DIRECTIVES.forEach { directive ->
+            if (directive.startsWith(upper, ignoreCase = true)) {
+                result.addElement(
+                    LookupElementBuilder.create(directive)
+                        .withTypeText("preprocessor", true)
+                        .withIcon(AllIcons.Nodes.Tag)
+                        .bold()
+                )
+            }
+        }
+    }
+
+    companion object {
+        private val PREPROCESSOR_DIRECTIVES = listOf(
+            "IF", "THEN", "ELSE", "ENDIF",
+            "DEFINE", "UNDEFINE",
+            "SCOPED-DEFINE", "GLOBAL-DEFINE",
+            "MESSAGE",
+            "ANALYZED-SUSPEND", "ANALYZED-RESUME",
+            "SKIP", "SPACE",
+            "XCODE", "XTRANSLATE"
+        )
     }
 
     // ─── Complétion des includes {file.i} ────────────────────────────────────

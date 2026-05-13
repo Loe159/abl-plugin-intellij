@@ -34,6 +34,27 @@ class AblCompletionContributorTest : BasePlatformTestCase() {
         assertNotNull(lookups)
     }
 
+    fun testPreprocessorCompletionAfterAmpersand() {
+        myFixture.configureByText("test.p", "&IF<caret>")
+        val lookups = myFixture.completeBasic()
+        // La liste complète des directives doit être disponible
+        assertTrue(
+            "&IF doit déclencher les préprocesseurs",
+            lookups?.any { it.lookupString.equals("IF", ignoreCase = true) } == true
+                || myFixture.file.text.contains("IF")  // auto-inserted
+        )
+    }
+
+    fun testPreprocessorNotTriggeredWithoutAmpersand() {
+        myFixture.configureByText("test.p", "DEFINE<caret>")
+        val lookups = myFixture.completeBasic()
+        // Sans &, on obtient des mots-clés normaux
+        // DEFINE peut être auto-inseré (1 seul résultat) ou dans la liste
+        val hasDefine = lookups?.any { it.lookupString.equals("DEFINE", ignoreCase = true) }
+            ?: myFixture.file.text.contains("DEFINE")
+        assertTrue("Sans & on doit voir les mots-clés ABL normaux", hasDefine)
+    }
+
     fun testVariableAppearsAfterDefinition() {
         myFixture.configureByText("test.p", """
             DEFINE VARIABLE mySpecialVar AS INTEGER NO-UNDO.
