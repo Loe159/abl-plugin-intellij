@@ -576,7 +576,7 @@ typeInfo?.methods?.forEach { method ->
 | 🔴 | Complétion DB dans le code (noms de tables et champs) | ✅ | `AblCompletionContributor.kt` |
 | 🔴 | Validation des requêtes (champs référencés existent dans le schéma) | ✅ | `AblSchemaValidationInspection.kt` |
 | 🟠 | Enregistrement d'une DataSource ABL dans la fenêtre "Database" d'IntelliJ | 📋 | nouveau |
-| 🟠 | Exploration du schéma : tables, champs, index, séquences | 📋 | nouveau |
+| 🟠 | Exploration du schéma : tables, champs, index, séquences | ✅ | `AblSchemaExplorerPanel.kt` (ToolWindow "ABL Schema") |
 | 🟡 | SQL Console ABL : requêtes `FOR EACH` avec complétion depuis le schéma | 📋 | nouveau |
 | 🟢 | ER Diagram généré depuis le `.df` | 📋 | nouveau |
 | 🟢 | DB Connection live pour inspecter les données réelles | 📋 | nouveau |

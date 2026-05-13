@@ -157,6 +157,9 @@
         <projectService serviceImplementation="com.ablls.plugin.coverage.AblCoverageService"/>
 
         <!-- ── Tool windows ──────────────────────────────────────────────────────────── -->
+        <toolWindow id="ABL Schema" secondary="true" icon="/icons/abl-file.svg"
+                    anchor="right" factoryClass="com.ablls.plugin.db.AblSchemaExplorerFactory"
+                    doNotActivateOnStart="true"/>
         <toolWindow id="ABL XREF" secondary="true" icon="/icons/abl-file.svg"
                     anchor="bottom" factoryClass="com.ablls.plugin.xref.XrefToolWindowFactory"/>
         <toolWindow id="ABL Duplicates" secondary="true" icon="/icons/abl-file.svg"
