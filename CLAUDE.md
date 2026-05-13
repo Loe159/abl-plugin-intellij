@@ -490,7 +490,7 @@ typeInfo?.methods?.forEach { method ->
 | 🔴 | Complétion membres OO (`myObject:<caret>` → méthodes/propriétés) | 📋 | `AblCompletionContributor.kt` |
 | 🔴 | Complétion tables et champs DB (après chargement `.df`) | ✅ | `AblCompletionContributor.kt` |
 | 🟠 | Complétion des paramètres de procédure/fonction | 📋 | `AblCompletionContributor.kt` |
-| 🟠 | Complétion des includes `{<caret>` → fichiers `.i` dans le PROPATH | 📋 | `AblCompletionContributor.kt` |
+| 🟠 | Complétion des includes `{<caret>` → fichiers `.i` dans le PROPATH | ✅ | `AblCompletionContributor.kt` |
 | 🟠 | Complétion des préprocesseurs (`&` → `&IF`, `&DEFINE`, `&SCOPED-DEFINE`…) | 📋 | `AblCompletionContributor.kt` |
 | 🟡 | Postfix completion (`x.message` → `MESSAGE x.`) | 📋 | `AblCompletionContributor.kt` |
 

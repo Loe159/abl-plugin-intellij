@@ -5,12 +5,15 @@ import com.ablls.plugin.core.AblKeywordList
 import com.ablls.plugin.core.AblProjectAnalysisService
 import com.ablls.plugin.core.AblSymbol
 import com.ablls.plugin.language.AblLanguage
+import com.ablls.plugin.project.OpenEdgeProjectService
 import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.components.service
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.util.ProcessingContext
+import java.nio.file.Files
+import java.nio.file.Paths
 import javax.swing.Icon
 
 /**
@@ -58,8 +61,16 @@ private class AblCompletionProvider : CompletionProvider<CompletionParameters>()
             addScopeCompletions(semanticResult.rootScope, prefix, result)
         }
 
-        // ── 1b. Complétion contextuelle Table.Field (dot notation) ───────────────
         val textBefore = file.text.take(parameters.offset)
+
+        // ── 1b. Complétion des includes {<caret>} ─────────────────────────────
+        val includePartial = detectIncludeContext(textBefore, prefix)
+        if (includePartial != null) {
+            addIncludeCompletions(includePartial, project, result)
+            return  // includes uniquement dans ce contexte
+        }
+
+        // ── 1c. Complétion contextuelle Table.Field (dot notation) ────────────
         val dotCandidate = extractTableBeforeDot(textBefore, prefix)
         if (dotCandidate != null) {
             addFieldCompletions(dotCandidate, prefix, service, result)
@@ -92,6 +103,72 @@ private class AblCompletionProvider : CompletionProvider<CompletionParameters>()
             }
         }
 
+    }
+
+    // ─── Complétion des includes {file.i} ────────────────────────────────────
+
+    /**
+     * Si le texte avant le curseur contient un `{` non fermé, retourne le chemin partiel
+     * typé depuis `{` jusqu'au curseur (incluant le [prefix] courant).
+     * Retourne null si on n'est pas dans un contexte d'include.
+     */
+    private fun detectIncludeContext(textBefore: String, prefix: String): String? {
+        val beforePrefix = textBefore.dropLast(prefix.length)
+        val lastOpen  = beforePrefix.lastIndexOf('{')
+        if (lastOpen < 0) return null
+        val lastClose = beforePrefix.lastIndexOf('}')
+        if (lastClose > lastOpen) return null  // le { est déjà fermé
+        // Le chemin partiel = texte entre { et le curseur (sans espaces en tête)
+        return (beforePrefix.substring(lastOpen + 1) + prefix).trimStart()
+    }
+
+    /**
+     * Ajoute les fichiers `.i` disponibles dans le PROPATH dont le chemin relatif
+     * commence par [partialPath]. Chaque suggestion insère le chemin complet + `}`.
+     */
+    private fun addIncludeCompletions(
+        partialPath: String,
+        project: com.intellij.openapi.project.Project,
+        result: CompletionResultSet
+    ) {
+        val config   = project.service<OpenEdgeProjectService>().config
+        val basePath = project.basePath ?: return
+        val dlcPath  = config.dlcPath ?: System.getenv("DLC") ?: ""
+        val customResult = result.withPrefixMatcher(partialPath)
+
+        config.propath.forEach { pathStr ->
+            val resolved = pathStr
+                .replace("\${DLC}", dlcPath)
+                .replace("\$DLC", dlcPath)
+            val dir = try {
+                val p = Paths.get(resolved)
+                if (p.isAbsolute) p else Paths.get(basePath).resolve(p)
+            } catch (_: Exception) { return@forEach }
+            if (!Files.isDirectory(dir)) return@forEach
+
+            try {
+                Files.walk(dir, 5).use { stream ->
+                    stream.filter { f ->
+                        Files.isRegularFile(f) && f.fileName.toString().endsWith(".i")
+                    }.forEach { file ->
+                        val rel = dir.relativize(file).toString().replace('\\', '/')
+                        if (!rel.startsWith(partialPath, ignoreCase = true)) return@forEach
+                        customResult.addElement(
+                            LookupElementBuilder.create(rel)
+                                .withTypeText("include", true)
+                                .withIcon(AllIcons.FileTypes.Any_type)
+                                .withInsertHandler { ctx, _ ->
+                                    // Fermer avec } si pas déjà présent
+                                    if (ctx.document.text.getOrNull(ctx.tailOffset) != '}') {
+                                        ctx.document.insertString(ctx.tailOffset, "}")
+                                        ctx.editor.caretModel.moveToOffset(ctx.tailOffset + 1)
+                                    }
+                                }
+                        )
+                    }
+                }
+            } catch (_: Exception) {}
+        }
     }
 
     // ─── Complétion contextuelle : Table.Field ────────────────────────────────
