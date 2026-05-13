@@ -539,7 +539,7 @@ typeInfo?.methods?.forEach { method ->
 |---|---|---|---|
 | 🟡 | Extract Procedure (sélection → nouvelle `PROCEDURE`) | ✅ | `AblExtractProcedureIntention.kt` |
 | 🟡 | Extract Method (dans une classe ABL) | 📋 | nouveau |
-| 🟡 | Inline Variable | 📋 | nouveau |
+| 🟡 | Inline Variable | ✅ | `AblInlineVariableIntention.kt` |
 | 🟡 | Introduce Variable (`DEFINE VARIABLE` à partir d'une expression) | ✅ | `AblIntroduceVariableIntention.kt` |
 | 🟡 | Change Signature (renommer/réordonner les paramètres) | 📋 | nouveau |
 | 🟡 | Safe Delete (vérifie qu'aucun usage avant de supprimer) | ✅ | `AblSafeDeleteHandler.kt` + `AblRefactoringSupportProvider` |
