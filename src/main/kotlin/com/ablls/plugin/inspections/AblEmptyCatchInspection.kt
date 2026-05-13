@@ -4,6 +4,7 @@ import com.ablls.plugin.core.AblProjectAnalysisService
 import com.ablls.plugin.language.AblLanguage
 import com.intellij.codeInspection.*
 import com.intellij.openapi.components.service
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
@@ -51,10 +52,47 @@ class AblEmptyCatchInspection : LocalInspectionTool() {
                             file,
                             "Empty CATCH block silently swallows exceptions — add error handling or logging",
                             ProblemHighlightType.WARNING,
-                            range
+                            range,
+                            AddCatchLoggingFix(catchNode.line),
+                            AddCatchRethrowFix(catchNode.line)
                         )
                     }
                 }
             }
         }
+}
+
+// ─── Quick fixes ──────────────────────────────────────────────────────────────
+
+/** Insère MESSAGE e:GetMessage(1). dans le bloc CATCH vide. */
+private class AddCatchLoggingFix(private val catchLine: Int) : LocalQuickFix {
+    override fun getFamilyName() = "Add error logging (MESSAGE e:GetMessage(1))"
+
+    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+        val file  = descriptor.psiElement as? PsiFile ?: return
+        val doc   = PsiDocumentManager.getInstance(project).getDocument(file) ?: return
+        insertAfterCatchColon(doc, catchLine, "    MESSAGE e:GetMessage(1) VIEW-AS ALERT-BOX.")
+    }
+}
+
+/** Insère UNDO, THROW e. dans le bloc CATCH vide (re-throw). */
+private class AddCatchRethrowFix(private val catchLine: Int) : LocalQuickFix {
+    override fun getFamilyName() = "Re-throw error (UNDO, THROW e.)"
+
+    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+        val file = descriptor.psiElement as? PsiFile ?: return
+        val doc  = PsiDocumentManager.getInstance(project).getDocument(file) ?: return
+        insertAfterCatchColon(doc, catchLine, "    UNDO, THROW e.")
+    }
+}
+
+/** Insère [text] sur une nouvelle ligne après la ligne de début du CATCH (la ligne avec le ':'). */
+private fun insertAfterCatchColon(
+    doc: com.intellij.openapi.editor.Document,
+    catchLine: Int,
+    text: String
+) {
+    val line = (catchLine - 1).coerceIn(0, doc.lineCount - 1)
+    val lineEnd = if (line + 1 < doc.lineCount) doc.getLineStartOffset(line + 1) else doc.textLength
+    doc.insertString(lineEnd, "$text\n")
 }
