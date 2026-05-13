@@ -271,6 +271,12 @@
             language="ABL"
             implementationClass="com.ablls.plugin.highlight.AblFormattingModelBuilder"/>
 
+        <!-- ── Code Style Settings (Settings → Editor → Code Style → OpenEdge ABL) ── -->
+        <codeStyleSettingsProvider
+            implementation="com.ablls.plugin.highlight.AblCodeStyleSettingsProvider"/>
+        <langCodeStyleSettingsProvider
+            implementation="com.ablls.plugin.highlight.AblLanguageCodeStyleSettingsProvider"/>
+
         <!-- ── Breadcrumb navigation ────────────────────────────────────────── -->
         <breadcrumbsInfoProvider
             implementation="com.ablls.plugin.navigation.AblBreadcrumbProvider"/>
