@@ -1040,7 +1040,7 @@ des nœuds composites (via `PsiBuilder` + markers pour PROCEDURE/CLASS/DO blocks
 | Go to Related | `AblGotoRelatedProvider.kt` | ✅ `gotoRelatedProvider` | — | ✅ OK |
 | Super class (Ctrl+U) | `AblSuperClassNavigator.kt` | ✅ `codeInsight.gotoSuper` | ⚠️ scan textuel INHERITS | 🟡 |
 | Overriding Methods | `AblOverridingMethodsProvider.kt` | ✅ `codeInsight.lineMarkerProvider` | ❌ index textuel | 🟡 Faux positifs possibles |
-| Breadcrumbs | `AblBreadcrumbProvider.kt` | ✅ `breadcrumbsInfoProvider` | ❌ | 🟡 `getParent()` → null (PSI plat) |
+| Breadcrumbs | `AblBreadcrumbProvider.kt` | ✅ `breadcrumbsInfoProvider` | ❌ | ✅ `getParent()` text-based (scan siblings, stack blocs) |
 | Find Usages | `AblFindUsagesProvider.kt` + `AblReferenceContributor.kt` | ✅ `lang.findUsagesProvider` + `psi.referenceContributor` | ✅ `AblSymbolReference.isReferenceTo()` via RSSW scope | ✅ Sémantique |
 
 ### Bloc 5 — Inspections
