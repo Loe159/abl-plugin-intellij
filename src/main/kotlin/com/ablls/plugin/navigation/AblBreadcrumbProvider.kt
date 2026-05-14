@@ -10,53 +10,88 @@ import com.intellij.icons.AllIcons
 /**
  * Breadcrumb provider ABL — affiche le chemin contextuel en haut de l'éditeur.
  *
- * Exemple : MyClass > constructor > DO block
+ * Exemple : CLASS Foo > METHOD bar > DO
  *
  * Comme le PSI ABL est plat (tokens feuilles directement sous AblFile),
- * le chemin est reconstruit depuis le texte source autour de l'offset courant
- * en remontant les mots-clés de bloc ouvrant les plus proches.
+ * [getParent] reconstruit le chemin en scannant les siblings avant l'élément
+ * et en simulant une stack de blocs ouvrants/fermants.
+ *
+ * Précision : "END PROCEDURE" est correctement traité comme fermeture, pas comme
+ * un nouveau bloc PROCEDURE — via tracking du token précédent.
  */
 class AblBreadcrumbProvider : BreadcrumbsProvider {
+
+    companion object {
+        private val BLOCK_OPENERS = setOf("PROCEDURE", "FUNCTION", "CLASS", "METHOD", "DO", "REPEAT")
+        private val NAMED_OPENERS = setOf("PROCEDURE", "FUNCTION", "CLASS", "METHOD")
+    }
 
     override fun getLanguages(): Array<out Language> = arrayOf(AblLanguage)
 
     override fun getElementInfo(element: PsiElement): String {
-        val text = element.text.trim()
-        return when {
-            text.uppercase().startsWith("PROCEDURE ") -> "PROCEDURE " + text.substringAfter(" ").substringBefore(":")
-            text.uppercase().startsWith("FUNCTION ")  -> "FUNCTION "  + text.substringAfter(" ").substringBefore(" ")
-            text.uppercase().startsWith("CLASS ")     -> "CLASS "     + text.substringAfter(" ").substringBefore(":")
-            text.uppercase().startsWith("METHOD ")    -> "METHOD "    + text.substringAfterLast(" ").substringBefore("(")
-            text.uppercase().startsWith("DO")         -> "DO"
-            text.uppercase().startsWith("IF ")        -> "IF"
-            else -> text.take(20)
+        val upper = element.text.trim().uppercase()
+        return if (upper in NAMED_OPENERS) {
+            val nameTok = nextRealSibling(element)
+            val name = nameTok?.text?.trim() ?: ""
+            if (name.isNotEmpty() && name[0].isLetter()) "$upper $name" else upper
+        } else {
+            upper
         }
     }
 
-    override fun getElementIcon(element: PsiElement): Icon? {
-        val text = element.text.trim().uppercase()
-        return when {
-            text.startsWith("PROCEDURE") -> AllIcons.Nodes.Method
-            text.startsWith("FUNCTION")  -> AllIcons.Nodes.Function
-            text.startsWith("CLASS")     -> AllIcons.Nodes.Class
-            text.startsWith("METHOD")    -> AllIcons.Nodes.Method
-            else -> null
-        }
+    override fun getElementIcon(element: PsiElement): Icon? = when (element.text.trim().uppercase()) {
+        "PROCEDURE" -> AllIcons.Nodes.Method
+        "FUNCTION"  -> AllIcons.Nodes.Function
+        "CLASS"     -> AllIcons.Nodes.Class
+        "METHOD"    -> AllIcons.Nodes.Method
+        else        -> null
     }
 
     override fun isShownByDefault(): Boolean = true
 
-    override fun getParent(element: PsiElement): PsiElement? {
-        // Avec un PSI plat, les breadcrumbs ne peuvent pas remonter les nœuds parents
-        // (tous sont des enfants directs de AblFile). Retourne null pour ne pas boucler.
-        return null
-    }
-
     override fun acceptElement(element: PsiElement): Boolean {
         if (element.language != AblLanguage) return false
-        val text = element.text.trim().uppercase()
-        return text.startsWith("PROCEDURE") || text.startsWith("FUNCTION") ||
-               text.startsWith("CLASS") || text.startsWith("METHOD") ||
-               text.startsWith("DO") || text.startsWith("IF ")
+        return element.text.trim().uppercase() in BLOCK_OPENERS
+    }
+
+    /**
+     * Scan siblings before [element] to find the nearest enclosing block opener.
+     *
+     * Simulates a block stack: block keywords push, END pops.
+     * prevUpper tracking ensures "END PROCEDURE/CLASS/..." qualifiers are not re-pushed.
+     */
+    override fun getParent(element: PsiElement): PsiElement? {
+        val file = element.containingFile ?: return null
+        val elementOffset = element.textOffset
+        val stack = ArrayDeque<PsiElement>()
+        var prevUpper = ""
+        var sibling = file.firstChild
+
+        while (sibling != null && sibling.textOffset < elementOffset) {
+            val text = sibling.text?.trim() ?: ""
+            if (text.isNotEmpty()) {
+                val upper = text.uppercase()
+                when {
+                    upper == "END" -> {
+                        if (stack.isNotEmpty()) stack.removeLast()
+                        prevUpper = "END"
+                    }
+                    upper in BLOCK_OPENERS && prevUpper != "END" -> {
+                        stack.addLast(sibling)
+                        prevUpper = upper
+                    }
+                    else -> prevUpper = upper
+                }
+            }
+            sibling = sibling.nextSibling
+        }
+
+        return stack.lastOrNull()
+    }
+
+    private fun nextRealSibling(element: PsiElement): PsiElement? {
+        var s = element.nextSibling
+        while (s != null && s.text.isBlank()) s = s.nextSibling
+        return s
     }
 }
