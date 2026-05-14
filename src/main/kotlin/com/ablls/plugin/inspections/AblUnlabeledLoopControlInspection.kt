@@ -40,11 +40,13 @@ class AblUnlabeledLoopControlInspection : LocalInspectionTool() {
                 for (node in topNode.query(ABLNodeType.LEAVE, ABLNodeType.NEXT)) {
                     if (node.getStatement().hasProparseDirective("NOANALYSIS")) continue
 
-                    // Vérifier si le LEAVE/NEXT porte une étiquette (nextSibling est un ID)
-                    val nextSib = node.nextSibling
-                    val hasLabel = nextSib != null &&
-                        nextSib.nodeType != ABLNodeType.PERIOD &&
-                        nextSib.text?.let { !it.isBlank() && !it.equals(".", ignoreCase = false) } == true
+                    // Vérifier si le LEAVE/NEXT porte une étiquette.
+                    // Dans le JPNode tree, le label est le firstChild du nœud LEAVE/NEXT
+                    // (ex : LEAVE outerLoop. → LEAVE[ID "outerLoop"]).
+                    val firstChild = node.firstChild
+                    val hasLabel = firstChild != null &&
+                        firstChild.nodeType != ABLNodeType.PERIOD &&
+                        firstChild.text?.let { !it.isBlank() && !it.equals(".") } == true
 
                     if (hasLabel) continue  // étiquette présente, pas de problème
 

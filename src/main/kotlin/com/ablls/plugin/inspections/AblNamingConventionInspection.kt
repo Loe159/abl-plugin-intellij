@@ -4,11 +4,12 @@ import com.ablls.plugin.core.AblProjectAnalysisService
 import com.ablls.plugin.language.AblLanguage
 import com.intellij.codeInspection.*
 import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.Document
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
-import org.prorefactor.core.ABLNodeType
 import org.prorefactor.core.JPNode
+import org.prorefactor.treeparser.TreeParserSymbolScope
 
 /**
  * Inspection : convention de nommage des variables ABL.
@@ -16,18 +17,18 @@ import org.prorefactor.core.JPNode
  * Signale les variables DEFINE VARIABLE dont le nom ne respecte pas les
  * préfixes conventionnels ABL (Hungarian notation) :
  *   l / b    → LOGICAL (booléen)
- *   i        → INTEGER
- *   c        → CHARACTER
- *   d        → DECIMAL / DATE
- *   dt       → DATETIME / DATETIME-TZ
+ *   i        → INTEGER / INT64
+ *   c        → CHARACTER / LONGCHAR
+ *   d        → DECIMAL / DATE / DATETIME
  *   h        → HANDLE
- *   o        → objet (classe)
- *   tt       → TEMP-TABLE (pour les buffers)
+ *   r / ri   → RAW / RECID / ROWID
  *
- * Les paramètres et les variables commençant par `_` (convention privée)
- * sont toujours ignorés. Les variables d'itération simples (i, j, k…) également.
+ * Les paramètres, les variables commençant par `_`, les variables mono-lettre
+ * (i, j, k…) et les globales (g_*, gi*, gc*…) sont ignorés.
  *
- * Niveau : WEAK_WARNING (information uniquement, car les conventions varient).
+ * Utilise TreeParserSymbolScope pour les types résolus et la position exacte du nom.
+ *
+ * Niveau : WEAK_WARNING (désactivé par défaut — les conventions varient par équipe).
  */
 class AblNamingConventionInspection : LocalInspectionTool() {
 
@@ -41,46 +42,58 @@ class AblNamingConventionInspection : LocalInspectionTool() {
                 if (file.language != AblLanguage) return
                 val uri     = file.virtualFile?.url ?: return
                 val service = file.project.service<AblProjectAnalysisService>()
-                val result  = service.analyzeFile(file.text, uri)
-                val topNode = result.topNode ?: return
                 val doc     = PsiDocumentManager.getInstance(file.project).getDocument(file) ?: return
 
-                for (defNode in topNode.queryStateHead(ABLNodeType.DEFINE)) {
-                    if (defNode.hasProparseDirective("NOANALYSIS")) continue
+                val semantic = try {
+                    service.analyzeFileSemantic(file.text, uri)
+                } catch (_: Exception) { null }
+                val scope = semantic?.rootScope ?: return
 
-                    // Chercher le nœud VARIABLE (ou VAR) dans le statement DEFINE
-                    val varNode  = defNode.query(ABLNodeType.VARIABLE).firstOrNull() ?: continue
-                    val nameNode = findNameAfterVariable(varNode) ?: continue
-                    val name     = nameNode.text?.takeIf { it.isNotBlank() } ?: continue
-
-                    // Ignorer les conventions spéciales
-                    if (name.startsWith("_")) continue
-                    if (name.length == 1) continue  // variables mono-lettre (i, j, k…)
-                    if (name.startsWith("g_") || name.startsWith("gi") || name.startsWith("gc") ||
-                        name.startsWith("gl") || name.startsWith("gd") || name.startsWith("gh")) continue  // globales
-
-                    // Détecter le type de données (rechercher le nœud AS TYPE)
-                    val dataType = extractDataType(defNode)?.uppercase() ?: continue
-
-                    val expectedPrefix = EXPECTED_PREFIXES[dataType] ?: continue  // type non conventionné
-                    val hasGoodPrefix  = expectedPrefix.any { name.startsWith(it, ignoreCase = true) }
-
-                    if (!hasGoodPrefix) {
-                        val suggestedPrefix = expectedPrefix.first()
-                        val range = AblInspectionHelper.toRange(doc, nameNode.line, nameNode.column, name.length)
-                        holder.registerProblem(
-                            file,
-                            "Variable '$name' of type $dataType should start with '$suggestedPrefix' (convention: ${expectedPrefix.joinToString("/") { "'$it'" }})",
-                            ProblemHighlightType.WEAK_WARNING,
-                            range
-                        )
-                    }
-                }
+                checkScope(scope, holder, file, doc)
             }
         }
 
+    private fun checkScope(
+        scope: TreeParserSymbolScope,
+        holder: ProblemsHolder,
+        file: PsiFile,
+        doc: Document
+    ) {
+        for (variable in runCatching { scope.variables }.getOrNull() ?: emptyList()) {
+            val name = variable.name.takeIf { it.isNotBlank() } ?: continue
+            if (variable.javaClass.simpleName.contains("Parameter", ignoreCase = true)) continue
+            if (name.startsWith("_")) continue
+            if (name.length == 1) continue
+            if (GLOBAL_PREFIXES.any { name.startsWith(it, ignoreCase = true) }) continue
+
+            val dataType = variable.dataType?.toString()?.uppercase() ?: continue
+            val expectedPrefix = EXPECTED_PREFIXES[dataType] ?: continue
+
+            val hasGoodPrefix = expectedPrefix.any { name.startsWith(it, ignoreCase = true) }
+            if (hasGoodPrefix) continue
+
+            val defNode: JPNode? = runCatching { variable.getDefineNode() }.getOrNull()
+            val defLine = defNode?.token?.line ?: continue
+            if (defLine <= 0) continue
+            val defCol = defNode.token?.charPositionInLine ?: 0
+
+            val suggestedPrefix = expectedPrefix.first()
+            val range = AblInspectionHelper.toRange(doc, defLine, defCol, name.length)
+            holder.registerProblem(
+                file,
+                "Variable '$name' of type $dataType should start with '$suggestedPrefix' " +
+                    "(convention: ${expectedPrefix.joinToString("/") { "'$it'" }})",
+                ProblemHighlightType.WEAK_WARNING,
+                range
+            )
+        }
+
+        for (child in runCatching { scope.childScopes }.getOrNull() ?: emptyList()) {
+            checkScope(child, holder, file, doc)
+        }
+    }
+
     companion object {
-        // Type ABL → liste de préfixes acceptés (premier = préfixe recommandé)
         private val EXPECTED_PREFIXES: Map<String, List<String>> = mapOf(
             "INTEGER"      to listOf("i", "n"),
             "INT64"        to listOf("i", "n"),
@@ -97,25 +110,6 @@ class AblNamingConventionInspection : LocalInspectionTool() {
             "ROWID"        to listOf("ri"),
         )
 
-        private fun findNameAfterVariable(varNode: JPNode): JPNode? {
-            // Le nom de la variable est le premier enfant du nœud VARIABLE
-            return varNode.firstChild
-        }
-
-        private fun extractDataType(defNode: JPNode): String? {
-            // Chercher le nœud AS puis le token de type
-            var node = defNode.firstChild
-            var foundAs = false
-            while (node != null) {
-                if (!foundAs && node.nodeType == ABLNodeType.AS) {
-                    foundAs = true
-                } else if (foundAs) {
-                    val txt = node.text?.uppercase() ?: ""
-                    if (txt.isNotBlank() && txt != ".") return txt
-                }
-                node = node.nextSibling
-            }
-            return null
-        }
+        private val GLOBAL_PREFIXES = listOf("g_", "gi", "gc", "gl", "gd", "gh")
     }
 }
