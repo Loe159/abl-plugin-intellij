@@ -303,6 +303,9 @@
             language="ABL"
             implementationClass="com.ablls.plugin.highlight.AblSpellcheckingStrategy"/>
 
+        <spellchecker.bundledDictionaryProvider
+            implementation="com.ablls.plugin.highlight.AblBundledDictionaryProvider"/>
+
         <!-- ── Overriding Methods Gutter ───────────────────────────────────── -->
         <codeInsight.lineMarkerProvider
             language="ABL"
