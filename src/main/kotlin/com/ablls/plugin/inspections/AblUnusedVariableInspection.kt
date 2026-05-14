@@ -4,25 +4,33 @@ import com.ablls.plugin.core.AblProjectAnalysisService
 import com.ablls.plugin.language.AblLanguage
 import com.intellij.codeInspection.*
 import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
+import org.antlr.v4.runtime.CommonTokenStream
 import org.antlr.v4.runtime.Token
+import org.prorefactor.core.JPNode
 import org.prorefactor.treeparser.TreeParserSymbolScope
 
 /**
- * Inspection : variable DEFINE VARIABLE définie mais jamais lue.
+ * Inspection : variable DEFINE VARIABLE définie mais jamais utilisée.
  *
- * Utilise l'analyse sémantique complète (ParseUnit.treeParser01) pour obtenir
- * les informations de lecture/écriture depuis le TreeParserSymbolScope.
- * Fallback sur le comptage textuel si la sémantique n'est pas disponible.
+ * Algorithme : pour chaque variable du TreeParserSymbolScope, on compte ses occurrences
+ * dans le flux de tokens (case-insensitive, default channel) en dehors de sa ligne de
+ * définition. Si le compte est 0, la variable est signalée.
+ *
+ * Les paramètres de procédure/fonction sont exclus (OUTPUT = valeur retournée au caller).
+ * Les variables préfixées par "_" sont ignorées par convention.
+ *
+ * Fallback textuel si l'analyse sémantique n'est pas disponible.
  */
 class AblUnusedVariableInspection : LocalInspectionTool() {
 
     override fun getDisplayName()      = "Variable defined but never read"
     override fun getShortName()        = "AblUnusedVariable"
-    override fun getGroupDisplayName() = "ABL Best Practices"
+    override fun getGroupDisplayName() = "OpenEdge ABL"
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
         object : PsiElementVisitor() {
@@ -32,49 +40,55 @@ class AblUnusedVariableInspection : LocalInspectionTool() {
                 val service = file.project.service<AblProjectAnalysisService>()
                 val doc     = PsiDocumentManager.getInstance(file.project).getDocument(file) ?: return
 
-                // Tenter l'analyse sémantique (bloquant — inspectons sont sur background thread)
+                val parseResult = service.analyzeFile(file.text, uri)
+                val tokens      = parseResult.tokens ?: return
+
                 val semantic = try {
                     service.analyzeFileSemantic(file.text, uri)
                 } catch (_: Exception) { null }
 
                 val scope = semantic?.rootScope
                 if (scope != null) {
-                    checkScope(scope, holder, file, doc, service, uri)
+                    checkScope(scope, tokens, holder, file, doc)
                 } else {
-                    // Fallback : comptage textuel depuis l'arbre syntaxique
-                    checkFallback(service, file, holder, doc, uri)
+                    checkFallback(tokens, holder, file, doc)
                 }
             }
         }
 
+    // ─── Chemin sémantique ────────────────────────────────────────────────────
+
     private fun checkScope(
         scope: TreeParserSymbolScope,
+        tokens: CommonTokenStream,
         holder: ProblemsHolder,
         file: PsiFile,
-        doc: com.intellij.openapi.editor.Document,
-        service: AblProjectAnalysisService,
-        uri: String
+        doc: Document
     ) {
-        collectVariablesFromScope(scope).forEach { (name, defLine, defCol) ->
-            if (name.startsWith("_")) return@forEach  // convention : variables privées ignorées
+        for (variable in runCatching { scope.variables }.getOrNull() ?: emptyList()) {
+            val name = variable.name.takeIf { it.isNotBlank() } ?: continue
+            if (name.startsWith("_")) continue
+            if (isParameter(variable)) continue
 
-            // Utiliser le token stream pour compter les occurrences hors définition
-            val parseResult = service.analyzeFile(file.text, uri)
-            val tokens = parseResult.tokens ?: return@forEach
-            var readCount = 0
-            var defIndex  = -1
+            val defNode: JPNode? = runCatching {
+                variable.javaClass.getMethod("getDefineNode").invoke(variable) as? JPNode
+            }.getOrNull()
+            val defLine = defNode?.token?.line ?: continue
+            if (defLine <= 0) continue
 
+            var defOccurrences   = 0
+            var otherOccurrences = 0
             val size = tokens.size()
             for (i in 0 until size) {
                 val t = tokens.get(i)
                 if (t.channel != Token.DEFAULT_CHANNEL) continue
-                if (t.text?.equals(name, ignoreCase = true) != true) continue
-                if (defIndex == -1 && t.line == defLine) { defIndex = i; continue }
-                readCount++
+                if (!t.text.equals(name, ignoreCase = true)) continue
+                if (t.line == defLine) defOccurrences++ else otherOccurrences++
             }
 
-            if (readCount == 0 && defLine > 0) {
-                val range = AblInspectionHelper.toRange(doc, defLine, defCol, name.length)
+            if (otherOccurrences == 0 && defOccurrences >= 1) {
+                val col   = defNode.token?.charPositionInLine ?: 0
+                val range = AblInspectionHelper.toRange(doc, defLine, col, name.length)
                 holder.registerProblem(
                     file,
                     "Variable '$name' is defined but never read",
@@ -84,80 +98,81 @@ class AblUnusedVariableInspection : LocalInspectionTool() {
                 )
             }
         }
+
+        for (child in runCatching { scope.childScopes }.getOrNull() ?: emptyList()) {
+            checkScope(child, tokens, holder, file, doc)
+        }
     }
+
+    /** Retourne true si [variable] est un paramètre (OUTPUT est valeur de retour pour l'appelant). */
+    private fun isParameter(variable: Any): Boolean =
+        variable.javaClass.simpleName.contains("Parameter", ignoreCase = true)
+
+    // ─── Fallback textuel ─────────────────────────────────────────────────────
 
     /**
-     * Collecte (name, defineLine, defineCol) depuis le scope et ses enfants.
+     * Utilisé quand treeParser01() a échoué ou n'a pas encore tourné.
+     * Détecte les DEFINE VARIABLE dans le flux de tokens et compte les occurrences.
      */
-    private fun collectVariablesFromScope(scope: TreeParserSymbolScope): List<Triple<String, Int, Int>> {
-        val result = mutableListOf<Triple<String, Int, Int>>()
-        try {
-            for (variable in scope.variables) {
-                // Ignorer les paramètres (OUTPUT-only est légitime)
-                if (variable.javaClass.simpleName == "Parameter") continue
-                val defNode = runCatching {
-                    variable.javaClass.getMethod("getDefineNode").invoke(variable)
-                        as? org.prorefactor.core.JPNode
-                }.getOrNull()
-                val line = defNode?.token?.line ?: 0
-                val col  = defNode?.token?.charPositionInLine ?: 0
-                result += Triple(variable.name, line, col)
-            }
-            for (child in scope.childScopes) {
-                result += collectVariablesFromScope(child)
-            }
-        } catch (_: Exception) {}
-        return result
-    }
-
-    /** Fallback quand la sémantique n'est pas disponible : simple comptage textuel. */
     private fun checkFallback(
-        service: AblProjectAnalysisService,
-        file: PsiFile,
+        tokens: CommonTokenStream,
         holder: ProblemsHolder,
-        doc: com.intellij.openapi.editor.Document,
-        uri: String
+        file: PsiFile,
+        doc: Document
     ) {
-        val parseResult = service.analyzeFile(file.text, uri)
-        val tokens = parseResult.tokens ?: return
-        val size   = tokens.size()
+        val size = tokens.size()
+        var i = 0
+        while (i < size) {
+            val t = tokens.get(i)
+            if (t.channel != Token.DEFAULT_CHANNEL || !t.text.equals("DEFINE", ignoreCase = true)) {
+                i++; continue
+            }
 
-        // Trouver les DEFINE VARIABLE
-        for (i in 0 until size - 2) {
-            val t1 = tokens.get(i)
-            val t2 = tokens.get(i + 1)
-            if (t1.channel != Token.DEFAULT_CHANNEL) continue
-            if (!t1.text.equals("DEFINE", ignoreCase = true) && !t1.text.equals("DEF", ignoreCase = true)) continue
-
-            // Sauter les espaces
+            // Chercher VARIABLE après DEFINE (en sautant les tokens hors default channel)
             var j = i + 1
             while (j < size && tokens.get(j).channel != Token.DEFAULT_CHANNEL) j++
-            if (j >= size) continue
-            val keyword = tokens.get(j).text?.uppercase() ?: continue
-            if (keyword != "VARIABLE" && keyword != "VAR") continue
+            if (j >= size || !tokens.get(j).text.equals("VARIABLE", ignoreCase = true)) { i++; continue }
 
-            // Le prochain token du default channel est le nom
+            // Le token suivant est le nom
             j++
             while (j < size && tokens.get(j).channel != Token.DEFAULT_CHANNEL) j++
-            if (j >= size) continue
-            val nameTok = tokens.get(j)
-            val name    = nameTok.text ?: continue
-            if (name.startsWith("_")) continue
+            if (j >= size) { i++; continue }
 
-            // Compter les occurrences hors définition
-            var count = 0
+            val nameTok = tokens.get(j)
+            val name    = nameTok.text
+            if (name == null || name.startsWith("_") || name.uppercase() in ABL_KEYWORDS) { i++; continue }
+
+            // Compter les occurrences hors ligne de définition
+            var defOccurrences   = 0
+            var otherOccurrences = 0
             for (k in 0 until size) {
-                if (k == j) continue
                 val tk = tokens.get(k)
                 if (tk.channel != Token.DEFAULT_CHANNEL) continue
-                if (tk.text?.equals(name, ignoreCase = true) == true) count++
+                if (!tk.text.equals(name, ignoreCase = true)) continue
+                if (tk.line == nameTok.line) defOccurrences++ else otherOccurrences++
             }
-            if (count == 0 && nameTok.line > 0) {
+
+            if (otherOccurrences == 0 && defOccurrences >= 1 && nameTok.line > 0) {
                 val range = AblInspectionHelper.toRange(doc, nameTok.line, nameTok.charPositionInLine, name.length)
-                holder.registerProblem(file, "Variable '$name' is defined but never read", ProblemHighlightType.WARNING, range,
-                    DeleteUnusedVariableFix(nameTok.line))
+                holder.registerProblem(
+                    file,
+                    "Variable '$name' is defined but never read",
+                    ProblemHighlightType.WARNING,
+                    range,
+                    DeleteUnusedVariableFix(nameTok.line)
+                )
             }
+            i++
         }
+    }
+
+    companion object {
+        // Filtre les faux positifs du mode fallback (tokens ABL confondus avec des noms)
+        private val ABL_KEYWORDS = setOf(
+            "AS", "NO-UNDO", "NO", "UNDO", "INTEGER", "CHARACTER", "LOGICAL",
+            "DECIMAL", "DATE", "DATETIME", "INT64", "LONGCHAR", "MEMPTR", "RAW",
+            "RECID", "ROWID", "HANDLE", "WIDGET-HANDLE", "CLASS", "EXTENT"
+        )
     }
 }
 
@@ -171,7 +186,8 @@ private class DeleteUnusedVariableFix(private val defineLine: Int) : LocalQuickF
         val doc  = PsiDocumentManager.getInstance(project).getDocument(file) ?: return
         val line = (defineLine - 1).coerceIn(0, doc.lineCount - 1)
         val lineStart = doc.getLineStartOffset(line)
-        val lineEnd   = if (line + 1 < doc.lineCount) doc.getLineStartOffset(line + 1) else doc.textLength
+        val lineEnd   = if (line + 1 < doc.lineCount) doc.getLineStartOffset(line + 1)
+                        else doc.textLength
         doc.deleteString(lineStart, lineEnd)
     }
 }
