@@ -272,6 +272,9 @@
         <codeInsight.inlayProvider
             language="ABL"
             implementationClass="com.ablls.plugin.hints.AblParameterInlayHintsProvider"/>
+        <codeInsight.inlayProvider
+            language="ABL"
+            implementationClass="com.ablls.plugin.hints.AblReturnValueInlayHintsProvider"/>
 
         <!-- ── Parameter Info (Ctrl+P) ──────────────────────────────────────── -->
         <codeInsight.parameterInfo
