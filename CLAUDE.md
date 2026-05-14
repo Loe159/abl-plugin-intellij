@@ -516,8 +516,8 @@ typeInfo?.methods?.forEach { method ->
 |---|---|---|---|
 | 🟠 | Inlay hints de type sur les variables (`DEFINE VARIABLE x` → hint `: INTEGER`) | ✅ | `AblTypeInlayHintsProvider.kt` |
 | 🟠 | Inlay hints sur les paramètres d'appel (`foo(/* INPUT */ 42, /* OUTPUT */ result)`) | ✅ | `AblParameterInlayHintsProvider.kt` |
-| 🟠 | Inlay hints de valeur de retour | 📋 | nouveau |
-| 🟡 | Code Vision (nombre d'usages au-dessus de chaque déclaration) | 📋 | nouveau |
+| 🟠 | Inlay hints de valeur de retour | ✅ | `AblReturnValueInlayHintsProvider.kt` |
+| 🟡 | Code Vision (nombre d'usages au-dessus de chaque déclaration) | ❌ Non disponible IC | API absente de Community SDK |
 
 ### Analyse et inspections supplémentaires
 
@@ -642,8 +642,8 @@ typeInfo?.methods?.forEach { method ->
 | Priorité | Feature | État | Fichier clé |
 |---|---|---|---|
 | 🟠 | Intention Actions (ampoule jaune) : suggestions contextuelles | ✅ | `AblAddNoUndoToAllIntention.kt`, `AblSurroundDescriptor.kt` |
-| 🟡 | Sticky lines : signature de la procédure courante en haut de l'éditeur | 📋 | nouveau |
-| 🟡 | Rainbow brackets : coloration des blocs `DO/END` imbriqués | 📋 | nouveau |
+| 🟡 | Sticky lines : signature de la procédure courante en haut de l'éditeur | ❌ Non disponible IC | API absente de Community SDK |
+| 🟡 | Rainbow brackets : coloration des blocs `DO/END` imbriqués | ❌ Non disponible IC | API absente de Community SDK |
 | 🟡 | Color Settings avancés : thème sombre/clair bien différencié | 📋 | `AblColorSettingsPage.kt` |
 | 🟢 | Editor tabs : icône distincte par type (`.cls` vs `.p` vs `.i`) | 📋 | `AblIcons.kt` |
 | 🟢 | Scratch files : support ABL dans les fichiers temporaires | 📋 | nouveau |
@@ -1141,6 +1141,12 @@ des nœuds composites (via `PsiBuilder` + markers pour PROCEDURE/CLASS/DO blocks
 | 18 | Bloc 1 | BracketMatcher — ajout de `[` `]` + `LBRACKET`/`RBRACKET` dans lexer | `AblFoldingBuilder.kt`, `AblLexerAdapter.kt`, `AblTokenTypes.kt` |
 | 19 | PSI | `AblAstFactory` + `AblNamedLeafElement` — `PsiNamedElement` sur les IDENTIFIER tokens | nouveau + `plugin.xml` |
 | 20 | Bloc 6 | Migration vers `RenameDialog` natif via `PsiNamedElement` + `handleElementRename()` | `AblIdentifierElement.kt`, `plugin.xml` |
+| 21 | Bloc 4 | `AblBreadcrumbProvider.getParent()` — scan text-based de siblings, stack blocs DO/END | `AblBreadcrumbProvider.kt` |
+| 22 | Docs | `AblBuiltinDocs` — correctif typo "LENGTHs", +130 built-ins (OO, I/O, DB, préprocesseur) | `AblBuiltinDocs.kt` |
+| 23 | UX | Dictionnaire spellchecker ABL embarqué (PROPATH, RECID, LONGCHAR, ROWID…) | `AblBundledDictionaryProvider.kt`, `spellchecker/abl.dic` |
+| 24 | Hints | `AblReturnValueInlayHintsProvider` — type de retour après parenthèse fermante des appels | `AblReturnValueInlayHintsProvider.kt`, `plugin.xml` |
+| 25 | Tests | Tests `AblBreadcrumbProviderTest` (8 cas) + `AblBuiltinDocsTest` (11 cas) | tests |
+| 26 | Templates | +13 live templates (dowhile, fori, output, input, interface, deleteobj, readjson…) | `liveTemplates/abl.xml` |
 
 > Chantiers multi-jours (documentés, non implémentés en session) :
 
