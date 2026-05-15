@@ -127,6 +127,35 @@ object AblTokenTypes {
         ABLNodeType.TRUE, ABLNodeType.FALSE, ABLNodeType.YES, ABLNodeType.NO
     )
 
+    // ─── Types de nœuds composites (blocs structurés) ───────────────────────
+    // Utilisés par AblPsiParser pour créer la hiérarchie PSI.
+
+    @JvmField val PROCEDURE_BLOCK   = AblElementType("PROCEDURE_BLOCK")
+    @JvmField val FUNCTION_BLOCK    = AblElementType("FUNCTION_BLOCK")
+    @JvmField val CLASS_BLOCK       = AblElementType("CLASS_BLOCK")
+    @JvmField val INTERFACE_BLOCK   = AblElementType("INTERFACE_BLOCK")
+    @JvmField val METHOD_BLOCK      = AblElementType("METHOD_BLOCK")
+    @JvmField val CONSTRUCTOR_BLOCK = AblElementType("CONSTRUCTOR_BLOCK")
+    @JvmField val DESTRUCTOR_BLOCK  = AblElementType("DESTRUCTOR_BLOCK")
+    @JvmField val DO_BLOCK          = AblElementType("DO_BLOCK")
+    @JvmField val REPEAT_BLOCK      = AblElementType("REPEAT_BLOCK")
+    @JvmField val FOR_BLOCK         = AblElementType("FOR_BLOCK")
+    @JvmField val CATCH_BLOCK       = AblElementType("CATCH_BLOCK")
+    @JvmField val FINALLY_BLOCK     = AblElementType("FINALLY_BLOCK")
+    @JvmField val CASE_BLOCK        = AblElementType("CASE_BLOCK")
+
+    /** Tous les types de blocs — utilisés par BreadcrumbsProvider et les navigateurs. */
+    val BLOCK_TYPES = setOf(
+        PROCEDURE_BLOCK, FUNCTION_BLOCK, CLASS_BLOCK, INTERFACE_BLOCK,
+        METHOD_BLOCK, CONSTRUCTOR_BLOCK, DESTRUCTOR_BLOCK,
+        DO_BLOCK, REPEAT_BLOCK, FOR_BLOCK, CATCH_BLOCK, FINALLY_BLOCK, CASE_BLOCK
+    )
+
+    /** Blocs dont le nom suit directement le mot-clé (PROCEDURE foo, CLASS Bar…). */
+    val NAMED_BLOCK_TYPES = setOf(
+        PROCEDURE_BLOCK, FUNCTION_BLOCK, CLASS_BLOCK, INTERFACE_BLOCK, METHOD_BLOCK
+    )
+
     fun mapAblNodeType(nodeType: ABLNodeType): IElementType = when {
         nodeType in FLOW_NODES    -> KEYWORD_FLOW
         nodeType in DEF_NODES     -> KEYWORD_DEF

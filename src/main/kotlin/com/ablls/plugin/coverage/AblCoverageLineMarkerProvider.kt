@@ -20,6 +20,7 @@ import com.intellij.psi.PsiElement
 class AblCoverageLineMarkerProvider : LineMarkerProvider {
 
     override fun getLineMarkerInfo(element: PsiElement): LineMarkerInfo<*>? {
+        if (element.firstChild != null) return null  // leaf elements only
         if (element.language != AblLanguage) return null
 
         // Seulement sur les tokens de début de statement (IDENTIFIER, keywords)

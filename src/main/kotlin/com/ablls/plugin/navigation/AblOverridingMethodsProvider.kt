@@ -26,6 +26,7 @@ import com.intellij.psi.PsiElement
 class AblOverridingMethodsProvider : LineMarkerProvider {
 
     override fun getLineMarkerInfo(element: PsiElement): LineMarkerInfo<*>? {
+        if (element.firstChild != null) return null  // leaf elements only
         if (element.language != AblLanguage) return null
         if (element.node?.elementType != AblTokenTypes.KEYWORD) return null
 

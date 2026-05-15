@@ -1,97 +1,86 @@
 package com.ablls.plugin.navigation
 
 import com.ablls.plugin.language.AblLanguage
+import com.ablls.plugin.parser.AblFile
+import com.ablls.plugin.parser.AblTokenTypes
 import com.intellij.lang.Language
-import com.intellij.ui.breadcrumbs.BreadcrumbsProvider
 import com.intellij.psi.PsiElement
-import javax.swing.Icon
-import com.intellij.icons.AllIcons
+import com.intellij.psi.tree.IElementType
+import com.intellij.ui.breadcrumbs.BreadcrumbsProvider
 
 /**
- * Breadcrumb provider ABL — affiche le chemin contextuel en haut de l'éditeur.
+ * Breadcrumb navigation for ABL — powered by the structured PSI tree.
  *
- * Exemple : CLASS Foo > METHOD bar > DO
+ * With composite block nodes (PROCEDURE_BLOCK, DO_BLOCK, …) in the PSI tree,
+ * [getParent] is a simple parent-chain walk instead of a text-based sibling scan.
+ * [acceptElement] accepts composite block nodes only.
  *
- * Comme le PSI ABL est plat (tokens feuilles directement sous AblFile),
- * [getParent] reconstruit le chemin en scannant les siblings avant l'élément
- * et en simulant une stack de blocs ouvrants/fermants.
- *
- * Précision : "END PROCEDURE" est correctement traité comme fermeture, pas comme
- * un nouveau bloc PROCEDURE — via tracking du token précédent.
+ * Breadcrumb chain example for a cursor inside DO inside PROCEDURE:
+ *   PROCEDURE foo > DO
  */
 class AblBreadcrumbProvider : BreadcrumbsProvider {
 
-    companion object {
-        private val BLOCK_OPENERS = setOf("PROCEDURE", "FUNCTION", "CLASS", "METHOD", "DO", "REPEAT")
-        private val NAMED_OPENERS = setOf("PROCEDURE", "FUNCTION", "CLASS", "METHOD")
-    }
+    override fun getLanguages(): Array<Language> = arrayOf(AblLanguage)
 
-    override fun getLanguages(): Array<out Language> = arrayOf(AblLanguage)
+    // ─── acceptElement ────────────────────────────────────────────────────────
 
-    override fun getElementInfo(element: PsiElement): String {
-        val upper = element.text.trim().uppercase()
-        return if (upper in NAMED_OPENERS) {
-            val nameTok = nextRealSibling(element)
-            val name = nameTok?.text?.trim() ?: ""
-            if (name.isNotEmpty() && name[0].isLetter()) "$upper $name" else upper
-        } else {
-            upper
-        }
-    }
+    override fun acceptElement(element: PsiElement): Boolean =
+        element.node.elementType in AblTokenTypes.BLOCK_TYPES
 
-    override fun getElementIcon(element: PsiElement): Icon? = when (element.text.trim().uppercase()) {
-        "PROCEDURE" -> AllIcons.Nodes.Method
-        "FUNCTION"  -> AllIcons.Nodes.Function
-        "CLASS"     -> AllIcons.Nodes.Class
-        "METHOD"    -> AllIcons.Nodes.Method
-        else        -> null
-    }
-
-    override fun isShownByDefault(): Boolean = true
-
-    override fun acceptElement(element: PsiElement): Boolean {
-        if (element.language != AblLanguage) return false
-        return element.text.trim().uppercase() in BLOCK_OPENERS
-    }
+    // ─── getParent ────────────────────────────────────────────────────────────
 
     /**
-     * Scan siblings before [element] to find the nearest enclosing block opener.
-     *
-     * Simulates a block stack: block keywords push, END pops.
-     * prevUpper tracking ensures "END PROCEDURE/CLASS/..." qualifiers are not re-pushed.
+     * Returns the nearest ancestor of [element] that is a block composite node,
+     * or null if [element] is at the top level (direct child of AblFile).
      */
     override fun getParent(element: PsiElement): PsiElement? {
-        val file = element.containingFile ?: return null
-        val elementOffset = element.textOffset
-        val stack = ArrayDeque<PsiElement>()
-        var prevUpper = ""
-        var sibling = file.firstChild
-
-        while (sibling != null && sibling.textOffset < elementOffset) {
-            val text = sibling.text?.trim() ?: ""
-            if (text.isNotEmpty()) {
-                val upper = text.uppercase()
-                when {
-                    upper == "END" -> {
-                        if (stack.isNotEmpty()) stack.removeLast()
-                        prevUpper = "END"
-                    }
-                    upper in BLOCK_OPENERS && prevUpper != "END" -> {
-                        stack.addLast(sibling)
-                        prevUpper = upper
-                    }
-                    else -> prevUpper = upper
-                }
-            }
-            sibling = sibling.nextSibling
+        var current = element.parent
+        while (current != null) {
+            if (current is AblFile) return null
+            if (acceptElement(current)) return current
+            current = current.parent
         }
-
-        return stack.lastOrNull()
+        return null
     }
 
-    private fun nextRealSibling(element: PsiElement): PsiElement? {
-        var s = element.nextSibling
-        while (s != null && s.text.isBlank()) s = s.nextSibling
-        return s
+    // ─── getElementInfo ───────────────────────────────────────────────────────
+
+    /**
+     * Returns a human-readable label for a breadcrumb element.
+     * For named blocks (PROCEDURE/FUNCTION/CLASS/METHOD) includes the identifier name.
+     */
+    override fun getElementInfo(element: PsiElement): String {
+        val type = element.node.elementType
+        val keyword = BLOCK_KEYWORDS[type] ?: return element.text.take(30)
+
+        if (type !in AblTokenTypes.NAMED_BLOCK_TYPES) return keyword
+
+        // Name token is the first non-whitespace child after the opening keyword leaf
+        val keywordLeaf = element.firstChild ?: return keyword
+        var nameCandidate = keywordLeaf.nextSibling
+        while (nameCandidate != null && nameCandidate.text.isBlank()) {
+            nameCandidate = nameCandidate.nextSibling
+        }
+        val name = nameCandidate?.text?.trim()
+            ?.takeIf { it.isNotEmpty() && it[0].isLetter() }
+        return if (name != null) "$keyword $name" else keyword
+    }
+
+    companion object {
+        private val BLOCK_KEYWORDS: Map<IElementType, String> = mapOf(
+            AblTokenTypes.PROCEDURE_BLOCK   to "PROCEDURE",
+            AblTokenTypes.FUNCTION_BLOCK    to "FUNCTION",
+            AblTokenTypes.CLASS_BLOCK       to "CLASS",
+            AblTokenTypes.INTERFACE_BLOCK   to "INTERFACE",
+            AblTokenTypes.METHOD_BLOCK      to "METHOD",
+            AblTokenTypes.CONSTRUCTOR_BLOCK to "CONSTRUCTOR",
+            AblTokenTypes.DESTRUCTOR_BLOCK  to "DESTRUCTOR",
+            AblTokenTypes.DO_BLOCK          to "DO",
+            AblTokenTypes.REPEAT_BLOCK      to "REPEAT",
+            AblTokenTypes.FOR_BLOCK         to "FOR",
+            AblTokenTypes.CATCH_BLOCK       to "CATCH",
+            AblTokenTypes.FINALLY_BLOCK     to "FINALLY",
+            AblTokenTypes.CASE_BLOCK        to "CASE",
+        )
     }
 }

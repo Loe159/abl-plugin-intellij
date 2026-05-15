@@ -22,6 +22,7 @@ import org.antlr.v4.runtime.Token
 class AblTestRunLineMarkerProvider : LineMarkerProvider {
 
     override fun getLineMarkerInfo(element: PsiElement): LineMarkerInfo<*>? {
+        if (element.firstChild != null) return null  // leaf elements only
         if (element.language != AblLanguage) return null
         if (element.node?.elementType != AblTokenTypes.IDENTIFIER) return null
 

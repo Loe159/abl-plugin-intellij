@@ -27,6 +27,7 @@ import com.intellij.psi.PsiFile
 class AblCompileGutterIconProvider : LineMarkerProvider {
 
     override fun getLineMarkerInfo(element: PsiElement): LineMarkerInfo<*>? {
+        if (element.firstChild != null) return null  // leaf elements only
         if (element.language != AblLanguage) return null
         val file = element.containingFile ?: return null
         val vf   = file.virtualFile ?: return null
