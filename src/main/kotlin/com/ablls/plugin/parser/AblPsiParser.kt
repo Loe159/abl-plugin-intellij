@@ -12,6 +12,7 @@ import com.intellij.psi.FileViewProvider
 import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.IElementType
 import com.ablls.plugin.language.AblFileType
+import org.prorefactor.core.ABLNodeType
 
 // ─── Fichier PSI racine ───────────────────────────────────────────────────────
 
@@ -64,13 +65,19 @@ class AblPsiParser : PsiParser, LightPsiParser {
         while (!builder.eof()) {
             val tokenText = builder.tokenText?.trim()?.uppercase() ?: ""
 
+            // Resolve the current token text to an ABLNodeType so abbreviations are handled
+            // (e.g. "PROC" → ABLNodeType.PROCEDURE) — mirrors AblFoldingBuilder's strategy.
+            val ablType = ABLNodeType.getLiteral(tokenText.lowercase())
+
             when {
-                tokenText == "END" -> {
+                ablType == ABLNodeType.END -> {
                     // Consume END, optional qualifier, optional period — inside the current block
                     builder.advanceLexer()
 
-                    val qualText = builder.tokenText?.trim()?.uppercase() ?: ""
-                    if (qualText in END_QUALIFIERS) builder.advanceLexer()
+                    // Use ABLNodeType to recognise abbreviated qualifiers (END PROC. etc.)
+                    val qualRaw = builder.tokenText?.trim()?.lowercase() ?: ""
+                    val qualType = ABLNodeType.getLiteral(qualRaw)
+                    if (qualType != null && qualType in END_QUALIFIER_TYPES) builder.advanceLexer()
 
                     if (builder.tokenType == AblTokenTypes.DOT) builder.advanceLexer()
 
@@ -82,7 +89,7 @@ class AblPsiParser : PsiParser, LightPsiParser {
                 }
 
                 else -> {
-                    val blockType = OPENER_MAP[tokenText]
+                    val blockType = ablType?.let { OPENER_NODE_TYPES[it] }
                     if (blockType != null && hasBlockColon(builder)) {
                         // Open a new block — marker wraps from this keyword to the matching END.
                         val marker = builder.mark()
@@ -127,28 +134,36 @@ class AblPsiParser : PsiParser, LightPsiParser {
     companion object {
         private const val MAX_LOOKAHEAD = 80
 
-        /** Maps block-opener keyword texts (uppercase) to their composite element type. */
-        private val OPENER_MAP: Map<String, IElementType> = mapOf(
-            "PROCEDURE"   to AblTokenTypes.PROCEDURE_BLOCK,
-            "FUNCTION"    to AblTokenTypes.FUNCTION_BLOCK,
-            "CLASS"       to AblTokenTypes.CLASS_BLOCK,
-            "INTERFACE"   to AblTokenTypes.INTERFACE_BLOCK,
-            "METHOD"      to AblTokenTypes.METHOD_BLOCK,
-            "CONSTRUCTOR" to AblTokenTypes.CONSTRUCTOR_BLOCK,
-            "DESTRUCTOR"  to AblTokenTypes.DESTRUCTOR_BLOCK,
-            "DO"          to AblTokenTypes.DO_BLOCK,
-            "REPEAT"      to AblTokenTypes.REPEAT_BLOCK,
-            "FOR"         to AblTokenTypes.FOR_BLOCK,
-            "CATCH"       to AblTokenTypes.CATCH_BLOCK,
-            "FINALLY"     to AblTokenTypes.FINALLY_BLOCK,
-            "CASE"        to AblTokenTypes.CASE_BLOCK,
+        /**
+         * Maps [ABLNodeType] block-opener keywords to their composite PSI element type.
+         * Using ABLNodeType (not raw strings) means abbreviations are handled automatically
+         * via ABLNodeType.getLiteral() in the parse loop (e.g. "PROC" → PROCEDURE_BLOCK).
+         */
+        private val OPENER_NODE_TYPES: Map<ABLNodeType, IElementType> = mapOf(
+            ABLNodeType.PROCEDURE   to AblTokenTypes.PROCEDURE_BLOCK,
+            ABLNodeType.FUNCTION    to AblTokenTypes.FUNCTION_BLOCK,
+            ABLNodeType.CLASS       to AblTokenTypes.CLASS_BLOCK,
+            ABLNodeType.INTERFACE   to AblTokenTypes.INTERFACE_BLOCK,
+            ABLNodeType.METHOD      to AblTokenTypes.METHOD_BLOCK,
+            ABLNodeType.CONSTRUCTOR to AblTokenTypes.CONSTRUCTOR_BLOCK,
+            ABLNodeType.DESTRUCTOR  to AblTokenTypes.DESTRUCTOR_BLOCK,
+            ABLNodeType.DO          to AblTokenTypes.DO_BLOCK,
+            ABLNodeType.REPEAT      to AblTokenTypes.REPEAT_BLOCK,
+            ABLNodeType.FOR         to AblTokenTypes.FOR_BLOCK,
+            ABLNodeType.CATCH       to AblTokenTypes.CATCH_BLOCK,
+            ABLNodeType.FINALLY     to AblTokenTypes.FINALLY_BLOCK,
+            ABLNodeType.CASE        to AblTokenTypes.CASE_BLOCK,
         )
 
-        /** Qualifier keywords that can follow END (consumed as part of the END clause). */
-        private val END_QUALIFIERS: Set<String> = setOf(
-            "PROCEDURE", "FUNCTION", "CLASS", "INTERFACE",
-            "METHOD", "CONSTRUCTOR", "DESTRUCTOR",
-            "CATCH", "FINALLY", "CASE"
+        /**
+         * ABLNodeType qualifier keywords that can follow END (END PROCEDURE, END CLASS…).
+         * Using ABLNodeType mirrors AblFoldingBuilder.END_QUALIFIER_TYPES and handles
+         * abbreviated forms (END PROC. etc.) via ABLNodeType.getLiteral().
+         */
+        private val END_QUALIFIER_TYPES: Set<ABLNodeType> = java.util.EnumSet.of(
+            ABLNodeType.PROCEDURE, ABLNodeType.FUNCTION, ABLNodeType.CLASS, ABLNodeType.INTERFACE,
+            ABLNodeType.METHOD, ABLNodeType.CONSTRUCTOR, ABLNodeType.DESTRUCTOR,
+            ABLNodeType.CATCH, ABLNodeType.FINALLY, ABLNodeType.CASE
         )
     }
 }
