@@ -194,16 +194,18 @@
         <toolWindow id="ABL Duplicates" secondary="true" icon="/icons/abl-file.svg"
                     anchor="bottom" factoryClass="com.ablls.plugin.duplication.AblDuplicatesToolWindowFactory"/>
 
+        <!-- ── SDK OpenEdge ABL (File → Project Structure → SDKs) ──────────────── -->
+        <sdkType implementation="com.ablls.plugin.project.OpenEdgeSdkType"/>
+
         <!-- ── Debug ──────────────────────────────────────────────────────────────────────── -->
-        <configurationType implementation="com.ablls.plugin.debug.AblDebugConfigurationType"/>
         <xdebugger.breakpointType implementation="com.ablls.plugin.debug.AblLineBreakpointType"/>
 
         <!-- ── Program runners ─────────────────────────────────────────────────────────── -->
         <!--
-             AblProgramRunner gère deux cas :
-               1. "ABL Program" + Debug (si debugPort > 0)  → launch OE -debugport + auto-attach
-               2. "ABL Remote Debug" + Debug                → attach à un OE déjà démarré
-             Le mode Run simple est géré par DefaultProgramRunner (CommandLineState).
+             AblProgramRunner gère le bouton Debug sur n'importe quel fichier .p/.w :
+             spawn _progres.exe avec un bootstrap qui attend la connexion IntelliJ,
+             puis le debugger XDebug pilote OE via le protocole reverse-engineerd
+             (cf. AblDebugConnection). Le mode Run simple reste géré par DefaultProgramRunner.
         -->
         <programRunner implementation="com.ablls.plugin.run.AblProgramRunner"/>
 

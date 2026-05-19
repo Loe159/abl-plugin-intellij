@@ -3,32 +3,38 @@ package com.ablls.plugin.debug
 import com.ablls.plugin.language.AblFileType
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.xdebugger.XDebuggerUtil
+import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties
 import com.intellij.xdebugger.breakpoints.XBreakpointType
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import com.intellij.xdebugger.frame.XCompositeNode
+import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XNamedValue
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
+import com.intellij.xdebugger.frame.XValueChildrenList
 import com.intellij.xdebugger.frame.XValueNode
 import com.intellij.xdebugger.frame.XValuePlace
 
-// ─── Type de point d'arrêt ────────────────────────────────────────────────────
+// ─── Type de breakpoint ───────────────────────────────────────────────────────
 
 class AblLineBreakpointType
     : XLineBreakpointType<XBreakpointProperties<*>>("abl-line", "ABL Line Breakpoints") {
 
     override fun canPutAt(file: VirtualFile, line: Int, project: Project): Boolean =
-        file.extension?.lowercase() in listOf("p", "cls", "w", "i")
+        file.extension?.lowercase() in setOf("p", "cls", "w", "i")
 
     override fun createBreakpointProperties(file: VirtualFile, line: Int): XBreakpointProperties<*>? = null
 }
 
-// ─── Handler de points d'arrêt ────────────────────────────────────────────────
+// ─── Handler de breakpoints ───────────────────────────────────────────────────
 
 @Suppress("UNCHECKED_CAST")
 class AblBreakpointHandler(private val conn: AblDebugConnection)
@@ -37,64 +43,130 @@ class AblBreakpointHandler(private val conn: AblDebugConnection)
     ) {
 
     override fun registerBreakpoint(breakpoint: XLineBreakpoint<*>) {
-        conn.setBreakpoint(normalizeFilePath(breakpoint.fileUrl), breakpoint.line + 1)
+        conn.setBreakpoint(normalize(breakpoint.fileUrl), breakpoint.line + 1)
     }
 
     override fun unregisterBreakpoint(breakpoint: XLineBreakpoint<*>, temporary: Boolean) {
-        conn.clearBreakpoint(normalizeFilePath(breakpoint.fileUrl), breakpoint.line + 1)
+        conn.clearBreakpoint(normalize(breakpoint.fileUrl), breakpoint.line + 1)
     }
 
-    /**
-     * Convertit une URL VFS (file:///C:/path/to/file.p) en chemin natif OE.
-     * Sur Windows, OE attend un backslash ou slash selon la version.
-     */
-    private fun normalizeFilePath(fileUrl: String): String =
+    private fun normalize(fileUrl: String): String =
         fileUrl
             .removePrefix("file:///")
             .removePrefix("file://")
             .removePrefix("file:/")
-            // Sur Windows, OE accepte les deux séparateurs ; on garde le slash
             .replace('\\', '/')
 }
 
-// ─── Fournisseur d'éditeur (nécessaire pour XDebugProcess) ───────────────────
+// ─── Éditeur d'expression (Evaluate Expression — Alt+F8) ─────────────────────
 
 class AblDebugEditorsProvider : XDebuggerEditorsProvider() {
     override fun getFileType(): FileType = AblFileType.INSTANCE
 }
 
-// ─── Stack frame ──────────────────────────────────────────────────────────────
-
-class AblStackFrame(
-    private val sourcePosition: com.intellij.xdebugger.XSourcePosition?
-) : XStackFrame() {
-    override fun getSourcePosition() = sourcePosition
-    override fun computeChildren(node: XCompositeNode) { node.setAlreadySorted(true) }
-}
-
 // ─── Valeur de variable ───────────────────────────────────────────────────────
 
 class AblValue(
-    name: String,
-    private val value: String,
-    private val type: String
-) : XNamedValue(name) {
+    private val variable: OeVariable,
+    private val conn: AblDebugConnection? = null,
+) : XNamedValue(variable.name) {
+
     override fun computePresentation(node: XValueNode, place: XValuePlace) {
-        node.setPresentation(null, type, value, false)
+        val isArray = variable.kind == OeVarKind.ARRAY
+        val displayValue = when {
+            isArray                          -> "${variable.type}[]"
+            variable.value == "?"            -> "?"
+            variable.type == "CHARACTER" ||
+            variable.type == "LONGCHAR"      -> "\"${variable.value}\""
+            else                             -> variable.value
+        }
+        // hasChildren = true pour les arrays → ▶ cliquable dans le panneau Variables.
+        node.setPresentation(null, variable.type, displayValue, isArray)
+    }
+
+    override fun computeChildren(node: XCompositeNode) {
+        if (variable.kind != OeVarKind.ARRAY || conn == null) {
+            super.computeChildren(node)
+            return
+        }
+        // Récupération asynchrone — GET-ARRAY est bloquant côté connexion (5 s).
+        ApplicationManager.getApplication().executeOnPooledThread {
+            val values = conn.getArray(variable.name, variable.type)
+            val list = XValueChildrenList()
+            values.forEachIndexed { idx, value ->
+                // ABL indexe à partir de 1.
+                val element = OeVariable(
+                    name  = "[${idx + 1}]",
+                    type  = variable.type,
+                    value = value,
+                    kind  = OeVarKind.VARIABLE,
+                )
+                list.add(AblValue(element, conn))
+            }
+            node.addChildren(list, true)
+        }
+    }
+}
+
+// ─── Stack frame ──────────────────────────────────────────────────────────────
+
+class AblStackFrame(
+    private val frame: OeStackFrame,
+    private val conn:  AblDebugConnection,
+    private val project: Project,
+) : XStackFrame() {
+
+    private val sourcePos: XSourcePosition? by lazy {
+        resolveFile(frame.file, project)?.let { vf ->
+            XDebuggerUtil.getInstance().createPosition(vf, frame.line - 1)
+        }
+    }
+
+    override fun getSourcePosition(): XSourcePosition? = sourcePos
+
+    override fun computeChildren(node: XCompositeNode) {
+        // Scope unique "Local" — parameters + variables (suivant vscode-abl).
+        val list = XValueChildrenList()
+
+        for (p in conn.listParameters()) list.add(AblValue(p, conn))
+        for (v in conn.listVariables())  list.add(AblValue(v, conn))
+
+        node.addChildren(list, true)
+    }
+
+    override fun toString(): String =
+        if (frame.file != null) "${frame.function} — ${frame.file}:${frame.line}"
+        else "${frame.function}:${frame.line}"
+}
+
+// ─── Pile d'exécution ─────────────────────────────────────────────────────────
+
+class AblExecutionStack(
+    private val frames: List<AblStackFrame>
+) : XExecutionStack("ABL") {
+
+    override fun getTopFrame(): XStackFrame? = frames.firstOrNull()
+
+    override fun computeStackFrames(firstFrameIndex: Int, container: XStackFrameContainer) {
+        val sub = if (firstFrameIndex < frames.size) frames.subList(firstFrameIndex, frames.size) else emptyList()
+        container.addStackFrames(sub, true)
     }
 }
 
 // ─── Contexte de suspension ───────────────────────────────────────────────────
 
 class AblSuspendContext(
-    private val position: com.intellij.xdebugger.XSourcePosition?
+    private val stack: AblExecutionStack
 ) : XSuspendContext() {
+    override fun getActiveExecutionStack(): XExecutionStack = stack
+}
 
-    override fun getActiveExecutionStack(): com.intellij.xdebugger.frame.XExecutionStack? =
-        object : com.intellij.xdebugger.frame.XExecutionStack("ABL") {
-            override fun getTopFrame() = AblStackFrame(position)
-            override fun computeStackFrames(firstFrameIndex: Int, container: XStackFrameContainer) {
-                container.addStackFrames(listOf(AblStackFrame(position)), true)
-            }
-        }
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+internal fun resolveFile(filePath: String?, project: Project): VirtualFile? {
+    if (filePath.isNullOrBlank()) return null
+    val lfs = LocalFileSystem.getInstance()
+    return lfs.findFileByPath(filePath)
+        ?: lfs.findFileByPath(filePath.replace('\\', '/'))
+        ?: project.basePath?.let { lfs.findFileByPath("$it/$filePath") }
 }

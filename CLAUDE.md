@@ -134,10 +134,9 @@ src/main/kotlin/com/ablls/plugin/
 │   └── LoadCoverageAction.kt
 │
 ├── debug/
-│   ├── AblDebugConfigurationType.kt
-│   ├── AblDebugConnection.kt
-│   ├── AblDebugProcess.kt
-│   └── AblDebugSupport.kt
+│   ├── AblDebugConnection.kt        Protocole TCP vers OE (closed source, reverse-engineerd)
+│   ├── AblDebugProcess.kt           Pont XDebugProcess ↔ AblDebugConnection
+│   └── AblDebugSupport.kt           Breakpoint type, stack frame, value handling
 │
 ├── duplication/
 │   ├── AblDuplicationDetector.kt
@@ -202,144 +201,6 @@ Ne jamais appeler `ParseUnit`, `ABLLexer` ou `Proparse` en dehors de `AblParserF
 
 ---
 
-### Niveau 1 — Parsing syntaxique (`AblParserFacade.parse`)
-
-Produit un AST ANTLR4 + liste d'erreurs. Rapide, pas de résolution de symboles.
-
-```kotlin
-val ablLexer = ABLLexer(session, charset, bytes, uri, false)
-val lex = Lexer(ablLexer, bytes, uri)
-val postLexer = PostLexer(ablLexer, lex)
-val tokenList = TokenList(postLexer)
-val tokens = CommonTokenStream(tokenList)
-val parser = Proparse(tokens)
-parser.initialize(session, null)
-val tree: Proparse.ProgramContext = parser.program()
-```
-
-Produit :
-- `Proparse.ProgramContext` — arbre ANTLR4 visitable avec `ProparseBaseVisitor`
-- `CommonTokenStream` — accès aux tokens du hidden channel (commentaires, whitespace)
-
----
-
-### Niveau 2 — Analyse sémantique (`AblParserFacade.analyze`)
-
-Résout les symboles, types et références. Plus lent — toujours en background thread.
-
-```kotlin
-val pu = object : ParseUnit(content, uri, session) {}
-pu.parse()
-pu.treeParser01()   // ← résout symboles, types, références croisées
-val scope: TreeParserSymbolScope = pu.getRootScope()
-val topNode: JPNode = pu.getTopNode()
-```
-
-Produit :
-- `TreeParserSymbolScope` — scope racine avec toutes les déclarations
-- `JPNode` — arbre sémantique avec `JPNode.getSymbol()` résolu
-
----
-
-### APIs `TreeParserSymbolScope`
-
-```kotlin
-scope.variables          // List<Variable>              — toutes les variables définies
-scope.routines           // List<Routine>               — procédures, fonctions, méthodes
-scope.childScopes        // List<TreeParserSymbolScope> — sous-scopes (corps de proc...)
-scope.getBufferList()    // Collection<TableBuffer>     — buffers table définis
-```
-
----
-
-### APIs `Variable` (`org.prorefactor.treeparser.symbols.Variable`)
-
-```kotlin
-variable.name
-variable.dataType                   // DataType enum : INTEGER, CHARACTER, LOGICAL...
-variable.getDefineNode()            // JPNode → position dans le source
-variable.getDefineNode().token.line // ligne (1-based → convertir en 0-based pour IntelliJ)
-variable.getDefineNode().token.charPositionInLine
-```
-
----
-
-### APIs `Routine` (`org.prorefactor.treeparser.symbols.Routine`)
-
-```kotlin
-routine.name
-routine.ideSignature                // "PROCEDURE foo(INPUT x AS INTEGER)" — pour la doc hover
-routine.signature                   // Signature courte
-routine.parameters                  // List<Parameter> avec nom et type
-routine.getDefineNode()             // JPNode → position de définition
-```
-
----
-
-### APIs `JPNode` (`org.prorefactor.core.JPNode`)
-
-```kotlin
-node.token                          // Token ANTLR4 : line (1-based), charPositionInLine, text
-node.getSymbol()                    // Symbol RSSW résolu — null si non référence
-node.firstChild                     // Navigation : firstChild, nextSibling, parent
-node.query(ABLNodeType.DEFINE)      // List<JPNode> — tous les nœuds d'un type dans le sous-arbre
-node.walk(ICallback)                // Traversée complète avec callback
-```
-
----
-
-### Création de `IProparseEnvironment`
-
-```kotlin
-// Minimal (syntaxe seule, pas de résolution d'includes)
-val settings = ProparseSettings("")
-settings.setCustomProversion("12.2.0")
-val env: IProparseEnvironment = object : RefactorSession(settings, Schema()) {}
-
-// Avec PROPATH (résolution d'includes {file.i})
-val settings = ProparseSettings(propath.joinToString(",") { it.toString() })
-val env: IProparseEnvironment = object : RefactorSession(settings, Schema()) {
-    override fun findFile3(fileName: String?): File? =
-        super.findFile3(fileName) ?: dummyFile
-}
-```
-
----
-
-### Chargement du schéma DB (`.df`) — TODO
-
-```kotlin
-// À implémenter dans OpenEdgeProjectService
-val schema = Schema()
-// Lire le .df depuis databases[].schemaFile dans openedge-project.json
-schema.createTable("sports2020", "Customer", listOf("CustNum", "Name", "CreditLimit"))
-val env = RefactorSession(ProparseSettings(propath), schema)
-// Débloque : complétion tables/champs, validation FIND/FOR EACH
-```
-
----
-
-## Architecture des services
-
-### `AblProjectAnalysisService` (project-level, cache central)
-
-```
-Document change
-    → AblProjectAnalysisService.invalidate(file)
-    → on next access : AblParserFacade.parse(file)   [Niveau 1, synchrone ou background]
-    →                  AblParserFacade.analyze(file)  [Niveau 2, toujours background]
-    → résultats cachés par VirtualFile + modificationStamp
-```
-
-### `OpenEdgeProjectService` (project-level)
-
-Lit `openedge-project.json`. Expose :
-- `version` → `ProparseSettings.setCustomProversion()`
-- `dlcPath` + `propath` → `IProparseEnvironment` pour la résolution d'includes
-- `databases[].schemaFile` → **TODO** alimenter `Schema`
-
----
-
 ## Fichier de configuration : `openedge-project.json`
 
 ```json
@@ -370,29 +231,6 @@ La structure de packages existante est **correcte et ne doit pas être réorgani
 La migration est interne : remplacer la logique ABL écrite à la main par les APIs RSSW,
 fichier par fichier.
 
-### 🟢 Migration core/ — TERMINÉE
-
-| Fichier | Action | État |
-|---|---|---|
-| `AblParserFacade.kt` | Seul point d'instanciation `ParseUnit`/`ABLLexer`/`Proparse` | ✅ |
-| `AblParseResult.kt` | Wrapper `ParseUnit` — expose `.topNode`, `.syntaxErrors`, `.queryNodes()` | ✅ |
-| `AblSemanticResult.kt` | Référence directe aux objets RSSW (`JPNode`, `TreeParserSymbolScope`) | ✅ rien à faire |
-| `AblSymbolCollector.kt` | `collectFromScope()` via `TreeParserSymbolScope` ; `AblSymbolVisitor` via `ProparseBaseVisitor` | ✅ |
-| `AblSymbolIndex.kt` | Alimenté depuis `Variable`, `TableBuffer` via `collectFromScope` | ✅ (`ITypeInfo` = TODO OO) |
-| `AblProparseKeywords.kt` | `ABLNodeType.values().filter { it.isKeyword }` | ✅ |
-
-**Décision sur `AblSymbolVisitor` :** il étend `ProparseBaseVisitor` — le visiteur ANTLR4
-**auto-généré par RSSW**. Les contextes typés (`ctx.newIdentifier()`, `ctx.datatype()`) sont
-l'API proparse publique. Ce n'est pas un walk manuel — c'est le chemin synchrone rapide (avant
-`treeParser01`). `collectFromScope()` enrichit les symboles après `treeParser01()`.
-Les deux chemins sont intentionnels et complémentaires.
-
-**Règle absolue :** `AblParserFacade` est le **seul** endroit du codebase qui instancie
-`ParseUnit`, `ABLLexer` ou `Proparse`. Tous les autres fichiers reçoivent `AblParseResult`
-ou `AblSemanticResult`. Ne jamais appeler ces classes directement ailleurs.
-
----
-
 ## État des fonctionnalités
 
 > Consulter ce tableau avant tout développement pour ne pas redévelopper l'existant.
@@ -417,6 +255,7 @@ ou `AblSemanticResult`. Ne jamais appeler ces classes directement ailleurs.
 | Inspection NO-UNDO + Quick Fix | ✅ Opérationnel | `AblNoUndoInspection.kt` |
 | Inspection FIND sans lock | ✅ Opérationnel | `AblFindNoLockInspection.kt` |
 | Run Configuration (.p) | ✅ Opérationnel | `AblRunConfigurationType.kt` |
+| SDK OpenEdge ABL (File → Project Structure → SDKs) | ✅ Opérationnel | `OpenEdgeSdkType.kt` |
 | openedge-project.json | ✅ Opérationnel | `OpenEdgeProjectService.kt` |
 | Find Usages (Alt+F7) | ✅ Scope-aware (TreeParserSymbolScope) | `AblFindUsagesProvider.kt` |
 | Rename (Shift+F6) | ✅ Scope-aware (TreeParserSymbolScope) | `AblRenameHandler.kt` |
@@ -553,19 +392,24 @@ typeInfo?.methods?.forEach { method ->
 
 ### Debugger
 
-> Package `debug/` existant : `AblDebugProcess`, `AblDebugConnection`, `AblDebugConfigurationType`.
+> Package `debug/` : `AblDebugConnection`, `AblDebugProcess`, `AblDebugSupport` (+ ressource `resources/abl/oe-debug-bootstrap.p`).
+> Détails du protocole et du flux dans la section "Debugger ABL — architecture et protocole" plus bas.
 
 | Priorité | Feature | État | Fichier clé |
 |---|---|---|---|
-| 🟠 | Breakpoints : ligne, conditionnel (`WHEN myVar > 0`), exception (`CATCH`) | 📋 | `AblDebugProcess.kt` |
-| 🟠 | Variables watch : affichage des variables locales dans la fenêtre Debugger | 📋 | `AblDebugProcess.kt` |
-| 🟠 | Step Over / Step Into / Step Out complets | 📋 | `AblDebugProcess.kt` |
-| 🟠 | Call Stack avec navigation vers le source | 📋 | `AblDebugProcess.kt` |
-| 🟠 | Attach to process (`-debugReady`) | 📋 | `AblDebugConnection.kt` |
-| 🟠 | Remote debug via socket (AppServer distant) | 📋 | `AblDebugConnection.kt` |
-| 🟡 | Evaluate Expression (expression ABL à la volée pendant le debug) | 📋 | `AblDebugProcess.kt` |
-| 🟡 | Conditional Breakpoints sur les champs de tables (`WHEN Customer.Balance > 1000`) | 📋 | `AblDebugProcess.kt` |
-| 🟢 | Hot Swap (rechargement de code à chaud pendant une session debug) | 📋 | `AblDebugProcess.kt` |
+| 🔴 | Debug du fichier courant (bouton Debug, sans config manuelle) | ✅ | `AblProgramRunner.kt` |
+| 🔴 | Breakpoints ligne | ✅ | `AblDebugSupport.kt` (AblLineBreakpointType) |
+| 🔴 | Step Over / Step Into / Step Out / Resume / Pause | ✅ | `AblDebugProcess.kt` |
+| 🔴 | Call Stack (multi-frames) avec navigation source | ✅ | `AblDebugConnection.parseStack`, `AblStackFrame` |
+| 🔴 | Variables locales + paramètres (mode IO via flèches ←/→/↔) | ✅ | `AblDebugConnection.listVariables/listParameters` |
+| 🟡 | Breakpoints conditionnels (`WHEN myVar > 0`) | 📋 | `AblDebugSupport.kt` |
+| 🟡 | Evaluate Expression (`Alt+F8`) — passe l'expression brute à OE | ✅ (basique) | `AblDebugEvaluator` |
+| 🟡 | Watchpoints (`watch <expr>` + `show watch`) | 📋 | nouveau |
+| 🟡 | Temp-tables / DataSets (récupération + browse) | 📋 | nouveau |
+| 🟡 | Inspection des classes OO (`GET-CLASS-INFO`) | 📋 | nouveau |
+| 🟡 | Inspection des arrays (`GET-ARRAY`) | 📋 | nouveau |
+| 🟠 | Remote Attach (AppServer / process OE existant) | 📋 | nouveau (utiliser `AblDebugConnection.connect()` direct) |
+| 🟢 | Hot Swap | 📋 | impossible côté OE |
 | 🟢 | Memory view : inspection des handles ABL (`WIDGET-HANDLE`, `QUERY-HANDLE`) | 📋 | nouveau |
 
 ### Database / DataSource
@@ -742,217 +586,6 @@ src/test/testData/
 ├── inspections/     ← fichiers avec marqueurs <warning descr="...">
 └── folding/         ← fichiers avec marqueurs <fold text="...">...</fold>
 ```
-
-### 1. Tests lexer
-
-```kotlin
-class AblLexerTest : LexerTestCase() {
-    override fun getDirPath() = "src/test/testData/lexer"
-    override fun createLexer() = AblLexerAdapter()
-
-    fun testSimpleProcedure() = doFileTest("simple_procedure.p")
-    fun testPreprocessorDefine() = doTest("&IF DEFINED(DEBUG) &THEN MESSAGE 'x'. &ENDIF", "")
-}
-```
-
-### 2. Tests parser
-
-```kotlin
-// Premier run avec -Dupdate=true pour générer les .txt attendus, puis committer.
-class AblParserTest : ParsingTestCase("parser/parsing", "p", AblParserDefinition()) {
-    override fun getTestDataPath() = "src/test/testData"
-    override fun includeRanges() = true
-
-    fun testProcedureDefinition() = doTest(true)
-    fun testClassWithInheritance() = doTest(true)
-    fun testSyntaxError() = doTest(false)
-}
-```
-
-### 3. Tests highlighting
-
-```kotlin
-class AblHighlightingTest : BasePlatformTestCase() {
-    override fun getTestDataPath() = "src/test/testData/highlighting"
-
-    // Le fichier contient : <info descr="KEYWORD">DEFINE</info> VARIABLE x ...
-    fun testKeywordHighlighting() = myFixture.testHighlighting(true, false, false, "keywords.p")
-
-    fun testNoKeywordInsideComment() {
-        myFixture.configureByText(AblFileType, "/* DEFINE VARIABLE */")
-        myFixture.checkHighlighting()
-    }
-}
-```
-
-### 4. Tests completion
-
-```kotlin
-class AblCompletionContributorTest : BasePlatformTestCase() {
-
-    fun testKeywordCompletion() {
-        myFixture.configureByText(AblFileType, "DEF<caret>")
-        val lookups = myFixture.completeBasic()
-        assertTrue(lookups?.any { it.lookupString.uppercase() == "DEFINE" } == true)
-    }
-
-    fun testVariableCompletion() {
-        myFixture.configureByText(AblFileType, """
-            DEFINE VARIABLE myVar AS INTEGER NO-UNDO.
-            myV<caret>
-        """.trimIndent())
-        assertTrue(myFixture.completeBasic()?.any { it.lookupString == "myVar" } == true)
-    }
-
-    fun testNoCompletionInComment() {
-        myFixture.configureByText(AblFileType, "/* DEF<caret> */")
-        assertTrue(myFixture.completeBasic().isNullOrEmpty())
-    }
-}
-```
-
-### 5. Tests inspections
-
-Pattern à répliquer pour chacune des 9 inspections :
-
-```kotlin
-class AblNoUndoInspectionTest : BasePlatformTestCase() {
-    override fun setUp() { super.setUp(); myFixture.enableInspections(AblNoUndoInspection()) }
-
-    // NoUndo.p : DEFINE VARIABLE <warning descr="Missing NO-UNDO">x</warning> AS INTEGER.
-    fun testWarningOnMissingNoUndo() = myFixture.testHighlighting("NoUndo.p")
-
-    fun testNoWarningWhenPresent() {
-        myFixture.configureByText(AblFileType, "DEFINE VARIABLE x AS INTEGER NO-UNDO.")
-        myFixture.checkHighlighting()
-    }
-
-    fun testQuickFix() {
-        myFixture.configureByText(AblFileType, "DEFINE VARIABLE <caret>x AS INTEGER.")
-        myFixture.launchAction(myFixture.findSingleIntention("Add NO-UNDO"))
-        myFixture.checkResult("DEFINE VARIABLE x AS INTEGER NO-UNDO.")
-    }
-}
-```
-
-| Test class | Inspection |
-|---|---|
-| `AblNoUndoInspectionTest` | `AblNoUndoInspection` |
-| `AblEmptyCatchInspectionTest` | `AblEmptyCatchInspection` |
-| `AblUnusedVariableInspectionTest` | `AblUnusedVariableInspection` |
-| `AblFindNoLockInspectionTest` | `AblFindNoLockInspection` |
-| `AblNoErrorWithoutCheckInspectionTest` | `AblNoErrorWithoutCheckInspection` |
-| `AblMissingSchemaPrefixInspectionTest` | `AblMissingSchemaPrefixInspection` |
-| `AblFortranOperatorsInspectionTest` | `AblFortranOperatorsInspection` |
-| `AblStringConcatInWhereInspectionTest` | `AblStringConcatInWhereInspection` |
-
-### 6. Tests navigation
-
-```kotlin
-class AblNavigationTest : BasePlatformTestCase() {
-
-    fun testGotoDeclaration() {
-        myFixture.configureByText(AblFileType, """
-            DEFINE VARIABLE myVar AS INTEGER NO-UNDO.
-            MESSAGE myV<caret>ar.
-        """.trimIndent())
-        val targets = GotoDeclarationAction.findAllTargetElements(
-            project, myFixture.editor, myFixture.caretOffset)
-        assertEquals(1, targets.size)
-    }
-
-    fun testFindUsages() {
-        myFixture.configureByText(AblFileType, """
-            DEFINE VARIABLE myVar AS INTEGER NO-UNDO.
-            myVar = 1.
-            MESSAGE myVar.
-        """.trimIndent())
-        val usages = myFixture.findUsages(myFixture.elementAtCaret)
-        assertEquals(2, usages.size)
-    }
-}
-```
-
-### 7. Tests rename
-
-```kotlin
-class AblRenameTest : BasePlatformTestCase() {
-
-    fun testRenameVariable() {
-        myFixture.configureByText(AblFileType, """
-            DEFINE VARIABLE my<caret>Var AS INTEGER NO-UNDO.
-            myVar = 42.
-        """.trimIndent())
-        myFixture.renameElementAtCaret("renamedVar")
-        myFixture.checkResult("""
-            DEFINE VARIABLE renamedVar AS INTEGER NO-UNDO.
-            renamedVar = 42.
-        """.trimIndent())
-    }
-}
-```
-
-### 8. Tests folding
-
-```kotlin
-// Étendre AblFoldingBuilderTest.kt existant
-class AblFoldingBuilderTest : BasePlatformTestCase() {
-    fun testProcedureFolding() = myFixture.testFolding("src/test/testData/folding/procedures.p")
-    fun testClassFolding()     = myFixture.testFolding("src/test/testData/folding/class.cls")
-}
-```
-
-### 9. Tests structure view
-
-```kotlin
-class AblStructureViewTest : BasePlatformTestCase() {
-
-    fun testProceduresAppearInStructure() {
-        myFixture.configureByText(AblFileType, """
-            PROCEDURE foo: END PROCEDURE.
-            PROCEDURE bar: END PROCEDURE.
-        """.trimIndent())
-        myFixture.testStructureView { model ->
-            val names = model.root.children.map { it.presentation.presentableText }
-            assertContainsElements(names, "foo", "bar")
-        }
-    }
-}
-```
-
-### 10. Tests core (JUnit pur, sans plateforme)
-
-```kotlin
-class AblParserFacadeTest {
-    private val facade = AblParserFacade(OpenEdgeProjectSettings.default())
-
-    @Test fun `parse procedure returns top node`() {
-        val result = facade.parseText("PROCEDURE foo: END PROCEDURE.")
-        assertNotNull(result.topNode)
-    }
-
-    @Test fun `syntax error captured without throw`() {
-        val result = facade.parseText("DEFINE VARIABLE x AS .")
-        assertTrue(result.syntaxErrors.isNotEmpty())
-    }
-
-    @Test fun `keyword list covers core ABL keywords`() {
-        val kws = ABLNodeType.values().filter { it.isKeyword() }.map { it.name }
-        assertContainsElements(kws, "DEFINE", "PROCEDURE", "FUNCTION", "CLASS", "IF", "FOR")
-        assertTrue(kws.size > 100)
-    }
-
-    @Test fun `symbol collector finds variables`() {
-        val result = facade.parseText("""
-            DEFINE VARIABLE myVar AS INTEGER NO-UNDO.
-            DEFINE VARIABLE otherVar AS CHARACTER NO-UNDO.
-        """.trimIndent())
-        val names = AblSymbolCollector.collect(result).map { it.name }
-        assertContainsElements(names, "myVar", "otherVar")
-    }
-}
-```
-
 ### Conventions de test
 
 | Convention | Règle |
@@ -1147,6 +780,7 @@ des nœuds composites (via `PsiBuilder` + markers pour PROCEDURE/CLASS/DO blocks
 | 24 | Hints | `AblReturnValueInlayHintsProvider` — type de retour après parenthèse fermante des appels | `AblReturnValueInlayHintsProvider.kt`, `plugin.xml` |
 | 25 | Tests | Tests `AblBreadcrumbProviderTest` (8 cas) + `AblBuiltinDocsTest` (11 cas) | tests |
 | 26 | Templates | +13 live templates (dowhile, fori, output, input, interface, deleteobj, readjson…) | `liveTemplates/abl.xml` |
+| 27 | SDK | `OpenEdgeSdkType` — SDK natif IntelliJ (File → Project Structure → SDKs), `resolveDlc()` priorité SDK | `OpenEdgeSdkType.kt`, `AblRunConfigurationType.kt`, `AblModuleBuilder.kt`, `plugin.xml` |
 
 > Chantiers multi-jours (documentés, non implémentés en session) :
 
@@ -1157,3 +791,105 @@ des nœuds composites (via `PsiBuilder` + markers pour PROCEDURE/CLASS/DO blocks
 | Database via `com.intellij.database` | 5+ jours | Dépend d'IntelliJ **Ultimate** — nécessite dépendance optionnelle (`<depends optional="true">com.intellij.database</depends>`) |
 | Test Runner ABLUnit (SMTestProxy) | 5+ jours | Nécessite protocole de communication avec ABLUnit + `SMTRunnerConsoleProperties` |
 | PSI structuré (non-plat) | 3-5 jours | Débloquerait Find Usages sémantique, Formatter complet, Breadcrumbs réels |
+| Protocole debugger OE réel | ✅ Implémenté | Voir section dédiée ci-dessous. |
+
+---
+
+## Debugger ABL — architecture et protocole
+
+### Vue d'ensemble
+
+Le debugger est **natif** et **transparent** : cliquer sur le bouton Debug d'un fichier
+`.p`/`.w` ouvert dans l'éditeur démarre une session debug — sans configuration manuelle.
+
+Flux complet (4 fichiers) :
+
+```
+AblProgramRunner.kt          orchestre le lancement
+AblDebugConnection.kt        protocole binaire vers OE (closed source, reverse-engineerd)
+AblDebugProcess.kt           pont XDebugProcess ↔ AblDebugConnection
+AblDebugSupport.kt           breakpoint type, stack frame, value handling
++ resources/abl/oe-debug-bootstrap.p   sas READKEY entre OE et IntelliJ
+```
+
+### Lancement (`AblProgramRunner.launch`)
+
+1. Allouer un port libre (≥ 1024 — ports privilégiés rejetés par `-debugReady` sur Windows).
+2. Extraire `oe-debug-bootstrap.p` du JAR vers `$TEMP/abl-debug/`.
+3. Spawn :
+   ```
+   _progres.exe -b -p <bootstrap.p> -debugReady <PORT>
+     ENABLE_OPENEDGE_DEBUGGER=1
+     ABL_DEBUG_PROGRAM=<fichier utilisateur>
+     ABL_DEBUG_PROPATH=<propath depuis openedge-project.json>
+     DLC=<SDK ou config>
+   ```
+4. `AblDebugConnection.connectWithRetry()` — IntelliJ ouvre **deux** sockets vers PORT (retry 15 s).
+5. Session XDebug démarre. IntelliJ propage les breakpoints existants au handler.
+6. `AblDebugProcess.sessionInitialized()` envoie `SETPROP IDE 1` + liste BPs, puis écrit `\r`
+   sur stdin du process → libère le `READKEY` du bootstrap → le programme utilisateur démarre.
+
+### Résolution du DLC
+
+Priorité dans `AblRunState.resolveDlc()` :
+1. Champ "DLC path" de la config Run (si renseigné)
+2. **SDK OpenEdge ABL** configuré dans File → Project Structure → SDKs
+3. `dlcPath` dans `openedge-project.json`
+4. Variable d'environnement `$DLC`
+
+### Protocole OE — closed source, reverse-engineerd
+
+Le protocole binaire d'OE n'est pas documenté par Progress. La référence est
+[vscode-abl](https://github.com/chriscamicas/vscode-abl) (`src/debugAdapter/`),
+qui l'a reverse-engineerd via Wireshark. Confirmé localement avec `tools/oe-debug-proxy.py`.
+
+**Architecture** : OE = serveur (écoute sur `-debugReady PORT`), IntelliJ = client.
+IntelliJ ouvre deux sockets vers le même port :
+- `recvSocket` — premier connect, IntelliJ y lit les événements OE
+- `sendSocket` — second connect,  IntelliJ y écrit les commandes IDE
+
+**Encodage** : messages texte ASCII/UTF-8 terminés par un octet nul `\0`.
+Plusieurs messages peuvent arriver dans un seul paquet TCP.
+
+**Commandes IDE → OE** :
+
+| Commande                            | Effet |
+|---|---|
+| `SETPROP IDE 1`                     | Handshake initial — active le mode debug |
+| `break B;id;E;path;line; ;…`        | Liste complète des breakpoints (renvoyée à chaque modification) |
+| `break;`                            | Efface tous les breakpoints |
+| `cont`                              | Reprend l'exécution |
+| `next`                              | Step Over |
+| `step`                              | Step Into |
+| `step-out`                          | Step Out |
+| `interrupt`                         | Pause |
+| `show stack-ide`                    | Demande la pile (réponse `STACK-IDE`) |
+| `list variables`                    | Demande les variables locales (réponse `MSG_VARIABLES`) |
+| `list parameters`                   | Demande les paramètres (réponse `MSG_PARAMETERS`) |
+| `SETPROP IDE 0`                     | Termine la session debug |
+
+**Événements OE → IDE** :
+
+| Code           | Sens |
+|---|---|
+| `MSG_ENTER`    | OE vient de se suspendre (breakpoint, step, pause). Les BPs sont effacés à chaque entrée dans un nouveau scope — il faut les renvoyer. |
+| `MSG_EXIT`     | OE quitte (programme terminé ou interrompu) |
+| `STACK-IDE`    | Pile d'appels — une frame par ligne, champs sépares par `;`. Indexation : `[4]`=file, `[6]`=function, `[8]`=line. |
+| `MSG_VARIABLES`| Variables locales — `name;type;classType?;?;extent;R|RW;value;` par ligne |
+| `MSG_PARAMETERS`| Paramètres — `INPUT|OUTPUT|INPUT-OUTPUT;name;type;?;?;value;` par ligne |
+| `MSG_LISTING`  | Info BPs / position — ignoré (on récupère la position via `STACK-IDE`) |
+| `MSG_STATUS`, `MSG_INFO` | Informationnels — ignorés |
+
+**Encodage CHARACTER/LONGCHAR** : `\x12<digits>"value"` (DC2 + longueur + value entre quotes).
+Voir `AblDebugConnection.decodeValue()`.
+
+### Points d'attention
+
+- OE clear ses breakpoints à chaque `MSG_ENTER`. `AblDebugConnection.dispatch()` les renvoie
+  automatiquement.
+- `_progres.exe` est le seul binaire à interpréter `-debugReady` correctement. `prowin.exe`
+  le parse caractère par caractère.
+- Le bootstrap `READKEY` est obligatoire : sans ce sas, OE exécuterait le programme avant
+  qu'IntelliJ ait fini son handshake → breakpoints jamais atteints.
+- `tools/oe-debug-proxy.py` permet de capturer le trafic d'une vraie session PDSOE ↔ OE
+  pour valider/étendre le protocole.

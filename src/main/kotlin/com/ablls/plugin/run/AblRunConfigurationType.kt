@@ -3,6 +3,7 @@ package com.ablls.plugin.run
 import com.ablls.plugin.language.AblFileType
 import com.ablls.plugin.language.AblIcons
 import com.ablls.plugin.project.OpenEdgeProjectService
+import com.ablls.plugin.project.resolveOpenEdgeSdkHome
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.*
 import com.intellij.execution.process.OSProcessHandler
@@ -95,15 +96,22 @@ class AblRunConfiguration(
         if (programFile.isBlank())
             throw RuntimeConfigurationError("Program file (.p) is required")
 
-        val resolvedDlc = dlcPath.ifBlank {
-            runCatching {
-                project.service<OpenEdgeProjectService>().config.dlcPath
-            }.getOrNull()
-                ?: System.getenv("DLC")
-        }
+        // Mirror resolveDlc() priority: field → SDK → openedge-project.json → $DLC
+        val resolvedDlc = dlcPath.ifBlank { null }
+            ?: resolveOpenEdgeSdkHome(project)
+            ?: runCatching { project.service<OpenEdgeProjectService>().config.dlcPath }.getOrNull()
+            ?: System.getenv("DLC")
+
         if (resolvedDlc.isNullOrBlank())
             throw RuntimeConfigurationWarning(
-                "DLC path not configured — set it in the run config, in openedge-project.json (\"dlcPath\"), or via \$DLC"
+                "DLC path not configured — set it in File → Project Structure → SDKs (OpenEdge ABL), " +
+                "in the run config, in openedge-project.json (\"dlcPath\"), or via \$DLC"
+            )
+
+        if (debugPort in 1..1023)
+            throw RuntimeConfigurationWarning(
+                "Debug port $debugPort is in the privileged range (< 1024) — it may be blocked on Windows.\n" +
+                "Use 3075 or higher, or leave 0 for automatic port selection."
             )
     }
 }
@@ -118,13 +126,18 @@ class AblRunState(
     /**
      * Résout le chemin DLC selon la priorité :
      *   1. Champ "DLC path" de la config Run (si renseigné)
-     *   2. `dlcPath` dans openedge-project.json (OpenEdgeProjectService)
-     *   3. Variable d'environnement $DLC
+     *   2. SDK OpenEdge configuré dans File → Project Structure → SDKs
+     *   3. `dlcPath` dans openedge-project.json (OpenEdgeProjectService)
+     *   4. Variable d'environnement $DLC
      *
      * Lève [ExecutionException] si aucune source ne fournit le chemin.
      */
     fun resolveDlc(): String {
+        // Priority: Run config field → Project SDK → openedge-project.json → $DLC
         if (config.dlcPath.isNotBlank()) return config.dlcPath
+
+        val fromSdk = resolveOpenEdgeSdkHome(config.project)
+        if (!fromSdk.isNullOrBlank()) return fromSdk
 
         val fromJson = runCatching {
             config.project.service<OpenEdgeProjectService>().config.dlcPath
@@ -138,8 +151,9 @@ class AblRunState(
             "DLC path not found.\n\n" +
             "Set it in one of these places (in order of priority):\n" +
             "  1. Run Configuration → DLC path field\n" +
-            "  2. openedge-project.json → \"dlcPath\": \"C:/Progress/OpenEdge\"\n" +
-            "  3. Environment variable \$DLC"
+            "  2. File → Project Structure → SDKs → Add OpenEdge ABL SDK\n" +
+            "  3. openedge-project.json → \"dlcPath\": \"C:/Progress/OpenEdge\"\n" +
+            "  4. Environment variable \$DLC"
         )
     }
 
@@ -170,16 +184,7 @@ class AblRunState(
 
         // Normaliser le chemin du fichier programme (forward slashes → séparateur natif)
         val programPath = java.io.File(config.programFile).path
-
-        val args = mutableListOf(executable, "-p", programPath)
-        if (config.batchMode) args.add(1, "-b")
-        if (debugPort > 0) {
-            // -debugReady PORT : OE (client) se connecte à IntelliJ (ServerSocket) sur localhost:PORT.
-            // IntelliJ doit écouter AVANT de lancer OE. OE attend GO avant de démarrer l'exécution.
-            args += listOf("-debugReady", debugPort.toString())
-        }
-        if (config.programParam.isNotBlank()) args += listOf("-param", config.programParam)
-
+        val args = buildArgList(executable, programPath, config.batchMode, forDebug, debugPort, config.programParam)
         val workDir = config.workingDirectory.ifBlank { config.project.basePath ?: "." }
         return GeneralCommandLine(args).withWorkDirectory(workDir)
     }
@@ -189,6 +194,42 @@ class AblRunState(
             .createColoredProcessHandler(buildCommandLine())
         ProcessTerminatedListener.attach(handler)
         return handler
+    }
+
+    companion object {
+        /**
+         * Construit la liste d'arguments OE — fonction pure, testable sans IntelliJ.
+         *
+         * Règles :
+         *  - `-b` supprimé en mode debug (incompatible avec `-debugReady` sur certaines versions OE Windows)
+         *  - `-debugReady PORT` ajouté si debugPort > 0
+         *  - `-param` ajouté si programParam non vide
+         */
+        /**
+         * Construit la liste d'arguments OE — fonction pure, testable sans IntelliJ.
+         *
+         * Règles :
+         *  - `-b` présent si batchMode=true, quel que soit le mode (run ou debug).
+         *    Le proxy PDSOE↔OE confirme : `_progres.exe -b -p prog.p -debugReady PORT`.
+         *    Sans `-b`, `_progres.exe` essaie d'ouvrir un terminal interactif et termine
+         *    immédiatement si aucun n'est disponible (cas d'IntelliJ).
+         *  - `-debugReady PORT` ajouté si debugPort > 0
+         *  - `-param` ajouté si programParam non vide
+         */
+        internal fun buildArgList(
+            executable: String,
+            programFile: String,
+            batchMode: Boolean,
+            forDebug: Boolean,
+            debugPort: Int,
+            programParam: String = ""
+        ): List<String> {
+            val args = mutableListOf(executable, "-p", programFile)
+            if (batchMode) args.add(1, "-b")   // requis pour headless, y compris en debug
+            if (debugPort > 0) args += listOf("-debugReady", debugPort.toString())
+            if (programParam.isNotBlank()) args += listOf("-param", programParam)
+            return args
+        }
     }
 }
 
