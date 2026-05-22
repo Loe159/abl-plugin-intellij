@@ -1,0 +1,421 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>ComplexCondition:AblCompletionContributor.kt$AblCompletionProvider$i >= 0 &amp;&amp; (beforePrefix[i].isLetterOrDigit() || beforePrefix[i] == '-' || beforePrefix[i] == '_' || beforePrefix[i] == '.')</ID>
+    <ID>ComplexCondition:AblCompletionContributor.kt$AblCompletionProvider$i >= 0 &amp;&amp; (textBefore[i].isLetterOrDigit() || textBefore[i] == '-' || textBefore[i] == '_')</ID>
+    <ID>ComplexCondition:AblCompletionContributor.kt$AblCompletionProvider$nameStart >= 0 &amp;&amp; (beforeParen[nameStart].isLetterOrDigit() || beforeParen[nameStart] == '-' || beforeParen[nameStart] == '_')</ID>
+    <ID>ComplexCondition:AblFindFirstNoErrorInspection.kt$AblFindFirstNoErrorInspection.AddNoErrorFix$ch == '.' &amp;&amp; (i + 1 >= text.length || text[i + 1].isWhitespace() || text[i + 1] == '/')</ID>
+    <ID>ComplexCondition:AblFindNoLockInspection.kt$AblFindNoLockInspection.AddNoLockFix$text[i] == '.' &amp;&amp; (i + 1 >= text.length || text[i + 1].isWhitespace() || text[i + 1] == '/')</ID>
+    <ID>ComplexCondition:AblLexerAdapter.kt$AblLexerAdapter$i &lt; end &amp;&amp; (buf[i].isLetterOrDigit() || buf[i] == '_' || buf[i] == '-')</ID>
+    <ID>ComplexCondition:AblLexerAdapter.kt$AblLexerAdapter$i &lt; end &amp;&amp; (buf[i].isLetterOrDigit() || buf[i] == '_' || buf[i] == '.')</ID>
+    <ID>ComplexCondition:AblNoUndoInspection.kt$AblNoUndoInspection.AddNoUndoFix$text[i] == '.' &amp;&amp; (i + 1 >= text.length || text[i + 1].isWhitespace() || text[i + 1] == '/')</ID>
+    <ID>ComplexCondition:AblParameterInfoHandler.kt$AblParameterInfoHandler$start > 0 &amp;&amp; (text[start - 1].isLetterOrDigit() || text[start - 1] == '-' || text[start - 1] == '_')</ID>
+    <ID>CyclomaticComplexMethod:AblAddNoUndoToAllIntention.kt$AblAddNoUndoToAllIntention$private fun scanVariableStatement( tokens: org.antlr.v4.runtime.CommonTokenStream, defIdx: Int, size: Int ): Pair&lt;Int, Boolean></ID>
+    <ID>CyclomaticComplexMethod:AblAutoCaseTypedHandler.kt$AblAutoCaseTypedHandler$override fun charTyped(c: Char, project: Project, editor: Editor, file: PsiFile): Result</ID>
+    <ID>CyclomaticComplexMethod:AblCompletionContributor.kt$AblCompletionProvider$private fun addScopeCompletions( scope: org.prorefactor.treeparser.TreeParserSymbolScope, prefix: String, result: CompletionResultSet )</ID>
+    <ID>CyclomaticComplexMethod:AblCoverageLineMarkerProvider.kt$AblCoverageLineMarkerProvider$override fun getLineMarkerInfo(element: PsiElement): LineMarkerInfo&lt;*>?</ID>
+    <ID>CyclomaticComplexMethod:AblDeadCodeInspection.kt$AblDeadCodeInspection$private fun checkScopeForDeadCode( scope: org.prorefactor.treeparser.TreeParserSymbolScope, tokens: org.antlr.v4.runtime.CommonTokenStream, holder: ProblemsHolder, file: PsiFile, doc: com.intellij.openapi.editor.Document )</ID>
+    <ID>CyclomaticComplexMethod:AblDocumentationProvider.kt$AblDocumentationProvider$private fun buildSignature(symbol: AblSymbol): String</ID>
+    <ID>CyclomaticComplexMethod:AblDuplicationDetector.kt$AblDuplicationDetector$fun detect(files: Map&lt;String, AblParseResult>): List&lt;DuplicatePair></ID>
+    <ID>CyclomaticComplexMethod:AblFindUsagesProvider.kt$AblFindUsagesProvider$override fun getType(element: PsiElement): String</ID>
+    <ID>CyclomaticComplexMethod:AblFoldingBuilder.kt$AblFoldingBuilder$private fun detectBlocks(tokens: List&lt;Tok>, descriptors: MutableList&lt;FoldingDescriptor>)</ID>
+    <ID>CyclomaticComplexMethod:AblFormattingModelBuilder.kt$AblRootBlock$private fun computeDepths(tokens: List&lt;ASTNode>): IntArray</ID>
+    <ID>CyclomaticComplexMethod:AblGotoDeclarationHandler.kt$AblGotoDeclarationHandler$override fun getGotoDeclarationTargets( sourceElement: PsiElement?, offset: Int, editor: Editor ): Array&lt;PsiElement>?</ID>
+    <ID>CyclomaticComplexMethod:AblGotoDeclarationHandler.kt$AblGotoDeclarationHandler$private fun findNearestDefinition( scope: TreeParserSymbolScope, word: String, cursorLine: Int ): JPNode?</ID>
+    <ID>CyclomaticComplexMethod:AblGotoRelatedProvider.kt$AblGotoRelatedProvider$override fun getItems(dataContext: DataContext): List&lt;GotoRelatedItem></ID>
+    <ID>CyclomaticComplexMethod:AblIdentifierElement.kt$AblSymbolReference$override fun resolve(): PsiElement?</ID>
+    <ID>CyclomaticComplexMethod:AblIdentifierElement.kt$AblSymbolReference$private fun findNearestDefinition( scope: TreeParserSymbolScope, word: String, cursorLine: Int ): JPNode?</ID>
+    <ID>CyclomaticComplexMethod:AblInlineVariableIntention.kt$AblInlineVariableIntention$override fun invoke(project: Project, editor: Editor?, file: PsiFile?)</ID>
+    <ID>CyclomaticComplexMethod:AblIntegerOverflowInspection.kt$AblIntegerOverflowInspection$private fun checkScope( scope: TreeParserSymbolScope, holder: ProblemsHolder, file: PsiFile, doc: Document )</ID>
+    <ID>CyclomaticComplexMethod:AblLexerAdapter.kt$AblLexerAdapter$private fun matchAt(buf: CharSequence, pos: Int, end: Int): Pair&lt;IElementType, Int></ID>
+    <ID>CyclomaticComplexMethod:AblNamingConventionInspection.kt$AblNamingConventionInspection$private fun checkScope( scope: TreeParserSymbolScope, holder: ProblemsHolder, file: PsiFile, doc: Document )</ID>
+    <ID>CyclomaticComplexMethod:AblOverridingMethodsProvider.kt$AblOverridingMethodsProvider$override fun getLineMarkerInfo(element: PsiElement): LineMarkerInfo&lt;*>?</ID>
+    <ID>CyclomaticComplexMethod:AblParameterInlayHintsProvider.kt$AblParameterInlayHintsProvider$private fun buildHintMap( tokens: org.antlr.v4.runtime.CommonTokenStream, routineParams: Map&lt;String, List&lt;String>>, document: Document ): Map&lt;Int, String></ID>
+    <ID>CyclomaticComplexMethod:AblProfilerParser.kt$AblProfilerParser$private fun parseWithCountsViaRssw(file: File): Map&lt;String, Map&lt;Int, Int>></ID>
+    <ID>CyclomaticComplexMethod:AblProjectAnalysisService.kt$AblProjectAnalysisService$fun buildIndexInBackground()</ID>
+    <ID>CyclomaticComplexMethod:AblPropathExplorerPanel.kt$AblPropathExplorerPanel$fun refresh()</ID>
+    <ID>CyclomaticComplexMethod:AblRenameHandler.kt$AblRenameHandler$internal fun findNearestDef(scope: TreeParserSymbolScope, word: String, line: Int): JPNode?</ID>
+    <ID>CyclomaticComplexMethod:AblRenameHandler.kt$AblRenameHandler$override fun invoke(project: Project, editor: Editor, file: PsiFile, dataContext: DataContext)</ID>
+    <ID>CyclomaticComplexMethod:AblSafeDeleteHandler.kt$AblSafeDeleteAction$override fun actionPerformed(e: com.intellij.openapi.actionSystem.AnActionEvent)</ID>
+    <ID>CyclomaticComplexMethod:AblSymbolCollector.kt$AblSymbolCollector$private fun collectScopeRecursive( scope: TreeParserSymbolScope, uri: String, symbols: MutableList&lt;AblSymbol> )</ID>
+    <ID>CyclomaticComplexMethod:AblSyntaxHighlighter.kt$AblSyntaxHighlighter$override fun getTokenHighlights(tokenType: IElementType): Array&lt;TextAttributesKey></ID>
+    <ID>CyclomaticComplexMethod:AblTypeInlayHintsProvider.kt$AblTypeInlayHintsProvider$override fun getCollectorFor( file: PsiFile, editor: Editor, settings: NoSettings, sink: InlayHintsSink ): InlayHintsCollector?</ID>
+    <ID>CyclomaticComplexMethod:AblUnusedVariableInspection.kt$AblUnusedVariableInspection$private fun checkFallback( tokens: CommonTokenStream, holder: ProblemsHolder, file: PsiFile, doc: Document )</ID>
+    <ID>CyclomaticComplexMethod:AblUnusedVariableInspection.kt$AblUnusedVariableInspection$private fun checkScope( scope: TreeParserSymbolScope, tokens: CommonTokenStream, holder: ProblemsHolder, file: PsiFile, doc: Document )</ID>
+    <ID>CyclomaticComplexMethod:XrefParser.kt$XrefParser$fun parse(file: File): XrefFile</ID>
+    <ID>EmptyElseBlock:AblFormattingModelBuilder.kt$AblRootBlock$if (parenDepth > 0) parenDepth--</ID>
+    <ID>EmptyFunctionBlock:AblModuleBuilder.kt$AblModuleBuilder.&lt;no name provided>${}</ID>
+    <ID>EmptyFunctionBlock:OpenEdgeSdkType.kt$OpenEdgeSdkType${}</ID>
+    <ID>LargeClass:AblBuiltinDocs.kt$AblBuiltinDocs</ID>
+    <ID>LongMethod:AblCompletionContributor.kt$AblCompletionProvider$override fun addCompletions( parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet )</ID>
+    <ID>LongMethod:AblFoldingBuilder.kt$AblFoldingBuilder$private fun detectBlocks(tokens: List&lt;Tok>, descriptors: MutableList&lt;FoldingDescriptor>)</ID>
+    <ID>LongMethod:AblLexerAdapter.kt$AblLexerAdapter$private fun matchAt(buf: CharSequence, pos: Int, end: Int): Pair&lt;IElementType, Int></ID>
+    <ID>LongMethod:AblSafeDeleteHandler.kt$AblSafeDeleteAction$override fun actionPerformed(e: com.intellij.openapi.actionSystem.AnActionEvent)</ID>
+    <ID>LongMethod:AblSymbolCollector.kt$AblSymbolCollector$private fun collectScopeRecursive( scope: TreeParserSymbolScope, uri: String, symbols: MutableList&lt;AblSymbol> )</ID>
+    <ID>LongParameterList:AblCompletionContributor.kt$AblCompletionProvider$( objectName: String, prefix: String, service: com.ablls.plugin.core.AblProjectAnalysisService, uri: String, scope: org.prorefactor.treeparser.TreeParserSymbolScope?, result: CompletionResultSet )</ID>
+    <ID>LongParameterList:AblCompletionContributor.kt$AblCompletionProvider$( procName: String, prefix: String, service: com.ablls.plugin.core.AblProjectAnalysisService, uri: String, scope: org.prorefactor.treeparser.TreeParserSymbolScope?, result: CompletionResultSet )</ID>
+    <ID>LongParameterList:AblRenameHandler.kt$AblRenameHandler$( project: Project, file: PsiFile, oldName: String, newName: String, rootScope: TreeParserSymbolScope, targetDef: JPNode )</ID>
+    <ID>LongParameterList:AblRunConfigurationType.kt$AblRunState.Companion$( executable: String, programFile: String, batchMode: Boolean, forDebug: Boolean, debugPort: Int, programParam: String = "" )</ID>
+    <ID>LoopWithTooManyJumpStatements:AblAddNoUndoToAllIntention.kt$AblAddNoUndoToAllIntention$while</ID>
+    <ID>LoopWithTooManyJumpStatements:AblCognitiveComplexityInspection.kt$AblCognitiveComplexityInspection.&lt;no name provided>$for</ID>
+    <ID>LoopWithTooManyJumpStatements:AblDeadCodeInspection.kt$AblDeadCodeInspection$for</ID>
+    <ID>LoopWithTooManyJumpStatements:AblDuplicationDetector.kt$AblDuplicationDetector$for</ID>
+    <ID>LoopWithTooManyJumpStatements:AblEmptyCatchInspection.kt$AblEmptyCatchInspection.&lt;no name provided>$for</ID>
+    <ID>LoopWithTooManyJumpStatements:AblFindFirstNoErrorInspection.kt$AblFindFirstNoErrorInspection.&lt;no name provided>$for</ID>
+    <ID>LoopWithTooManyJumpStatements:AblFortranOperatorsInspection.kt$AblFortranOperatorsInspection.&lt;no name provided>$for</ID>
+    <ID>LoopWithTooManyJumpStatements:AblGotoRelatedProvider.kt$AblGotoRelatedProvider$for</ID>
+    <ID>LoopWithTooManyJumpStatements:AblIntegerOverflowInspection.kt$AblIntegerOverflowInspection$for</ID>
+    <ID>LoopWithTooManyJumpStatements:AblKeywordList.kt$AblKeywordList$for</ID>
+    <ID>LoopWithTooManyJumpStatements:AblMissingSchemaPrefixInspection.kt$AblMissingSchemaPrefixInspection.&lt;no name provided>$for</ID>
+    <ID>LoopWithTooManyJumpStatements:AblNamingConventionInspection.kt$AblNamingConventionInspection$for</ID>
+    <ID>LoopWithTooManyJumpStatements:AblNoUndoInspection.kt$AblNoUndoInspection.&lt;no name provided>$for</ID>
+    <ID>LoopWithTooManyJumpStatements:AblParameterInlayHintsProvider.kt$AblParameterInlayHintsProvider$for</ID>
+    <ID>LoopWithTooManyJumpStatements:AblParameterInlayHintsProvider.kt$AblParameterInlayHintsProvider$while</ID>
+    <ID>LoopWithTooManyJumpStatements:AblProfilerParser.kt$AblProfilerParser$for</ID>
+    <ID>LoopWithTooManyJumpStatements:AblSchemaValidationInspection.kt$AblSchemaValidationInspection.&lt;no name provided>$while</ID>
+    <ID>LoopWithTooManyJumpStatements:AblTokenNormalizer.kt$AblTokenNormalizer$for</ID>
+    <ID>LoopWithTooManyJumpStatements:AblUnlabeledLoopControlInspection.kt$AblUnlabeledLoopControlInspection.&lt;no name provided>$for</ID>
+    <ID>LoopWithTooManyJumpStatements:AblUnusedVariableInspection.kt$AblUnusedVariableInspection$for</ID>
+    <ID>LoopWithTooManyJumpStatements:AblUnusedVariableInspection.kt$AblUnusedVariableInspection$while</ID>
+    <ID>LoopWithTooManyJumpStatements:XrefParser.kt$XrefParser$for</ID>
+    <ID>MagicNumber:AblAddNoUndoToAllIntention.kt$AblAddNoUndoToAllIntention$3</ID>
+    <ID>MagicNumber:AblAddUsingIntention.kt$AblAddUsingIntention$3</ID>
+    <ID>MagicNumber:AblAnnotator.kt$AblAnnotator$20</ID>
+    <ID>MagicNumber:AblBreadcrumbProvider.kt$AblBreadcrumbProvider$30</ID>
+    <ID>MagicNumber:AblCallHierarchyProvider.kt$AblCallHierarchyBrowser$0.5</ID>
+    <ID>MagicNumber:AblCallHierarchyProvider.kt$AblCallHierarchyBrowser$4</ID>
+    <ID>MagicNumber:AblChangeSignatureIntention.kt$AblChangeSignatureIntention$3</ID>
+    <ID>MagicNumber:AblChangeSignatureIntention.kt$AblChangeSignatureIntention$30</ID>
+    <ID>MagicNumber:AblCodeStyleSettingsProvider.kt$AblLanguageCodeStyleSettingsProvider$4</ID>
+    <ID>MagicNumber:AblCodeStyleSettingsProvider.kt$AblLanguageCodeStyleSettingsProvider$8</ID>
+    <ID>MagicNumber:AblCompilerWarningAnnotator.kt$AblCompilerWarningAnnotator$3</ID>
+    <ID>MagicNumber:AblCompletionContributor.kt$AblCompletionProvider$5</ID>
+    <ID>MagicNumber:AblCoverageService.kt$AblCoverageService$0x90</ID>
+    <ID>MagicNumber:AblCoverageService.kt$AblCoverageService$0x99</ID>
+    <ID>MagicNumber:AblCoverageService.kt$AblCoverageService$0xEE</ID>
+    <ID>MagicNumber:AblCoverageService.kt$AblCoverageService$0xFF</ID>
+    <ID>MagicNumber:AblCoverageService.kt$AblCoverageService$80</ID>
+    <ID>MagicNumber:AblDebugConnection.kt$AblDebugConnection$0x12</ID>
+    <ID>MagicNumber:AblDebugConnection.kt$AblDebugConnection$3</ID>
+    <ID>MagicNumber:AblDebugConnection.kt$AblDebugConnection$4</ID>
+    <ID>MagicNumber:AblDebugConnection.kt$AblDebugConnection$5</ID>
+    <ID>MagicNumber:AblDebugConnection.kt$AblDebugConnection$512</ID>
+    <ID>MagicNumber:AblDebugConnection.kt$AblDebugConnection$6</ID>
+    <ID>MagicNumber:AblDebugConnection.kt$AblDebugConnection$7</ID>
+    <ID>MagicNumber:AblDebugConnection.kt$AblDebugConnection$8</ID>
+    <ID>MagicNumber:AblDuplicationDetector.kt$AblDuplicationDetector$1024</ID>
+    <ID>MagicNumber:AblDuplicationDetector.kt$AblDuplicationDetector$17L</ID>
+    <ID>MagicNumber:AblDuplicationDetector.kt$AblDuplicationDetector$31</ID>
+    <ID>MagicNumber:AblFoldingBuilder.kt$AblFoldingBuilder$50</ID>
+    <ID>MagicNumber:AblFormattingModelBuilder.kt$AblRootBlock$50</ID>
+    <ID>MagicNumber:AblGotoRelatedProvider.kt$AblGotoRelatedProvider$5</ID>
+    <ID>MagicNumber:AblHotSpotAnnotator.kt$AblHotSpotInlayProvider$5</ID>
+    <ID>MagicNumber:AblHotSpotAnnotator.kt$AblHotSpotInlayProvider$50</ID>
+    <ID>MagicNumber:AblInlineVariableIntention.kt$AblInlineVariableIntention$3</ID>
+    <ID>MagicNumber:AblIntegerOverflowInspection.kt$AblIntegerOverflowInspection.ChangeToInt64Fix$4</ID>
+    <ID>MagicNumber:AblMissingSchemaPrefixInspection.kt$AblMissingSchemaPrefixInspection.&lt;no name provided>$3</ID>
+    <ID>MagicNumber:AblNoErrorWithoutCheckInspection.kt$AblNoErrorWithoutCheckInspection.&lt;no name provided>$5</ID>
+    <ID>MagicNumber:AblParserFacade.kt$AblParserFacade$30</ID>
+    <ID>MagicNumber:AblParserFacade.kt$AblParserFacade.CollectingErrorListener$30</ID>
+    <ID>MagicNumber:AblProfilerParser.kt$AblProfilerParser$3</ID>
+    <ID>MagicNumber:AblProfilerViewPanel.kt$AblProfilerViewPanel$5</ID>
+    <ID>MagicNumber:AblProfilerViewPanel.kt$AblProfilerViewPanel.CoverageBarRenderer$0x90</ID>
+    <ID>MagicNumber:AblProfilerViewPanel.kt$AblProfilerViewPanel.CoverageBarRenderer$0xEE</ID>
+    <ID>MagicNumber:AblProgramRunner.kt$AblProgramRunner.Companion$1024</ID>
+    <ID>MagicNumber:AblProgramRunner.kt$AblProgramRunner.Companion$20</ID>
+    <ID>MagicNumber:AblProgramRunner.kt$AblProgramRunner.Companion$3075</ID>
+    <ID>MagicNumber:AblProjectSettingsConfigurable.kt$AblProjectSettingsConfigurable$4</ID>
+    <ID>MagicNumber:AblProjectSettingsConfigurable.kt$AblProjectSettingsConfigurable$8</ID>
+    <ID>MagicNumber:AblPropathExplorerPanel.kt$AblPropathExplorerPanel$200</ID>
+    <ID>MagicNumber:AblPropathExplorerPanel.kt$AblPropathExplorerPanel$3</ID>
+    <ID>MagicNumber:AblRunConfigurationType.kt$AblRunConfiguration$1023</ID>
+    <ID>MagicNumber:AblSymbolCollector.kt$AblSymbolVisitor$5</ID>
+    <ID>MagicNumber:AblTypeHierarchyProvider.kt$AblTypeHierarchyBrowser$0.4</ID>
+    <ID>MagicNumber:AblTypeHierarchyProvider.kt$AblTypeHierarchyBrowser$4</ID>
+    <ID>MagicNumber:DfSchemaParser.kt$DfSchemaParser$3</ID>
+    <ID>MatchingDeclarationName:AblHotSpotAnnotator.kt$AblHotSpotInlayProvider : InlayHintsProvider</ID>
+    <ID>MatchingDeclarationName:AblNewProjectWizard.kt$AblNewProjectWizardStep : AbstractNewProjectWizardStep</ID>
+    <ID>MaxLineLength:AblAnnotator.kt$AblAnnotator$"${errors.size} erreurs syntaxiques (${errors.size - 20} masquées) — vérifiez le PROPATH dans openedge-project.json"</ID>
+    <ID>MaxLineLength:AblAnnotatorIntegrationTest.kt$AblAnnotatorIntegrationTest$`when`(mockAnalysisService.analyzeFile(code, uri)).thenReturn(com.ablls.plugin.core.AblParseResult(null, null, syntaxErrors, uri))</ID>
+    <ID>MaxLineLength:AblAnnotatorIntegrationTest.kt$AblAnnotatorIntegrationTest$val input = annotator.collectInformation(mockPsiFile, mock(com.intellij.openapi.editor.Editor::class.java), false)</ID>
+    <ID>MaxLineLength:AblAnnotatorIntegrationTest.kt$AblAnnotatorIntegrationTest$val mockAnalysisService = mockProject.getService(AblProjectAnalysisService::class.java) as AblProjectAnalysisService</ID>
+    <ID>MaxLineLength:AblBuiltinDocs.kt$AblBuiltinDocs$put("&amp;ANALYZE-SUSPEND", "**&amp;ANALYZE-SUSPEND** / **&amp;ANALYZE-RESUME**\n\nSuspend l'analyse statique (zones générées par AppBuilder).")</ID>
+    <ID>MaxLineLength:AblBuiltinDocs.kt$AblBuiltinDocs$put("AMBIGUOUS", "**AMBIGUOUS** `(record)` → `LOGICAL`\n\n`TRUE` si plusieurs enregistrements correspondent.")</ID>
+    <ID>MaxLineLength:AblBuiltinDocs.kt$AblBuiltinDocs$put("DATETIME-TZ", "**DATETIME-TZ** `(date, ms, tz)` → `DATETIME-TZ`\n\nConstruit une datetime avec fuseau horaire.")</ID>
+    <ID>MaxLineLength:AblBuiltinDocs.kt$AblBuiltinDocs$put("DEFINED", "**DEFINED** `(name)` → `INTEGER`\n\n`0` si non défini, `1` si global, `2` si scoped, `3` si paramètre.")</ID>
+    <ID>MaxLineLength:AblBuiltinDocs.kt$AblBuiltinDocs$put("DYNAMIC-FUNCTION", "**DYNAMIC-FUNCTION** `(name [, args])` → `CHARACTER`\n\nAppelle une fonction ABL dynamiquement.")</ID>
+    <ID>MaxLineLength:AblBuiltinDocs.kt$AblBuiltinDocs$put("ERROR", "**ERROR** → `LOGICAL`\n\nAttribut de `ERROR-STATUS`. `TRUE` si la dernière instruction a levé une erreur.")</ID>
+    <ID>MaxLineLength:AblBuiltinDocs.kt$AblBuiltinDocs$put("ERROR-STATUS", "**ERROR-STATUS** — État d'erreur après `NO-ERROR`.\n\nEx: `ERROR-STATUS:ERROR`, `ERROR-STATUS:GET-MESSAGE(1)`")</ID>
+    <ID>MaxLineLength:AblBuiltinDocs.kt$AblBuiltinDocs$put("FIRST-OF", "**FIRST-OF** `(field)` → `LOGICAL`\n\n`TRUE` pour le premier enregistrement d'un groupe (`BREAK BY`).")</ID>
+    <ID>MaxLineLength:AblBuiltinDocs.kt$AblBuiltinDocs$put("FORMAT", "**FORMAT** `\"fmt\"` — Masque de saisie/affichage. Ex: `FORMAT \"X(30)\"`, `FORMAT \"99/99/9999\"`.")</ID>
+    <ID>MaxLineLength:AblBuiltinDocs.kt$AblBuiltinDocs$put("GET-CLASS", "**GET-CLASS** `(ClassName)` → `Progress.Lang.Class`\n\nObtient le méta-objet d'une classe.")</ID>
+    <ID>MaxLineLength:AblBuiltinDocs.kt$AblBuiltinDocs$put("GETBYTE", "**GETBYTE** `(string, position)` → `INTEGER`\n\nRetourne la valeur d'octet à la position donnée.")</ID>
+    <ID>MaxLineLength:AblBuiltinDocs.kt$AblBuiltinDocs$put("ISO-DATE", "**ISO-DATE** `(date|datetime)` → `CHARACTER`\n\nFormate en ISO 8601. Ex: `\"2026-03-31\"`")</ID>
+    <ID>MaxLineLength:AblBuiltinDocs.kt$AblBuiltinDocs$put("LEFT-TRIM", "**LEFT-TRIM** `(string [, chars])` → `CHARACTER`\n\nSupprime les espaces en **début** de chaîne.")</ID>
+    <ID>MaxLineLength:AblBuiltinDocs.kt$AblBuiltinDocs$put("LOCKED", "**LOCKED** `(record)` → `LOGICAL`\n\n`TRUE` si l'enregistrement est verrouillé par un autre utilisateur.")</ID>
+    <ID>MaxLineLength:AblBuiltinDocs.kt$AblBuiltinDocs$put("MTIME", "**MTIME** `[(date)]` → `INTEGER`\n\nHeure en millisecondes depuis minuit. Sans argument : heure courante.")</ID>
+    <ID>MaxLineLength:AblBuiltinDocs.kt$AblBuiltinDocs$put("NO-ERROR", "**NO-ERROR** — Supprime l'exception sur l'instruction courante. Tester `ERROR-STATUS:ERROR` ensuite.")</ID>
+    <ID>MaxLineLength:AblBuiltinDocs.kt$AblBuiltinDocs$put("NO-UNDO", "**NO-UNDO** — La variable/temp-table n'est pas restaurée lors d'un UNDO (meilleure performance).")</ID>
+    <ID>MaxLineLength:AblBuiltinDocs.kt$AblBuiltinDocs$put("NO-WAIT", "**NO-WAIT** — Retourne immédiatement si l'enregistrement est verrouillé (plutôt que d'attendre).")</ID>
+    <ID>MaxLineLength:AblBuiltinDocs.kt$AblBuiltinDocs$put("NUM-RESULTS", "**NUM-RESULTS** `(queryname)` → `INTEGER`\n\nNombre d'enregistrements de la requête (si disponible).")</ID>
+    <ID>MaxLineLength:AblBuiltinDocs.kt$AblBuiltinDocs$put("RANDOM", "**RANDOM** `(low, high)` → `INTEGER`\n\nNombre entier aléatoire entre `low` et `high` (inclus).")</ID>
+    <ID>MaxLineLength:AblBuiltinDocs.kt$AblBuiltinDocs$put("READ-XML", "**READ-XML** `(schema-type, source [, read-mode [, schema-source [, lang]]])`\n\nLit du XML dans un DATASET ou TEMP-TABLE.")</ID>
+    <ID>MaxLineLength:AblBuiltinDocs.kt$AblBuiltinDocs$put("RETURN-VALUE", "**RETURN-VALUE** → `CHARACTER`\n\nValeur retournée par le dernier `RUN` ou `RETURN \"valeur\"`.")</ID>
+    <ID>MaxLineLength:AblBuiltinDocs.kt$AblBuiltinDocs$put("RIGHT-TRIM", "**RIGHT-TRIM** `(string [, chars])` → `CHARACTER`\n\nSupprime les espaces en **fin** de chaîne.")</ID>
+    <ID>MaxLineLength:AblBuiltinDocs.kt$AblBuiltinDocs$put("SEARCH", "**SEARCH** `(filename)` → `CHARACTER`\n\nRecherche un fichier dans le PROPATH. Retourne `?` si non trouvé.")</ID>
+    <ID>MaxLineLength:AblBuiltinDocs.kt$AblBuiltinDocs$put("UNDO", "**UNDO** `[label] [LEAVE|NEXT|RETURN|RETRY|THROW]`\n\nAnnule les modifications et transfère le contrôle.")</ID>
+    <ID>MaxLineLength:AblBuiltinDocs.kt$AblBuiltinDocs$put("WRITE-XML", "**WRITE-XML** `(schema-type, target [, pretty-print ...])`\n\nSérialise un DATASET ou TEMP-TABLE en XML.")</ID>
+    <ID>MaxLineLength:AblCognitiveComplexityInspection.kt$AblCognitiveComplexityInspection$"$label has cognitive complexity $complexity (threshold: $THRESHOLD) — consider splitting into smaller routines"</ID>
+    <ID>MaxLineLength:AblCompileGutterIconProvider.kt$CompileAblFileAction$"DLC path is not configured.\n\nSet 'dlcPath' in openedge-project.json\nor define the DLC environment variable."</ID>
+    <ID>MaxLineLength:AblCompilerWarningAnnotator.kt$AblCompilerWarningAnnotator$class</ID>
+    <ID>MaxLineLength:AblCompilerWarningAnnotator.kt$AblCompilerWarningAnnotator$val pattern = Regex("""\*\*\s+\S+\s+Warning:\s*\(([^)]+)\).*\(line\s+(\d+)[\s,]+col\s+(\d+)\)""", RegexOption.IGNORE_CASE)</ID>
+    <ID>MaxLineLength:AblCompletionContributor.kt$AblCompletionProvider$.</ID>
+    <ID>MaxLineLength:AblCyclomaticComplexityInspection.kt$AblCyclomaticComplexityInspection.&lt;no name provided>$"$kind has cyclomatic complexity $cc (threshold: $MAX_CC) — consider breaking it into smaller units"</ID>
+    <ID>MaxLineLength:AblDocumentationProviderTest.kt$AblDocumentationProviderTest$assertTrue("Fallback doc must mention variable name or type", doc!!.contains("myVar") || doc.contains("INTEGER"))</ID>
+    <ID>MaxLineLength:AblDuplicatesPanel.kt$AblDuplicatesPanel$val content = runCatching { VfsUtil.loadText(vFile) }.getOrNull() ?: return@iterateChildrenRecursively true</ID>
+    <ID>MaxLineLength:AblFindFirstNoErrorInspection.kt$AblFindFirstNoErrorInspection.&lt;no name provided>$"FIND FIRST/LAST without NO-ERROR throws a fatal error when no record is found — add NO-ERROR and check AVAILABLE"</ID>
+    <ID>MaxLineLength:AblFindFirstNoErrorInspectionTest.kt$AblFindFirstNoErrorInspectionTest$"""&lt;warning descr="FIND FIRST/LAST without NO-ERROR throws a fatal error when no record is found — add NO-ERROR and check AVAILABLE">FIND&lt;/warning> FIRST Customer WHERE Customer.CustNum = 1 NO-LOCK."""</ID>
+    <ID>MaxLineLength:AblFindFirstNoErrorInspectionTest.kt$AblFindFirstNoErrorInspectionTest$"""&lt;warning descr="FIND FIRST/LAST without NO-ERROR throws a fatal error when no record is found — add NO-ERROR and check AVAILABLE">FIND&lt;/warning> LAST Customer WHERE Customer.CustNum = 1 NO-LOCK."""</ID>
+    <ID>MaxLineLength:AblFindNoLockInspection.kt$AblFindNoLockInspection.&lt;no name provided>$val hasLock = findNode.query(ABLNodeType.NOLOCK, ABLNodeType.SHARELOCK, ABLNodeType.EXCLUSIVELOCK).isNotEmpty()</ID>
+    <ID>MaxLineLength:AblFindNoLockInspectionTest.kt$AblFindNoLockInspectionTest$"""&lt;warning descr="Missing lock modifier on FIND (defaults to SHARE-LOCK, which is often dangerous).">FIND&lt;/warning> Customer WHERE Customer.CustNum = 1."""</ID>
+    <ID>MaxLineLength:AblFoldingBuilder.kt$AblFoldingBuilder$FoldingDescriptor(block.openerNode, TextRange(block.startOffset, endPos), null, block.placeholder)</ID>
+    <ID>MaxLineLength:AblFoldingBuilder.kt$AblFoldingBuilder$if</ID>
+    <ID>MaxLineLength:AblFortranOperatorsInspectionTest.kt$AblFortranOperatorsInspectionTest$"""IF x &lt;warning descr="Deprecated Fortran-style operator 'eq' — use '=' instead">EQ&lt;/warning> 5 THEN MESSAGE "yes"."""</ID>
+    <ID>MaxLineLength:AblMissingSchemaPrefixInspection.kt$AblMissingSchemaPrefixInspection.&lt;no name provided>$"Table '$name' referenced without database prefix in multi-db environment$dbHint — use 'dbname.$name'"</ID>
+    <ID>MaxLineLength:AblMissingSchemaPrefixInspectionTest.kt$AblMissingSchemaPrefixInspectionTest$"""{"databases":[{"logicalName":"sports","database":"/data/sports"},{"logicalName":"empdb","database":"/data/empdb"}]}"""</ID>
+    <ID>MaxLineLength:AblNewProjectWizard.kt$AblNewProjectWizardStep$"/* main.p — Point d'entrée du projet ${context.projectName} */\n\nMESSAGE \"Hello from ${context.projectName}!\" VIEW-AS ALERT-BOX.\n"</ID>
+    <ID>MaxLineLength:AblNoErrorWithoutCheckInspection.kt$AblNoErrorWithoutCheckInspection.&lt;no name provided>$"NO-ERROR used without subsequent ERROR-STATUS:ERROR, AVAILABLE or RETURN-VALUE check — errors will be silently ignored"</ID>
+    <ID>MaxLineLength:AblNoErrorWithoutCheckInspection.kt$AblNoErrorWithoutCheckInspection.&lt;no name provided>$val range = AblInspectionHelper.toRange(doc, noErrorNode.line, noErrorNode.column, "NO-ERROR".length)</ID>
+    <ID>MaxLineLength:AblNoUndoInspectionTest.kt$AblNoUndoInspectionTest$"""&lt;warning descr="Missing NO-UNDO modifier on VARIABLE (affects performance)">DEFINE&lt;/warning> VARIABLE iCount AS INTEGER."""</ID>
+    <ID>MaxLineLength:AblParameterInfoHandler.kt$AblParameterInfoHandler$while (start > 0 &amp;&amp; (text[start - 1].isLetterOrDigit() || text[start - 1] == '-' || text[start - 1] == '_')) start--</ID>
+    <ID>MaxLineLength:AblParserFacade.kt$AblParserFacade$// Éviter de spammer les erreurs sur la même ligne si ANTLR a déjà signalé une erreur (ex: lors d'une tentative de récupération)</ID>
+    <ID>MaxLineLength:AblPostfixTemplateProvider.kt$AblPostfixTemplateProvider$AblPostfixTemplate("alert", "MESSAGE expr VIEW-AS ALERT-BOX.", "MESSAGE \$EXPR\$ VIEW-AS ALERT-BOX INFORMATION.\$END\$", this)</ID>
+    <ID>MaxLineLength:AblPostfixTemplateProvider.kt$AblPostfixTemplateProvider$AblPostfixTemplate("if", "IF expr THEN DO: ... END.", "IF \$EXPR\$ THEN DO:\n \$END\$\nEND.", this)</ID>
+    <ID>MaxLineLength:AblPostfixTemplateProvider.kt$AblPostfixTemplateProvider$AblPostfixTemplate("ifnot", "IF NOT expr THEN DO: ... END.", "IF NOT \$EXPR\$ THEN DO:\n \$END\$\nEND.", this)</ID>
+    <ID>MaxLineLength:AblPostfixTemplateProvider.kt$AblPostfixTemplateProvider$AblPostfixTemplate("message", "MESSAGE expr.", "MESSAGE \$EXPR\$.\$END\$", this)</ID>
+    <ID>MaxLineLength:AblPostfixTemplateProvider.kt$AblPostfixTemplateProvider$AblPostfixTemplate("not", "NOT expr", "NOT \$EXPR\$\$END\$", this)</ID>
+    <ID>MaxLineLength:AblPostfixTemplateProvider.kt$AblPostfixTemplateProvider$AblPostfixTemplate("return", "RETURN expr.", "RETURN \$EXPR\$.\$END\$", this)</ID>
+    <ID>MaxLineLength:AblPostfixTemplateProvider.kt$AblPostfixTemplateProvider$AblPostfixTemplate("run", "RUN expr.", "RUN \$EXPR\$.\$END\$", this)</ID>
+    <ID>MaxLineLength:AblProcedureLengthInspection.kt$AblProcedureLengthInspection.&lt;no name provided>$"$kind is $length lines long (threshold: $MAX_LINES) — consider splitting into smaller units"</ID>
+    <ID>MaxLineLength:AblProjectSettingsConfigurable.kt$AblProjectSettingsConfigurable$JOptionPane.showMessageDialog(panel, "Configuration reloaded.", "ABL Project", JOptionPane.INFORMATION_MESSAGE)</ID>
+    <ID>MaxLineLength:AblPropathExplorerPanel.kt$AblPropathExplorerPanel.PropathTreeCellRenderer$NodeKind.DIR_MISSING -> { icon = AllIcons.Nodes.Folder; foreground = java.awt.Color.RED; text = info.label }</ID>
+    <ID>MaxLineLength:AblRenameHandlerTest.kt$AblRenameHandlerTest$assertFalse("Original name must not remain after textual fallback rename", result.contains("myVar", ignoreCase = true))</ID>
+    <ID>MaxLineLength:AblRunStateTest.kt$AblRunStateTest$val args = AblRunState.buildArgList(exe, prog, batchMode = false, forDebug = false, debugPort = 0, programParam = "")</ID>
+    <ID>MaxLineLength:AblRunStateTest.kt$AblRunStateTest$val args = AblRunState.buildArgList(exe, prog, batchMode = false, forDebug = false, debugPort = 0, programParam = "foo")</ID>
+    <ID>MaxLineLength:AblSchemaValidationInspection.kt$AblSchemaValidationInspection.&lt;no name provided>$"Field '$fieldName' not found in table '$tableName' (schema: ${knownTables.size} tables loaded)"</ID>
+    <ID>MaxLineLength:AblStringConcatInWhereInspection.kt$AblStringConcatInWhereInspection.&lt;no name provided>$"String concatenation (+) in WHERE clause disables index usage — evaluate expression before the query"</ID>
+    <ID>MaxLineLength:AblStructureViewFactory.kt$AblFileStructureElement$override fun navigate(requestFocus: Boolean)</ID>
+    <ID>MaxLineLength:AblSymbolCollector.kt$AblSymbolCollector$kind = if (variable.javaClass.simpleName == "Parameter") AblSymbol.Kind.PARAMETER else AblSymbol.Kind.VARIABLE</ID>
+    <ID>MaxLineLength:AblUnusedVariableInspectionTest.kt$AblUnusedVariableInspectionTest$"""DEFINE VARIABLE &lt;warning descr="Variable 'iCount' is defined but never read">iCount&lt;/warning> AS INTEGER NO-UNDO."""</ID>
+    <ID>NestedBlockDepth:AblCompletionContributor.kt$AblCompletionProvider$private fun addIncludeCompletions( partialPath: String, project: com.intellij.openapi.project.Project, result: CompletionResultSet )</ID>
+    <ID>NestedBlockDepth:AblCompletionContributor.kt$AblCompletionProvider$private fun detectRunCallContext(textBefore: String, prefix: String): String?</ID>
+    <ID>NestedBlockDepth:AblFindUsagesProvider.kt$AblFindUsagesProvider$override fun getType(element: PsiElement): String</ID>
+    <ID>NestedBlockDepth:AblFoldingBuilder.kt$AblFoldingBuilder$private fun detectBlocks(tokens: List&lt;Tok>, descriptors: MutableList&lt;FoldingDescriptor>)</ID>
+    <ID>NestedBlockDepth:AblFormattingModelBuilder.kt$AblRootBlock$private fun computeDepths(tokens: List&lt;ASTNode>): IntArray</ID>
+    <ID>NestedBlockDepth:AblGotoDeclarationHandler.kt$AblGotoDeclarationHandler$override fun getGotoDeclarationTargets( sourceElement: PsiElement?, offset: Int, editor: Editor ): Array&lt;PsiElement>?</ID>
+    <ID>NestedBlockDepth:AblParameterInlayHintsProvider.kt$AblParameterInlayHintsProvider$private fun buildHintMap( tokens: org.antlr.v4.runtime.CommonTokenStream, routineParams: Map&lt;String, List&lt;String>>, document: Document ): Map&lt;Int, String></ID>
+    <ID>NestedBlockDepth:AblPropathExplorerPanel.kt$AblPropathExplorerPanel$fun refresh()</ID>
+    <ID>NestedBlockDepth:AblSymbolCollector.kt$AblSymbolCollector$fun collectFromSchema(schema: Schema): List&lt;AblSymbol></ID>
+    <ID>NestedBlockDepth:XrefParser.kt$XrefParser$fun parse(file: File): XrefFile</ID>
+    <ID>ReturnCount:AblAddNoUndoToAllIntention.kt$AblAddNoUndoToAllIntention$override fun invoke(project: Project, editor: Editor?, file: PsiFile?)</ID>
+    <ID>ReturnCount:AblAddNoUndoToAllIntention.kt$AblAddNoUndoToAllIntention$override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean</ID>
+    <ID>ReturnCount:AblAddNoUndoToAllIntention.kt$AblAddNoUndoToAllIntention$private fun scanVariableStatement( tokens: org.antlr.v4.runtime.CommonTokenStream, defIdx: Int, size: Int ): Pair&lt;Int, Boolean></ID>
+    <ID>ReturnCount:AblAddUsingIntention.kt$AblAddUsingIntention$override fun invoke(project: Project, editor: Editor?, file: PsiFile?)</ID>
+    <ID>ReturnCount:AblAddUsingIntention.kt$AblAddUsingIntention$override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean</ID>
+    <ID>ReturnCount:AblAnnotator.kt$AblAnnotator$override fun collectInformation(file: PsiFile, editor: Editor, hasErrors: Boolean): Input?</ID>
+    <ID>ReturnCount:AblAutoCaseTypedHandler.kt$AblAutoCaseTypedHandler$override fun charTyped(c: Char, project: Project, editor: Editor, file: PsiFile): Result</ID>
+    <ID>ReturnCount:AblBreadcrumbProvider.kt$AblBreadcrumbProvider$override fun getElementInfo(element: PsiElement): String</ID>
+    <ID>ReturnCount:AblBreadcrumbProvider.kt$AblBreadcrumbProvider$override fun getParent(element: PsiElement): PsiElement?</ID>
+    <ID>ReturnCount:AblBreadcrumbProviderTest.kt$AblBreadcrumbProviderTest$fun search(el: PsiElement): PsiElement?</ID>
+    <ID>ReturnCount:AblCallHierarchyProvider.kt$AblCallHierarchyBrowser$private fun buildCallees(procName: String, root: DefaultMutableTreeNode, service: AblProjectAnalysisService)</ID>
+    <ID>ReturnCount:AblCallHierarchyProvider.kt$AblCallHierarchyProvider$override fun getTarget(dataContext: DataContext): PsiElement?</ID>
+    <ID>ReturnCount:AblChangeSignatureIntention.kt$AblChangeSignatureIntention$override fun invoke(project: Project, editor: Editor?, file: PsiFile?)</ID>
+    <ID>ReturnCount:AblChangeSignatureIntention.kt$AblChangeSignatureIntention$override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean</ID>
+    <ID>ReturnCount:AblCognitiveComplexityInspection.kt$AblCognitiveComplexityInspection.&lt;no name provided>$override fun visitFile(file: PsiFile)</ID>
+    <ID>ReturnCount:AblCompileGutterIconProvider.kt$AblCompileGutterIconProvider$override fun getLineMarkerInfo(element: PsiElement): LineMarkerInfo&lt;*>?</ID>
+    <ID>ReturnCount:AblCompileGutterIconProvider.kt$CompileAblFileAction$override fun actionPerformed(e: AnActionEvent)</ID>
+    <ID>ReturnCount:AblCompilerWarningAnnotator.kt$AblCompilerWarningAnnotator$override fun collectInformation(file: PsiFile, editor: Editor, hasErrors: Boolean): Input?</ID>
+    <ID>ReturnCount:AblCompilerWarningAnnotator.kt$AblCompilerWarningAnnotator$override fun doAnnotate(input: Input?): List&lt;CompilerWarning></ID>
+    <ID>ReturnCount:AblCompletionContributor.kt$AblCompletionProvider$override fun addCompletions( parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet )</ID>
+    <ID>ReturnCount:AblCompletionContributor.kt$AblCompletionProvider$private fun addProcedureParameterCompletions( procName: String, prefix: String, service: com.ablls.plugin.core.AblProjectAnalysisService, uri: String, scope: org.prorefactor.treeparser.TreeParserSymbolScope?, result: CompletionResultSet )</ID>
+    <ID>ReturnCount:AblCompletionContributor.kt$AblCompletionProvider$private fun detectIncludeContext(textBefore: String, prefix: String): String?</ID>
+    <ID>ReturnCount:AblCompletionContributor.kt$AblCompletionProvider$private fun detectRunCallContext(textBefore: String, prefix: String): String?</ID>
+    <ID>ReturnCount:AblCompletionContributor.kt$AblCompletionProvider$private fun extractObjectBeforeColon(textBefore: String, prefix: String): String?</ID>
+    <ID>ReturnCount:AblCompletionContributor.kt$AblCompletionProvider$private fun findRoutineInScope( scope: org.prorefactor.treeparser.TreeParserSymbolScope?, name: String ): org.prorefactor.treeparser.symbols.Routine?</ID>
+    <ID>ReturnCount:AblCompletionContributor.kt$AblCompletionProvider$private fun resolveVariableType( name: String, scope: org.prorefactor.treeparser.TreeParserSymbolScope ): String?</ID>
+    <ID>ReturnCount:AblConsoleFilterProvider.kt$AblErrorConsoleFilter$override fun applyFilter(line: String, entireLength: Int): Filter.Result?</ID>
+    <ID>ReturnCount:AblConsoleFilterProvider.kt$AblErrorConsoleFilter$private fun findRecursive( dir: com.intellij.openapi.vfs.VirtualFile, name: String ): com.intellij.openapi.vfs.VirtualFile?</ID>
+    <ID>ReturnCount:AblConsoleFilterProvider.kt$AblErrorConsoleFilter$private fun resolveFile(fileName: String): com.intellij.openapi.vfs.VirtualFile?</ID>
+    <ID>ReturnCount:AblCoverageLineMarkerProvider.kt$AblCoverageLineMarkerProvider$override fun getLineMarkerInfo(element: PsiElement): LineMarkerInfo&lt;*>?</ID>
+    <ID>ReturnCount:AblCoverageService.kt$AblCoverageService$fun getExecutionCount(filePath: String, lineNum: Int): Int?</ID>
+    <ID>ReturnCount:AblCoverageService.kt$AblCoverageService$fun isLineCovered(filePath: String, lineNum: Int): Boolean?</ID>
+    <ID>ReturnCount:AblCyclomaticComplexityInspection.kt$AblCyclomaticComplexityInspection.&lt;no name provided>$override fun visitFile(file: PsiFile)</ID>
+    <ID>ReturnCount:AblDeadCodeInspection.kt$AblDeadCodeInspection.&lt;no name provided>$override fun visitFile(file: PsiFile)</ID>
+    <ID>ReturnCount:AblDebugConnection.kt$AblDebugConnection$private fun decodeValue(type: String, raw: String): String</ID>
+    <ID>ReturnCount:AblDebugProcess.kt$AblDebugProcess$private fun isBootstrapFrame(frame: OeStackFrame): Boolean</ID>
+    <ID>ReturnCount:AblDocumentationProvider.kt$AblDocumentationProvider$override fun generateDoc(element: PsiElement?, originalElement: PsiElement?): String?</ID>
+    <ID>ReturnCount:AblDocumentationProvider.kt$AblDocumentationProvider$override fun getUrlFor(element: PsiElement?, originalElement: PsiElement?): List&lt;String></ID>
+    <ID>ReturnCount:AblDocumentationProvider.kt$AblDocumentationProvider$private fun buildVariableDoc(name: String, scope: TreeParserSymbolScope, uri: String): String?</ID>
+    <ID>ReturnCount:AblDocumentationProvider.kt$AblDocumentationProvider$private fun findRoutineInScope(name: String, scope: TreeParserSymbolScope): Routine?</ID>
+    <ID>ReturnCount:AblDocumentationProvider.kt$AblDocumentationProvider$private fun findVariableInScope(name: String, scope: TreeParserSymbolScope): Variable?</ID>
+    <ID>ReturnCount:AblEmptyCatchInspection.kt$AblEmptyCatchInspection.&lt;no name provided>$override fun visitFile(file: PsiFile)</ID>
+    <ID>ReturnCount:AblExtractProcedureIntention.kt$AblExtractProcedureIntention$override fun invoke(project: Project, editor: Editor?, file: PsiFile?)</ID>
+    <ID>ReturnCount:AblExtractProcedureIntention.kt$AblExtractProcedureIntention$override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean</ID>
+    <ID>ReturnCount:AblFindFirstNoErrorInspection.kt$AblFindFirstNoErrorInspection.&lt;no name provided>$override fun visitFile(file: PsiFile)</ID>
+    <ID>ReturnCount:AblFindNoLockInspection.kt$AblFindNoLockInspection.&lt;no name provided>$override fun visitFile(file: PsiFile)</ID>
+    <ID>ReturnCount:AblFindUsagesProvider.kt$AblFindUsagesProvider$override fun getType(element: PsiElement): String</ID>
+    <ID>ReturnCount:AblFoldingBuilder.kt$AblFoldingBuilder$private fun hasBlockColon(tokens: List&lt;Tok>, startIdx: Int): Boolean</ID>
+    <ID>ReturnCount:AblFormattingModelBuilder.kt$AblRootBlock$private fun hasColonAhead(tokens: List&lt;ASTNode>, startIdx: Int): Boolean</ID>
+    <ID>ReturnCount:AblFortranOperatorsInspection.kt$AblFortranOperatorsInspection.&lt;no name provided>$override fun visitFile(file: PsiFile)</ID>
+    <ID>ReturnCount:AblGotoDeclarationHandler.kt$AblGotoDeclarationHandler$override fun getGotoDeclarationTargets( sourceElement: PsiElement?, offset: Int, editor: Editor ): Array&lt;PsiElement>?</ID>
+    <ID>ReturnCount:AblGotoDeclarationHandler.kt$AblGotoDeclarationHandler$private fun resolveInclude( tokenText: String, project: com.intellij.openapi.project.Project ): com.intellij.openapi.vfs.VirtualFile?</ID>
+    <ID>ReturnCount:AblGotoRelatedProvider.kt$AblGotoRelatedProvider$override fun getItems(dataContext: DataContext): List&lt;GotoRelatedItem></ID>
+    <ID>ReturnCount:AblGotoRelatedProvider.kt$AblGotoRelatedProvider$private fun findRecursive(dir: VirtualFile, fileName: String, project: Project, depth: Int): PsiFile?</ID>
+    <ID>ReturnCount:AblHotSpotAnnotator.kt$AblHotSpotCollector$override fun collect(element: PsiElement, editor: Editor, sink: InlayHintsSink): Boolean</ID>
+    <ID>ReturnCount:AblHotSpotAnnotator.kt$AblHotSpotInlayProvider$override fun getCollectorFor( file: PsiFile, editor: Editor, settings: NoSettings, sink: InlayHintsSink ): InlayHintsCollector?</ID>
+    <ID>ReturnCount:AblIdentifierElement.kt$AblSymbolReference$override fun resolve(): PsiElement?</ID>
+    <ID>ReturnCount:AblIdentifierElement.kt$AblSymbolReferenceProvider$override fun getReferencesByElement( element: PsiElement, context: ProcessingContext ): Array&lt;PsiReference></ID>
+    <ID>ReturnCount:AblInlineVariableIntention.kt$AblInlineVariableIntention$override fun invoke(project: Project, editor: Editor?, file: PsiFile?)</ID>
+    <ID>ReturnCount:AblInlineVariableIntention.kt$AblInlineVariableIntention$override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean</ID>
+    <ID>ReturnCount:AblIntegerOverflowInspection.kt$AblIntegerOverflowInspection.&lt;no name provided>$override fun visitFile(file: PsiFile)</ID>
+    <ID>ReturnCount:AblIntroduceVariableIntention.kt$AblIntroduceVariableIntention$override fun invoke(project: Project, editor: Editor?, file: PsiFile?)</ID>
+    <ID>ReturnCount:AblIntroduceVariableIntention.kt$AblIntroduceVariableIntention$override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean</ID>
+    <ID>ReturnCount:AblLexerAdapter.kt$AblLexerAdapter$private fun matchAt(buf: CharSequence, pos: Int, end: Int): Pair&lt;IElementType, Int></ID>
+    <ID>ReturnCount:AblMissingSchemaPrefixInspection.kt$AblMissingSchemaPrefixInspection.&lt;no name provided>$override fun visitFile(file: PsiFile)</ID>
+    <ID>ReturnCount:AblNamingConventionInspection.kt$AblNamingConventionInspection.&lt;no name provided>$override fun visitFile(file: PsiFile)</ID>
+    <ID>ReturnCount:AblNoErrorWithoutCheckInspection.kt$AblNoErrorWithoutCheckInspection.&lt;no name provided>$override fun visitFile(file: PsiFile)</ID>
+    <ID>ReturnCount:AblNoUndoInspection.kt$AblNoUndoInspection.&lt;no name provided>$override fun visitFile(file: PsiFile)</ID>
+    <ID>ReturnCount:AblOptimizeUsingsIntention.kt$AblOptimizeUsingsIntention$override fun invoke(project: Project, editor: Editor?, file: PsiFile?)</ID>
+    <ID>ReturnCount:AblOverridingMethodsProvider.kt$AblOverridingMethodsProvider$override fun getLineMarkerInfo(element: PsiElement): LineMarkerInfo&lt;*>?</ID>
+    <ID>ReturnCount:AblOverridingMethodsProvider.kt$AblOverridingMethodsProvider$private fun extractInherits(dataType: String?): String?</ID>
+    <ID>ReturnCount:AblParameterInfoHandler.kt$AblParameterInfoHandler$override fun findElementForParameterInfo(context: CreateParameterInfoContext): PsiElement?</ID>
+    <ID>ReturnCount:AblParameterInfoHandler.kt$AblParameterInfoHandler$private fun buildCallInfo(element: PsiElement): AblCallInfo?</ID>
+    <ID>ReturnCount:AblParameterInfoHandler.kt$AblParameterInfoHandler$private fun findCallAnchor(file: PsiFile, offset: Int): PsiElement?</ID>
+    <ID>ReturnCount:AblParameterInfoHandler.kt$AblParameterInfoHandler$private fun findRoutineInScope(scope: TreeParserSymbolScope, name: String): Routine?</ID>
+    <ID>ReturnCount:AblParameterInlayHintsProvider.kt$AblParamHintsCollector$override fun collect(element: PsiElement, editor: Editor, sink: InlayHintsSink): Boolean</ID>
+    <ID>ReturnCount:AblParameterInlayHintsProvider.kt$AblParameterInlayHintsProvider$override fun getCollectorFor( file: PsiFile, editor: Editor, settings: NoSettings, sink: InlayHintsSink ): InlayHintsCollector?</ID>
+    <ID>ReturnCount:AblPostfixTemplateProvider.kt$AblExpressionSelector$override fun getExpressions( context: PsiElement, document: Document, offset: Int ): List&lt;PsiElement></ID>
+    <ID>ReturnCount:AblProcedureLengthInspection.kt$AblProcedureLengthInspection.&lt;no name provided>$override fun visitFile(file: PsiFile)</ID>
+    <ID>ReturnCount:AblProfilerViewPanel.kt$AblProfilerViewPanel$private fun openFile(fileName: String)</ID>
+    <ID>ReturnCount:AblPropathExplorerPanel.kt$AblPropathExplorerPanel.&lt;no name provided>$override fun mouseClicked(e: java.awt.event.MouseEvent)</ID>
+    <ID>ReturnCount:AblPsiParser.kt$AblPsiParser$private fun hasBlockColon(builder: PsiBuilder): Boolean</ID>
+    <ID>ReturnCount:AblRefactoringActions.kt$AblChangeSignatureAction$override fun actionPerformed(e: AnActionEvent)</ID>
+    <ID>ReturnCount:AblRefactoringActions.kt$AblExtractProcedureAction$override fun actionPerformed(e: AnActionEvent)</ID>
+    <ID>ReturnCount:AblRefactoringActions.kt$AblInlineVariableAction$override fun actionPerformed(e: AnActionEvent)</ID>
+    <ID>ReturnCount:AblRefactoringActions.kt$AblIntroduceVariableAction$override fun actionPerformed(e: AnActionEvent)</ID>
+    <ID>ReturnCount:AblRenameHandler.kt$AblRenameHandler$internal fun performScopeAwareRename( project: Project, file: PsiFile, oldName: String, newName: String, rootScope: TreeParserSymbolScope, targetDef: JPNode )</ID>
+    <ID>ReturnCount:AblRenameHandler.kt$AblRenameHandler$override fun invoke(project: Project, editor: Editor, file: PsiFile, dataContext: DataContext)</ID>
+    <ID>ReturnCount:AblRenameHandler.kt$AblRenameHandler$override fun isAvailableOnDataContext(dataContext: DataContext): Boolean</ID>
+    <ID>ReturnCount:AblReturnValueInlayHintsProvider.kt$AblReturnHintsCollector$override fun collect(element: PsiElement, editor: Editor, sink: InlayHintsSink): Boolean</ID>
+    <ID>ReturnCount:AblReturnValueInlayHintsProvider.kt$AblReturnValueInlayHintsProvider$override fun getCollectorFor( file: PsiFile, editor: Editor, settings: NoSettings, sink: InlayHintsSink ): InlayHintsCollector?</ID>
+    <ID>ReturnCount:AblRunConfigurationProducer.kt$AblRunConfigurationProducer$override fun setupConfigurationFromContext( configuration: AblRunConfiguration, context: ConfigurationContext, sourceElement: Ref&lt;PsiElement> ): Boolean</ID>
+    <ID>ReturnCount:AblRunConfigurationType.kt$AblRunState$fun resolveDlc(): String</ID>
+    <ID>ReturnCount:AblSafeDeleteHandler.kt$AblSafeDeleteAction$override fun actionPerformed(e: com.intellij.openapi.actionSystem.AnActionEvent)</ID>
+    <ID>ReturnCount:AblSchemaValidationInspection.kt$AblSchemaValidationInspection.&lt;no name provided>$override fun visitFile(file: PsiFile)</ID>
+    <ID>ReturnCount:AblStringConcatInWhereInspection.kt$AblStringConcatInWhereInspection.&lt;no name provided>$override fun visitFile(file: PsiFile)</ID>
+    <ID>ReturnCount:AblStructureViewFactory.kt$AblSymbolStructureElement$override fun navigate(requestFocus: Boolean)</ID>
+    <ID>ReturnCount:AblSuperClassNavigator.kt$AblSuperClassNavigator.Companion$fun findSuperClassName(file: PsiFile): String?</ID>
+    <ID>ReturnCount:AblSuperClassNavigator.kt$AblSuperClassNavigator.Companion$private fun extractInherits(dataType: String?): String?</ID>
+    <ID>ReturnCount:AblSurroundDescriptor.kt$AblSurroundDescriptor$override fun getElementsToSurround(file: PsiFile, startOffset: Int, endOffset: Int): Array&lt;PsiElement></ID>
+    <ID>ReturnCount:AblSymbolCollector.kt$AblSymbolVisitor$override fun visitFunctionStatement(ctx: Proparse.FunctionStatementContext): Void?</ID>
+    <ID>ReturnCount:AblSymbolCollector.kt$AblSymbolVisitor$override fun visitProcedureStatement(ctx: Proparse.ProcedureStatementContext): Void?</ID>
+    <ID>ReturnCount:AblSymbolCollector.kt$AblSymbolVisitor$private fun extractPrecedingComment(ctx: ParserRuleContext): String?</ID>
+    <ID>ReturnCount:AblSymbolIndex.kt$AblSymbolIndex$fun findByName(name: String, currentUri: String): List&lt;AblSymbol></ID>
+    <ID>ReturnCount:AblTestRunLineMarkerProvider.kt$AblTestRunLineMarkerProvider$override fun getLineMarkerInfo(element: PsiElement): LineMarkerInfo&lt;*>?</ID>
+    <ID>ReturnCount:AblTypeHierarchyProvider.kt$AblTypeHierarchyBrowser$private fun buildSupertypes( name: String, parent: DefaultMutableTreeNode, service: AblProjectAnalysisService, visited: MutableSet&lt;String> )</ID>
+    <ID>ReturnCount:AblTypeHierarchyProvider.kt$AblTypeHierarchyProvider$override fun getTarget(dataContext: DataContext): PsiElement?</ID>
+    <ID>ReturnCount:AblTypeHierarchyProvider.kt$private fun extractInherits(dataType: String?): String?</ID>
+    <ID>ReturnCount:AblTypeInlayHintsProvider.kt$AblTypeHintsCollector$override fun collect(element: PsiElement, editor: Editor, sink: InlayHintsSink): Boolean</ID>
+    <ID>ReturnCount:AblTypeInlayHintsProvider.kt$AblTypeInlayHintsProvider$override fun getCollectorFor( file: PsiFile, editor: Editor, settings: NoSettings, sink: InlayHintsSink ): InlayHintsCollector?</ID>
+    <ID>ReturnCount:AblUnlabeledLoopControlInspection.kt$AblUnlabeledLoopControlInspection.&lt;no name provided>$override fun visitFile(file: PsiFile)</ID>
+    <ID>ReturnCount:AblUnusedVariableInspection.kt$AblUnusedVariableInspection.&lt;no name provided>$override fun visitFile(file: PsiFile)</ID>
+    <ID>ReturnCount:OpenEdgeSdkType.kt$fun resolveOpenEdgeSdkHome(project: com.intellij.openapi.project.Project): String?</ID>
+    <ID>ReturnCount:XrefPanel.kt$XrefPanel$private fun navigateToSelected()</ID>
+    <ID>SpreadOperator:AblProjectAnalysisService.kt$AblProjectAnalysisService$(*dbList.toTypedArray())</ID>
+    <ID>TooGenericExceptionCaught:AblCompileGutterIconProvider.kt$CompileAblFileAction$ex: Exception</ID>
+    <ID>TooGenericExceptionCaught:AblDebugConnection.kt$AblDebugConnection$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:AblParserFacade.kt$AblParserFacade$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:AblProjectAnalysisService.kt$AblProjectAnalysisService$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:AblSymbolCollector.kt$AblSymbolCollector$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:DfSchemaParser.kt$DfSchemaParser$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:OpenEdgeProjectService.kt$OpenEdgeProjectServiceImpl$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:XrefPanel.kt$XrefPanel$e: Exception</ID>
+    <ID>TooManyFunctions:AblCompletionContributor.kt$AblCompletionProvider : CompletionProvider</ID>
+    <ID>TooManyFunctions:AblDebugConnection.kt$AblDebugConnection</ID>
+    <ID>TooManyFunctions:AblDebugProcess.kt$AblDebugProcess : XDebugProcess</ID>
+    <ID>TooManyFunctions:AblDocumentationProvider.kt$AblDocumentationProvider : AbstractDocumentationProvider</ID>
+    <ID>TooManyFunctions:AblLexerAdapter.kt$AblLexerAdapter : LexerBase</ID>
+    <ID>TooManyFunctions:AblParameterInfoHandler.kt$AblParameterInfoHandler : ParameterInfoHandler</ID>
+    <ID>TooManyFunctions:AblSymbolCollector.kt$AblSymbolVisitor : ProparseBaseVisitor</ID>
+    <ID>TooManyFunctions:OpenEdgeSdkType.kt$OpenEdgeSdkType : SdkType</ID>
+    <ID>UnusedParameter:AblCompletionContributor.kt$AblCompletionProvider$prefix: String</ID>
+    <ID>UnusedParameter:AblCompletionContributor.kt$AblCompletionProvider$service: com.ablls.plugin.core.AblProjectAnalysisService</ID>
+    <ID>UnusedParameter:AblCompletionContributor.kt$AblCompletionProvider$uri: String</ID>
+    <ID>UnusedParameter:AblInlineVariableIntention.kt$AblInlineVariableIntention$assignRegex: Regex</ID>
+    <ID>UnusedParameter:AblInlineVariableIntention.kt$AblInlineVariableIntention$defRegex: Regex</ID>
+    <ID>UnusedParameter:AblInlineVariableIntention.kt$AblInlineVariableIntention$tokens: org.antlr.v4.runtime.CommonTokenStream</ID>
+    <ID>UnusedParameter:AblRunConfigurationType.kt$AblRunState.Companion$forDebug: Boolean</ID>
+    <ID>UnusedParameter:AblSuperClassNavigator.kt$AblSuperClassNavigator.Companion$editor: Editor</ID>
+    <ID>UnusedPrivateMember:AblFoldingBuilderTest.kt$AblFoldingBuilderTest$private fun getFoldingRegions(content: String): Array&lt;FoldingDescriptor></ID>
+    <ID>UnusedPrivateProperty:AblCompletionContributor.kt$AblCompletionProvider$val qualifiedPrefix = "$tableNameUpper.$prefixUpper"</ID>
+    <ID>UnusedPrivateProperty:AblCoverageLineMarkerProvider.kt$AblCoverageLineMarkerProvider$val lineStart = doc.getLineStartOffset(lineNum)</ID>
+    <ID>UnusedPrivateProperty:AblExtractProcedureIntention.kt$AblExtractProcedureIntention$val procNameOffset = endOfFile + "\n\nPROCEDURE ".length + callText.length - callText.length + doc.textLength - procDefinition.length + "\n\nPROCEDURE ".length</ID>
+    <ID>UnusedPrivateProperty:AblFindNoLockInspection.kt$AblFindNoLockInspection.Companion$// Source de vérité : ABLNodeType — couvre les abréviations automatiquement private val LOCK_TYPES: Set&lt;ABLNodeType> = java.util.EnumSet.of( ABLNodeType.NOLOCK, ABLNodeType.SHARELOCK, ABLNodeType.EXCLUSIVELOCK )</ID>
+    <ID>UnusedPrivateProperty:AblFoldingBuilderTest.kt$AblFoldingBuilderTest$val document = DocumentImpl(content)</ID>
+    <ID>UnusedPrivateProperty:AblFoldingBuilderTest.kt$AblFoldingBuilderTest$val parseResult = facade.parse(content, "test.p")</ID>
+    <ID>UnusedPrivateProperty:AblIntegerOverflowInspection.kt$AblIntegerOverflowInspection.ChangeToInt64Fix$private val col: Int</ID>
+    <ID>UnusedPrivateProperty:AblSafeDeleteHandler.kt$AblSafeDeleteAction$val usages = service.symbolIndex.allSymbols() .filter { sym -> sym.kind == AblSymbol.Kind.UNKNOWN &amp;&amp; sym.name.equals(symbolName, ignoreCase = true) }</ID>
+    <ID>VariableNaming:AblActions.kt$OpenProjectConfigAction$private val DEFAULT_CONFIG = """ { "name": "Mon Projet ABL", "version": "12.7", "dlcPath": "/usr/dlc", "propath": [ "src", "src/includes", "${'$'}{DLC}/tty" ], "buildPath": ".build", "charset": "UTF-8", "databases": [ { "logicalName": "mydb", "database": "mydb", "host": "localhost", "port": 8500, "schemaFile": ".schemas/mydb.df" } ] } """.trimIndent()</ID>
+    <ID>VariableNaming:AblColorSettingsPage.kt$AblColorSettingsPage$// Tags personnalisés pour le texte d'exemple (optionnel) // Permet de colorier les éléments de l'exemple de façon indépendante private val ADDITIONAL_TAGS = mapOf( "kw" to AblSyntaxHighlighter.KEYWORD, "kdef" to AblSyntaxHighlighter.KEYWORD_DEF, "kflow" to AblSyntaxHighlighter.KEYWORD_FLOW, "ktype" to AblSyntaxHighlighter.KEYWORD_TYPE, "kmod" to AblSyntaxHighlighter.KEYWORD_MOD, "kdb" to AblSyntaxHighlighter.KEYWORD_DB, "str" to AblSyntaxHighlighter.STRING, "num" to AblSyntaxHighlighter.NUMBER, "log" to AblSyntaxHighlighter.LOGICAL_LITERAL, "cmt" to AblSyntaxHighlighter.BLOCK_COMMENT, "pp" to AblSyntaxHighlighter.PREPROCESSOR, "ann" to AblSyntaxHighlighter.ANNOTATION, )</ID>
+    <ID>VariableNaming:AblColorSettingsPage.kt$AblColorSettingsPage$private val DESCRIPTORS = arrayOf( AttributesDescriptor("Keyword", AblSyntaxHighlighter.KEYWORD), AttributesDescriptor("Keyword//Flow control (IF, DO, FOR, END...)", AblSyntaxHighlighter.KEYWORD_FLOW), AttributesDescriptor("Keyword//Definition (DEFINE, CLASS, METHOD...)", AblSyntaxHighlighter.KEYWORD_DEF), AttributesDescriptor("Keyword//Database (FIND, FOR EACH, WHERE...)", AblSyntaxHighlighter.KEYWORD_DB), AttributesDescriptor("Keyword//Access modifier (PUBLIC, PRIVATE, STATIC...)", AblSyntaxHighlighter.KEYWORD_MOD), AttributesDescriptor("Keyword//Primitive type (CHARACTER, INTEGER...)", AblSyntaxHighlighter.KEYWORD_TYPE), AttributesDescriptor("String", AblSyntaxHighlighter.STRING), AttributesDescriptor("Number", AblSyntaxHighlighter.NUMBER), AttributesDescriptor("Logical literal (TRUE/FALSE/YES/NO/?)", AblSyntaxHighlighter.LOGICAL_LITERAL), AttributesDescriptor("Comment//Block comment", AblSyntaxHighlighter.BLOCK_COMMENT), AttributesDescriptor("Comment//Line comment", AblSyntaxHighlighter.LINE_COMMENT), AttributesDescriptor("Preprocessor (&amp;DEFINE, {include})", AblSyntaxHighlighter.PREPROCESSOR), AttributesDescriptor("Operator", AblSyntaxHighlighter.OPERATOR), AttributesDescriptor("Punctuation//Dot (.)", AblSyntaxHighlighter.DOT), AttributesDescriptor("Punctuation//Colon (:)", AblSyntaxHighlighter.COLON), AttributesDescriptor("Punctuation//Comma (,)", AblSyntaxHighlighter.COMMA), AttributesDescriptor("Punctuation//Parentheses", AblSyntaxHighlighter.PARENTHESES), AttributesDescriptor("Identifier", AblSyntaxHighlighter.IDENTIFIER), AttributesDescriptor("Annotation (@...)", AblSyntaxHighlighter.ANNOTATION), AttributesDescriptor("Bad character", AblSyntaxHighlighter.BAD_CHARACTER), )</ID>
+    <ID>VariableNaming:AblCoverageService.kt$AblCoverageService$private val COVERED_COLOR = Color(0x90, 0xEE, 0x90, 80) // vert transparent</ID>
+    <ID>VariableNaming:AblCoverageService.kt$AblCoverageService$private val UNCOVERED_COLOR = Color(0xFF, 0x99, 0x99, 80) // rouge transparent</ID>
+    <ID>VariableNaming:AblFoldingBuilder.kt$AblBracketMatcher$private val PAIRS = arrayOf( BracePair(AblTokenTypes.LPAREN, AblTokenTypes.RPAREN, false), BracePair(AblTokenTypes.LBRACKET, AblTokenTypes.RBRACKET, false) )</ID>
+    <ID>VariableNaming:AblParserFacade.kt$AblParserFacade$private val LOG = Logger.getInstance(AblParserFacade::class.java)</ID>
+    <ID>VariableNaming:AblProjectAnalysisService.kt$AblProjectAnalysisService$private val LOG = Logger.getInstance(AblProjectAnalysisService::class.java)</ID>
+    <ID>WildcardImport:AblAnnotatorIntegrationTest.kt$import org.mockito.Mockito.*</ID>
+    <ID>WildcardImport:AblCallHierarchyProvider.kt$import javax.swing.*</ID>
+    <ID>WildcardImport:AblCognitiveComplexityInspection.kt$import com.intellij.codeInspection.*</ID>
+    <ID>WildcardImport:AblColorSettingsPage.kt$import com.intellij.openapi.options.colors.*</ID>
+    <ID>WildcardImport:AblCompletionContributor.kt$import com.intellij.codeInsight.completion.*</ID>
+    <ID>WildcardImport:AblCyclomaticComplexityInspection.kt$import com.intellij.codeInspection.*</ID>
+    <ID>WildcardImport:AblDeadCodeInspection.kt$import com.intellij.codeInspection.*</ID>
+    <ID>WildcardImport:AblDebugConnectionTest.kt$import org.junit.Assert.*</ID>
+    <ID>WildcardImport:AblDebugPortTest.kt$import org.junit.Assert.*</ID>
+    <ID>WildcardImport:AblDuplicatesPanel.kt$import javax.swing.*</ID>
+    <ID>WildcardImport:AblEmptyCatchInspection.kt$import com.intellij.codeInspection.*</ID>
+    <ID>WildcardImport:AblFindFirstNoErrorInspection.kt$import com.intellij.codeInspection.*</ID>
+    <ID>WildcardImport:AblFindNoLockInspection.kt$import com.intellij.codeInspection.*</ID>
+    <ID>WildcardImport:AblFormattingModelBuilder.kt$import com.intellij.formatting.*</ID>
+    <ID>WildcardImport:AblFortranOperatorsInspection.kt$import com.intellij.codeInspection.*</ID>
+    <ID>WildcardImport:AblHotSpotAnnotator.kt$import com.intellij.codeInsight.hints.*</ID>
+    <ID>WildcardImport:AblIdentifierElement.kt$import com.intellij.psi.*</ID>
+    <ID>WildcardImport:AblIntegerOverflowInspection.kt$import com.intellij.codeInspection.*</ID>
+    <ID>WildcardImport:AblMissingSchemaPrefixInspection.kt$import com.intellij.codeInspection.*</ID>
+    <ID>WildcardImport:AblNamingConventionInspection.kt$import com.intellij.codeInspection.*</ID>
+    <ID>WildcardImport:AblNoErrorWithoutCheckInspection.kt$import com.intellij.codeInspection.*</ID>
+    <ID>WildcardImport:AblNoUndoInspection.kt$import com.intellij.codeInspection.*</ID>
+    <ID>WildcardImport:AblParameterInfoHandler.kt$import com.intellij.lang.parameterInfo.*</ID>
+    <ID>WildcardImport:AblParameterInlayHintsProvider.kt$import com.intellij.codeInsight.hints.*</ID>
+    <ID>WildcardImport:AblParserFacade.kt$import org.antlr.v4.runtime.*</ID>
+    <ID>WildcardImport:AblPostfixTemplateProvider.kt$import com.intellij.codeInsight.template.postfix.templates.*</ID>
+    <ID>WildcardImport:AblProcedureLengthInspection.kt$import com.intellij.codeInspection.*</ID>
+    <ID>WildcardImport:AblProfilerViewPanel.kt$import javax.swing.*</ID>
+    <ID>WildcardImport:AblProjectSettingsConfigurable.kt$import javax.swing.*</ID>
+    <ID>WildcardImport:AblPropathExplorerPanel.kt$import javax.swing.*</ID>
+    <ID>WildcardImport:AblReturnValueInlayHintsProvider.kt$import com.intellij.codeInsight.hints.*</ID>
+    <ID>WildcardImport:AblRunConfigurationType.kt$import com.intellij.execution.configurations.*</ID>
+    <ID>WildcardImport:AblRunStateTest.kt$import org.junit.Assert.*</ID>
+    <ID>WildcardImport:AblSchemaExplorerPanel.kt$import javax.swing.*</ID>
+    <ID>WildcardImport:AblSchemaValidationInspection.kt$import com.intellij.codeInspection.*</ID>
+    <ID>WildcardImport:AblStringConcatInWhereInspection.kt$import com.intellij.codeInspection.*</ID>
+    <ID>WildcardImport:AblStructureViewFactory.kt$import com.intellij.ide.structureView.*</ID>
+    <ID>WildcardImport:AblTypeHierarchyProvider.kt$import javax.swing.*</ID>
+    <ID>WildcardImport:AblTypeInlayHintsProvider.kt$import com.intellij.codeInsight.hints.*</ID>
+    <ID>WildcardImport:AblUnlabeledLoopControlInspection.kt$import com.intellij.codeInspection.*</ID>
+    <ID>WildcardImport:AblUnusedVariableInspection.kt$import com.intellij.codeInspection.*</ID>
+    <ID>WildcardImport:PrintMethodsTest.kt$import org.antlr.v4.runtime.*</ID>
+    <ID>WildcardImport:XrefPanel.kt$import javax.swing.*</ID>
+  </CurrentIssues>
+</SmellBaseline>
