@@ -11,7 +11,12 @@ import com.intellij.ui.content.ContentFactory
 import com.intellij.ui.treeStructure.SimpleTree
 import java.awt.BorderLayout
 import java.awt.Component
-import javax.swing.*
+import javax.swing.JButton
+import javax.swing.JPanel
+import javax.swing.JScrollPane
+import javax.swing.JToolBar
+import javax.swing.JTree
+import javax.swing.SwingUtilities
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeCellRenderer
 import javax.swing.tree.DefaultTreeModel
@@ -24,8 +29,10 @@ import javax.swing.tree.DefaultTreeModel
  * extraits des fichiers .df déclarés dans openedge-project.json.
  */
 class AblSchemaExplorerFactory : ToolWindowFactory {
-
-    override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
+    override fun createToolWindowContent(
+        project: Project,
+        toolWindow: ToolWindow,
+    ) {
         val panel = AblSchemaExplorerPanel(project)
         val content = ContentFactory.getInstance().createContent(panel, "Schema", false)
         toolWindow.contentManager.addContent(content)
@@ -33,7 +40,6 @@ class AblSchemaExplorerFactory : ToolWindowFactory {
 }
 
 class AblSchemaExplorerPanel(private val project: Project) : JPanel(BorderLayout()) {
-
     private val tree: JTree
 
     init {
@@ -77,9 +83,10 @@ class AblSchemaExplorerPanel(private val project: Project) : JPanel(BorderLayout
             val fieldName = field.name.substringAfterLast('.')
             val tableNode = tableNodes[tableName.uppercase()]
             if (tableNode != null) {
-                val fieldNode = DefaultMutableTreeNode(
-                    SchemaNode(fieldName, "FIELD", field.dataType)
-                )
+                val fieldNode =
+                    DefaultMutableTreeNode(
+                        SchemaNode(fieldName, "FIELD", field.dataType),
+                    )
                 tableNode.add(fieldNode)
             }
         }
@@ -100,8 +107,13 @@ class AblSchemaExplorerPanel(private val project: Project) : JPanel(BorderLayout
 
     private inner class SchemaTreeCellRenderer : DefaultTreeCellRenderer() {
         override fun getTreeCellRendererComponent(
-            tree: JTree, value: Any?, sel: Boolean, expanded: Boolean,
-            leaf: Boolean, row: Int, hasFocus: Boolean
+            tree: JTree,
+            value: Any?,
+            sel: Boolean,
+            expanded: Boolean,
+            leaf: Boolean,
+            row: Int,
+            hasFocus: Boolean,
         ): Component {
             super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus)
             val node = (value as? DefaultMutableTreeNode)?.userObject

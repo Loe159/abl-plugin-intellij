@@ -2,7 +2,6 @@ package com.ablls.plugin.highlight
 
 import com.ablls.plugin.parser.AblTokenTypes
 import com.intellij.lang.ASTNode
-import org.prorefactor.core.ABLNodeType
 import com.intellij.lang.BracePair
 import com.intellij.lang.Commenter
 import com.intellij.lang.PairedBraceMatcher
@@ -13,6 +12,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.tree.IElementType
+import org.prorefactor.core.ABLNodeType
 
 // ─── AblFoldingBuilder ───────────────────────────────────────────────────────
 
@@ -38,11 +38,15 @@ import com.intellij.psi.tree.IElementType
  * block-opening keywords (those followed by ':' before any 'END') with 'END'.
  */
 class AblFoldingBuilder : FoldingBuilderEx() {
-
     private data class Tok(val node: ASTNode, val upper: String, val start: Int, val end: Int)
+
     private data class BlockStart(val openerNode: ASTNode, val startOffset: Int, val placeholder: String)
 
-    override fun buildFoldRegions(root: PsiElement, document: Document, quick: Boolean): Array<FoldingDescriptor> {
+    override fun buildFoldRegions(
+        root: PsiElement,
+        document: Document,
+        quick: Boolean,
+    ): Array<FoldingDescriptor> {
         val descriptors = mutableListOf<FoldingDescriptor>()
         val tokens = collectLeaves(root.node)
 
@@ -58,6 +62,7 @@ class AblFoldingBuilder : FoldingBuilderEx() {
 
     private fun collectLeaves(root: ASTNode): List<Tok> {
         val result = mutableListOf<Tok>()
+
         fun walk(n: ASTNode) {
             if (n.firstChildNode == null) {
                 if (n.elementType != AblTokenTypes.WHITE_SPACE) {
@@ -65,14 +70,21 @@ class AblFoldingBuilder : FoldingBuilderEx() {
                 }
             } else {
                 var c = n.firstChildNode
-                while (c != null) { walk(c); c = c.treeNext }
+                while (c != null) {
+                    walk(c)
+                    c = c.treeNext
+                }
             }
         }
         walk(root)
         return result
     }
 
-    private fun detectBlocks(tokens: List<Tok>, descriptors: MutableList<FoldingDescriptor>) {
+    @Suppress("CyclomaticComplexMethod", "NestedBlockDepth")
+    private fun detectBlocks(
+        tokens: List<Tok>,
+        descriptors: MutableList<FoldingDescriptor>,
+    ) {
         val stack = ArrayDeque<BlockStart>()
         var i = 0
         while (i < tokens.size) {
@@ -163,7 +175,7 @@ class AblFoldingBuilder : FoldingBuilderEx() {
                         }
                         if (endPos > block.startOffset) {
                             descriptors.add(
-                                FoldingDescriptor(block.openerNode, TextRange(block.startOffset, endPos), null, block.placeholder)
+                                FoldingDescriptor(block.openerNode, TextRange(block.startOffset, endPos), null, block.placeholder),
                             )
                         }
                     }
@@ -175,7 +187,10 @@ class AblFoldingBuilder : FoldingBuilderEx() {
 
     // Returns true if there is a ':' (outside parentheses) before the next END keyword,
     // scanning up to 50 tokens ahead. This identifies block-opening statements.
-    private fun hasBlockColon(tokens: List<Tok>, startIdx: Int): Boolean {
+    private fun hasBlockColon(
+        tokens: List<Tok>,
+        startIdx: Int,
+    ): Boolean {
         var depth = 0
         val limit = minOf(tokens.size, startIdx + 50)
         for (i in startIdx + 1 until limit) {
@@ -189,30 +204,39 @@ class AblFoldingBuilder : FoldingBuilderEx() {
         return false
     }
 
-    private fun nameAfter(tokens: List<Tok>, startIdx: Int): String {
+    private fun nameAfter(
+        tokens: List<Tok>,
+        startIdx: Int,
+    ): String {
         val text = tokens.getOrNull(startIdx + 1)?.upper ?: return ""
         return if (text.isNotEmpty() && text[0].isLetter()) "$text " else ""
     }
 
-    override fun getPlaceholderText(node: ASTNode): String? = when (node.elementType) {
-        AblTokenTypes.BLOCK_COMMENT -> "/* ... */"
-        else -> "..."
-    }
+    override fun getPlaceholderText(node: ASTNode): String? =
+        when (node.elementType) {
+            AblTokenTypes.BLOCK_COMMENT -> "/* ... */"
+            else -> "..."
+        }
 
     override fun isCollapsedByDefault(node: ASTNode): Boolean = false
 
     companion object {
         // Itérateurs valides après FOR — source de vérité : ABLNodeType
-        private val FOR_ITERATOR_TYPES: Set<ABLNodeType> = java.util.EnumSet.of(
-            ABLNodeType.EACH, ABLNodeType.FIRST, ABLNodeType.LAST
-        )
+        private val FOR_ITERATOR_TYPES: Set<ABLNodeType> =
+            java.util.EnumSet.of(
+                ABLNodeType.EACH,
+                ABLNodeType.FIRST,
+                ABLNodeType.LAST,
+            )
+
         // Qualificateurs optionnels après END — source de vérité : ABLNodeType
-        private val END_QUALIFIER_TYPES: Set<ABLNodeType> = java.util.EnumSet.of(
-            ABLNodeType.PROCEDURE, ABLNodeType.FUNCTION, ABLNodeType.CLASS,
-            ABLNodeType.INTERFACE, ABLNodeType.METHOD, ABLNodeType.CONSTRUCTOR,
-            ABLNodeType.DESTRUCTOR, ABLNodeType.CATCH, ABLNodeType.FINALLY,
-            ABLNodeType.CASE
-        )
+        private val END_QUALIFIER_TYPES: Set<ABLNodeType> =
+            java.util.EnumSet.of(
+                ABLNodeType.PROCEDURE, ABLNodeType.FUNCTION, ABLNodeType.CLASS,
+                ABLNodeType.INTERFACE, ABLNodeType.METHOD, ABLNodeType.CONSTRUCTOR,
+                ABLNodeType.DESTRUCTOR, ABLNodeType.CATCH, ABLNodeType.FINALLY,
+                ABLNodeType.CASE,
+            )
     }
 }
 
@@ -220,22 +244,34 @@ class AblFoldingBuilder : FoldingBuilderEx() {
 
 class AblCommenter : Commenter {
     override fun getLineCommentPrefix(): String = "// "
+
     override fun getBlockCommentPrefix(): String = "/* "
+
     override fun getBlockCommentSuffix(): String = " */"
+
     override fun getCommentedBlockCommentPrefix(): String? = null
+
     override fun getCommentedBlockCommentSuffix(): String? = null
 }
 
 // ─── AblBracketMatcher ───────────────────────────────────────────────────────
 
 class AblBracketMatcher : PairedBraceMatcher {
+    private val pairs =
+        arrayOf(
+            BracePair(AblTokenTypes.LPAREN, AblTokenTypes.RPAREN, false),
+            BracePair(AblTokenTypes.LBRACKET, AblTokenTypes.RBRACKET, false),
+        )
 
-    private val PAIRS = arrayOf(
-        BracePair(AblTokenTypes.LPAREN,   AblTokenTypes.RPAREN,   false),
-        BracePair(AblTokenTypes.LBRACKET, AblTokenTypes.RBRACKET, false)
-    )
+    override fun getPairs(): Array<BracePair> = pairs
 
-    override fun getPairs(): Array<BracePair> = PAIRS
-    override fun isPairedBracesAllowedBeforeType(lbraceType: IElementType, contextType: IElementType?): Boolean = true
-    override fun getCodeConstructStart(file: PsiFile, openingBracketOffset: Int): Int = openingBracketOffset
+    override fun isPairedBracesAllowedBeforeType(
+        lbraceType: IElementType,
+        contextType: IElementType?,
+    ): Boolean = true
+
+    override fun getCodeConstructStart(
+        file: PsiFile,
+        openingBracketOffset: Int,
+    ): Int = openingBracketOffset
 }

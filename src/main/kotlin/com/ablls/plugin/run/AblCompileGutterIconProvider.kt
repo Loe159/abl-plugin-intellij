@@ -12,7 +12,6 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 
 /**
  * Gutter icon "Compile this file" pour les fichiers `.p` ABL.
@@ -25,19 +24,18 @@ import com.intellij.psi.PsiFile
  *   - Le fichier doit être un `.p` ou `.cls`
  */
 class AblCompileGutterIconProvider : LineMarkerProvider {
-
     override fun getLineMarkerInfo(element: PsiElement): LineMarkerInfo<*>? {
-        if (element.firstChild != null) return null  // leaf elements only
+        if (element.firstChild != null) return null // leaf elements only
         if (element.language != AblLanguage) return null
         val file = element.containingFile ?: return null
-        val vf   = file.virtualFile ?: return null
+        val vf = file.virtualFile ?: return null
 
         // Seulement sur le premier token du fichier (pour n'afficher qu'une icône)
         if (element.textRange.startOffset != 0) return null
         if (vf.extension?.lowercase() !in setOf("p", "cls", "w")) return null
 
         val project = element.project
-        val config  = project.service<OpenEdgeProjectService>().config
+        val config = project.service<OpenEdgeProjectService>().config
         val dlcPath = config.dlcPath ?: System.getenv("DLC")
 
         val action = CompileAblFileAction(vf, dlcPath)
@@ -46,13 +44,16 @@ class AblCompileGutterIconProvider : LineMarkerProvider {
             element.textRange,
             AllIcons.Actions.Compile,
             { "Compile ${vf.name}" },
-            { _, elt -> action.actionPerformed(
-                com.intellij.openapi.actionSystem.AnActionEvent.createFromDataContext(
-                    "gutter", null,
-                    com.intellij.openapi.actionSystem.impl.SimpleDataContext.getProjectContext(elt.project)
+            { _, elt ->
+                action.actionPerformed(
+                    com.intellij.openapi.actionSystem.AnActionEvent.createFromDataContext(
+                        "gutter",
+                        null,
+                        com.intellij.openapi.actionSystem.impl.SimpleDataContext.getProjectContext(elt.project),
+                    ),
                 )
-            )},
-            GutterIconRenderer.Alignment.RIGHT
+            },
+            GutterIconRenderer.Alignment.RIGHT,
         ) { "Compile ${vf.name}" }
     }
 }
@@ -61,9 +62,8 @@ class AblCompileGutterIconProvider : LineMarkerProvider {
 
 private class CompileAblFileAction(
     private val file: VirtualFile,
-    private val dlcPath: String?
+    private val dlcPath: String?,
 ) : AnAction("Compile ${file.name}", "Compile ABL file", AllIcons.Actions.Compile) {
-
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
 
@@ -71,36 +71,38 @@ private class CompileAblFileAction(
             Messages.showWarningDialog(
                 project,
                 "DLC path is not configured.\n\nSet 'dlcPath' in openedge-project.json\nor define the DLC environment variable.",
-                "ABL Compilation"
+                "ABL Compilation",
             )
             return
         }
 
         val filePath = file.path
-        val prowin   = "$dlcPath/bin/prowin" // Linux/Mac
-        val prowinWin = "$dlcPath\\bin\\prowin32.exe"  // Windows
+        val prowin = "$dlcPath/bin/prowin" // Linux/Mac
+        val prowinWin = "$dlcPath\\bin\\prowin32.exe" // Windows
 
-        val executable = when {
-            java.io.File(prowinWin).exists() -> prowinWin
-            java.io.File("$prowin.exe").exists() -> "$prowin.exe"
-            java.io.File(prowin).exists() -> prowin
-            else -> {
-                Messages.showWarningDialog(
-                    project,
-                    "prowin not found in '$dlcPath/bin/'.\nCheck your DLC installation.",
-                    "ABL Compilation"
-                )
-                return
+        val executable =
+            when {
+                java.io.File(prowinWin).exists() -> prowinWin
+                java.io.File("$prowin.exe").exists() -> "$prowin.exe"
+                java.io.File(prowin).exists() -> prowin
+                else -> {
+                    Messages.showWarningDialog(
+                        project,
+                        "prowin not found in '$dlcPath/bin/'.\nCheck your DLC installation.",
+                        "ABL Compilation",
+                    )
+                    return
+                }
             }
-        }
 
         // Lancer la compilation dans un thread background
         com.intellij.openapi.application.ApplicationManager.getApplication().executeOnPooledThread {
             try {
                 val cmd = listOf(executable, "-b", "-p", "prolib/compile.p", "-param", filePath)
-                val proc = ProcessBuilder(cmd)
-                    .redirectErrorStream(true)
-                    .start()
+                val proc =
+                    ProcessBuilder(cmd)
+                        .redirectErrorStream(true)
+                        .start()
                 val output = proc.inputStream.bufferedReader().readText()
                 val exitCode = proc.waitFor()
 

@@ -30,7 +30,6 @@ import javax.swing.JComponent
  * Enregistré via <moduleBuilder builderClass="..."> dans plugin.xml.
  */
 class AblModuleBuilder : ModuleBuilder() {
-
     private var oeVersion: String = "12.7"
     private var dlcPath: String = ""
 
@@ -38,69 +37,79 @@ class AblModuleBuilder : ModuleBuilder() {
 
     override fun getDescription(): String =
         "Creates a new OpenEdge ABL project with standard directory structure " +
-        "and an <code>openedge-project.json</code> configuration file."
+            "and an <code>openedge-project.json</code> configuration file."
 
     override fun getNodeIcon(): Icon = AblIcons.FILE
 
     override fun getModuleType(): ModuleType<*> = EmptyModuleType.getInstance()
 
-    override fun isSuitableSdkType(sdkType: SdkTypeId?): Boolean =
-        sdkType == null || sdkType is OpenEdgeSdkType
+    override fun isSuitableSdkType(sdkType: SdkTypeId?): Boolean = sdkType == null || sdkType is OpenEdgeSdkType
 
     override fun modifyProjectTypeStep(settingsStep: SettingsStep): ModuleWizardStep =
         object : ModuleWizardStep() {
             val panel = createSettingsPanel()
+
             override fun getComponent(): JComponent = panel
+
             override fun updateDataModel() {} // binding is live via bindText
         }
 
     override fun setupRootModel(rootModel: ModifiableRootModel) {
         val contentEntry = doAddContentEntry(rootModel) ?: return
-        val basePath = contentEntry.url
-            .removePrefix("file://")
-            .removePrefix("file:/")
+        val basePath =
+            contentEntry.url
+                .removePrefix("file://")
+                .removePrefix("file:/")
 
         createProjectStructure(basePath, rootModel.project.name)
     }
 
-    private fun createSettingsPanel(): JComponent = panel {
-        row("OpenEdge version:") {
-            textField()
-                .bindText(::oeVersion)
-                .comment("Version OpenEdge (ex. 12.7, 12.2)")
+    private fun createSettingsPanel(): JComponent =
+        panel {
+            row("OpenEdge version:") {
+                textField()
+                    .bindText(::oeVersion)
+                    .comment("Version OpenEdge (ex. 12.7, 12.2)")
+            }
+            row("DLC path (optional):") {
+                textField()
+                    .bindText(::dlcPath)
+                    .comment("Chemin d'installation OpenEdge (\$DLC). Peut être laissé vide.")
+            }
         }
-        row("DLC path (optional):") {
-            textField()
-                .bindText(::dlcPath)
-                .comment("Chemin d'installation OpenEdge (\$DLC). Peut être laissé vide.")
-        }
-    }
 
-    private fun createProjectStructure(basePath: String, projectName: String) {
+    private fun createProjectStructure(
+        basePath: String,
+        projectName: String,
+    ) {
         listOf("src", "src/includes", ".schemas", ".build", ".build/.warnings").forEach { dir ->
             File(basePath, dir).mkdirs()
         }
 
         File(basePath, "src/main.p").also {
-            if (!it.exists()) it.writeText(
-                "/* main.p — Point d'entrée du projet $projectName */\n\n" +
-                "MESSAGE \"Hello from $projectName!\" VIEW-AS ALERT-BOX.\n"
-            )
+            if (!it.exists()) {
+                it.writeText(
+                    "/* main.p — Point d'entrée du projet $projectName */\n\n" +
+                        "MESSAGE \"Hello from $projectName!\" VIEW-AS ALERT-BOX.\n",
+                )
+            }
         }
 
         val dlcEntry = if (dlcPath.isNotBlank()) "  \"dlcPath\": \"$dlcPath\",\n" else ""
         File(basePath, "openedge-project.json").also {
-            if (!it.exists()) it.writeText(
-                "{\n" +
-                "  \"name\": \"$projectName\",\n" +
-                "  \"version\": \"$oeVersion\",\n" +
-                dlcEntry +
-                "  \"propath\": [\"src\", \"src/includes\"],\n" +
-                "  \"buildPath\": \".build\",\n" +
-                "  \"charset\": \"UTF-8\",\n" +
-                "  \"databases\": []\n" +
-                "}\n"
-            )
+            if (!it.exists()) {
+                it.writeText(
+                    "{\n" +
+                        "  \"name\": \"$projectName\",\n" +
+                        "  \"version\": \"$oeVersion\",\n" +
+                        dlcEntry +
+                        "  \"propath\": [\"src\", \"src/includes\"],\n" +
+                        "  \"buildPath\": \".build\",\n" +
+                        "  \"charset\": \"UTF-8\",\n" +
+                        "  \"databases\": []\n" +
+                        "}\n",
+                )
+            }
         }
 
         File(basePath, ".gitignore").also {
@@ -108,8 +117,10 @@ class AblModuleBuilder : ModuleBuilder() {
         }
 
         VfsUtil.markDirtyAndRefresh(
-            false, true, true,
-            LocalFileSystem.getInstance().findFileByPath(basePath)
+            false,
+            true,
+            true,
+            LocalFileSystem.getInstance().findFileByPath(basePath),
         )
     }
 }

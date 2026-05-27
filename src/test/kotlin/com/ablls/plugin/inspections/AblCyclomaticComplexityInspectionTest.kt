@@ -9,7 +9,6 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase
  * Inspection highlights "PROCEDURE" or "FUNCTION" keyword (9 chars at col 0).
  */
 class AblCyclomaticComplexityInspectionTest : BasePlatformTestCase() {
-
     override fun setUp() {
         super.setUp()
         myFixture.enableInspections(AblCyclomaticComplexityInspection::class.java)
@@ -17,7 +16,9 @@ class AblCyclomaticComplexityInspectionTest : BasePlatformTestCase() {
 
     fun testHighComplexityProcedureTriggersWeakWarning() {
         // 11 IF branches → CC = 1 + 11 = 12 > threshold(10)
-        myFixture.configureByText("test.p", """<weak_warning>PROCEDURE</weak_warning> complexProc:
+        myFixture.configureByText(
+            "test.p",
+            """<weak_warning>PROCEDURE</weak_warning> complexProc:
     IF a1 THEN MESSAGE "1".
     IF a2 THEN MESSAGE "2".
     IF a3 THEN MESSAGE "3".
@@ -29,21 +30,28 @@ class AblCyclomaticComplexityInspectionTest : BasePlatformTestCase() {
     IF a9 THEN MESSAGE "9".
     IF a10 THEN MESSAGE "10".
     IF a11 THEN MESSAGE "11".
-END PROCEDURE.""")
+END PROCEDURE.""",
+        )
         myFixture.checkHighlighting(false, false, true)
     }
 
     fun testSimpleProcedureProducesNoWeakWarning() {
-        myFixture.configureByText("test.p", """PROCEDURE simpleProc:
+        myFixture.configureByText(
+            "test.p",
+            """PROCEDURE simpleProc:
     IF a THEN MESSAGE "yes".
     IF b THEN MESSAGE "no".
-END PROCEDURE.""")
+END PROCEDURE.""",
+        )
         myFixture.checkHighlighting(false, false, true)
     }
 
     fun testEmptyProcedureProducesNoWeakWarning() {
-        myFixture.configureByText("test.p", """PROCEDURE emptyProc:
-END PROCEDURE.""")
+        myFixture.configureByText(
+            "test.p",
+            """PROCEDURE emptyProc:
+END PROCEDURE.""",
+        )
         myFixture.checkHighlighting(false, false, true)
     }
 }

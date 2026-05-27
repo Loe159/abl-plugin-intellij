@@ -16,7 +16,13 @@ import com.intellij.psi.PsiElement
 import com.intellij.ui.treeStructure.SimpleTree
 import java.awt.BorderLayout
 import java.awt.Font
-import javax.swing.*
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPanel
+import javax.swing.JScrollPane
+import javax.swing.JSplitPane
+import javax.swing.JTree
+import javax.swing.SwingUtilities
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeCellRenderer
 import javax.swing.tree.DefaultTreeModel
@@ -32,24 +38,25 @@ import javax.swing.tree.DefaultTreeModel
  * encode "CLASS INHERITS ParentName" (renseigné par [AblSymbolCollector.visitClassStatement]).
  */
 class AblTypeHierarchyProvider : HierarchyProvider {
-
     override fun getTarget(dataContext: DataContext): PsiElement? {
-        val file   = dataContext.getData(CommonDataKeys.PSI_FILE) ?: return null
+        val file = dataContext.getData(CommonDataKeys.PSI_FILE) ?: return null
         val editor = dataContext.getData(CommonDataKeys.EDITOR) ?: return null
         if (file.language != AblLanguage) return null
 
         val element = file.findElementAt(editor.caretModel.offset) ?: return null
-        val word    = element.text?.trim() ?: return null
-        val uri     = file.virtualFile?.url ?: return null
+        val word = element.text?.trim() ?: return null
+        val uri = file.virtualFile?.url ?: return null
         val service = file.project.service<AblProjectAnalysisService>()
 
-        val isClass = service.symbolIndex.findByName(word, uri)
-            .any { it.kind == AblSymbol.Kind.CLASS }
+        val isClass =
+            service.symbolIndex.findByName(word, uri)
+                .any { it.kind == AblSymbol.Kind.CLASS }
         return if (isClass) element else null
     }
 
-    override fun createHierarchyBrowser(target: PsiElement): HierarchyBrowser =
-        AblTypeHierarchyBrowser(target.project, target)
+    override fun createHierarchyBrowser(target: PsiElement): HierarchyBrowser {
+        return AblTypeHierarchyBrowser(target.project, target)
+    }
 
     override fun browserActivated(hierarchyBrowser: HierarchyBrowser) {
         (hierarchyBrowser as? AblTypeHierarchyBrowser)?.refresh()
@@ -60,9 +67,8 @@ class AblTypeHierarchyProvider : HierarchyProvider {
 
 class AblTypeHierarchyBrowser(
     private val project: Project,
-    private val target: PsiElement
+    private val target: PsiElement,
 ) : HierarchyBrowser {
-
     private val panel = JPanel(BorderLayout(0, 4))
     private var initialized = false
 
@@ -84,7 +90,7 @@ class AblTypeHierarchyBrowser(
     private fun buildUI() {
         panel.removeAll()
         val className = target.text?.trim() ?: return
-        val service   = project.service<AblProjectAnalysisService>()
+        val service = project.service<AblProjectAnalysisService>()
 
         // ── Supertypes ────────────────────────────────────────────────────────
         val superRoot = DefaultMutableTreeNode("Supertypes of $className")
@@ -94,9 +100,12 @@ class AblTypeHierarchyBrowser(
         val subRoot = DefaultMutableTreeNode("Subtypes of $className")
         buildSubtypes(className, subRoot, service, mutableSetOf())
 
-        val splitPane = JSplitPane(JSplitPane.VERTICAL_SPLIT,
-            buildTreePanel(superRoot, "Supertypes"),
-            buildTreePanel(subRoot,   "Subtypes"))
+        val splitPane =
+            JSplitPane(
+                JSplitPane.VERTICAL_SPLIT,
+                buildTreePanel(superRoot, "Supertypes"),
+                buildTreePanel(subRoot, "Subtypes"),
+            )
         splitPane.resizeWeight = 0.4
 
         panel.add(splitPane, BorderLayout.CENTER)
@@ -108,11 +117,12 @@ class AblTypeHierarchyBrowser(
         name: String,
         parent: DefaultMutableTreeNode,
         service: AblProjectAnalysisService,
-        visited: MutableSet<String>
+        visited: MutableSet<String>,
     ) {
         if (!visited.add(name.uppercase())) return
-        val sym = service.symbolIndex.findByName(name, "")
-            .firstOrNull { it.kind == AblSymbol.Kind.CLASS } ?: return
+        val sym =
+            service.symbolIndex.findByName(name, "")
+                .firstOrNull { it.kind == AblSymbol.Kind.CLASS } ?: return
         val parentName = extractInherits(sym.dataType) ?: return
         val node = DefaultMutableTreeNode(SymbolNode(parentName, sym))
         parent.add(node)
@@ -123,13 +133,13 @@ class AblTypeHierarchyBrowser(
         name: String,
         parent: DefaultMutableTreeNode,
         service: AblProjectAnalysisService,
-        visited: MutableSet<String>
+        visited: MutableSet<String>,
     ) {
         if (!visited.add(name.uppercase())) return
         service.symbolIndex.allSymbols()
             .filter { sym ->
                 sym.kind == AblSymbol.Kind.CLASS &&
-                extractInherits(sym.dataType).equals(name, ignoreCase = true)
+                    extractInherits(sym.dataType).equals(name, ignoreCase = true)
             }
             .forEach { sym ->
                 val node = DefaultMutableTreeNode(SymbolNode(sym.name, sym))
@@ -138,17 +148,22 @@ class AblTypeHierarchyBrowser(
             }
     }
 
-    private fun buildTreePanel(root: DefaultMutableTreeNode, title: String): JPanel {
+    private fun buildTreePanel(
+        root: DefaultMutableTreeNode,
+        title: String,
+    ): JPanel {
         val tree = SimpleTree(DefaultTreeModel(root))
         tree.isRootVisible = true
         tree.cellRenderer = SymbolTreeCellRenderer()
-        tree.addMouseListener(object : java.awt.event.MouseAdapter() {
-            override fun mouseClicked(e: java.awt.event.MouseEvent) {
-                if (e.clickCount != 2) return
-                val node = tree.lastSelectedPathComponent as? DefaultMutableTreeNode ?: return
-                (node.userObject as? SymbolNode)?.let { navigateTo(it.symbol) }
-            }
-        })
+        tree.addMouseListener(
+            object : java.awt.event.MouseAdapter() {
+                override fun mouseClicked(e: java.awt.event.MouseEvent) {
+                    if (e.clickCount != 2) return
+                    val node = tree.lastSelectedPathComponent as? DefaultMutableTreeNode ?: return
+                    (node.userObject as? SymbolNode)?.let { navigateTo(it.symbol) }
+                }
+            },
+        )
         for (i in 0 until root.childCount) tree.expandRow(i + 1)
 
         val panel = JPanel(BorderLayout())
@@ -161,7 +176,7 @@ class AblTypeHierarchyBrowser(
 
     private fun navigateTo(symbol: AblSymbol) {
         val uri = symbol.uri?.takeIf { !it.startsWith("db://") } ?: return
-        val vf  = VirtualFileManager.getInstance().findFileByUrl(uri) ?: return
+        val vf = VirtualFileManager.getInstance().findFileByUrl(uri) ?: return
         val line = (symbol.definitionRange?.startLine ?: 0).coerceAtLeast(0)
         OpenFileDescriptor(project, vf, line, 0).navigate(true)
     }
@@ -173,18 +188,29 @@ private data class SymbolNode(val label: String, val symbol: AblSymbol)
 
 private class SymbolTreeCellRenderer : DefaultTreeCellRenderer() {
     override fun getTreeCellRendererComponent(
-        tree: JTree, value: Any?, sel: Boolean, expanded: Boolean,
-        leaf: Boolean, row: Int, hasFocus: Boolean
+        tree: JTree,
+        value: Any?,
+        sel: Boolean,
+        expanded: Boolean,
+        leaf: Boolean,
+        row: Int,
+        hasFocus: Boolean,
     ): java.awt.Component {
         super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus)
         val node = (value as? DefaultMutableTreeNode)?.userObject
         when (node) {
             is SymbolNode -> {
                 text = node.label
-                icon = if (node.symbol.dataType?.startsWith("INTERFACE") == true)
-                    AllIcons.Nodes.Interface else AllIcons.Nodes.Class
+                icon =
+                    if (node.symbol.dataType?.startsWith("INTERFACE") == true) {
+                        AllIcons.Nodes.Interface
+                    } else {
+                        AllIcons.Nodes.Class
+                    }
             }
-            is String -> { icon = null }
+            is String -> {
+                icon = null
+            }
         }
         return this
     }

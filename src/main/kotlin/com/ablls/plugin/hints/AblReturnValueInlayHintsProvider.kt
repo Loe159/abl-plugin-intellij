@@ -3,7 +3,14 @@ package com.ablls.plugin.hints
 import com.ablls.plugin.core.AblProjectAnalysisService
 import com.ablls.plugin.language.AblLanguage
 import com.ablls.plugin.parser.AblTokenTypes
-import com.intellij.codeInsight.hints.*
+import com.intellij.codeInsight.hints.ChangeListener
+import com.intellij.codeInsight.hints.FactoryInlayHintsCollector
+import com.intellij.codeInsight.hints.ImmediateConfigurable
+import com.intellij.codeInsight.hints.InlayHintsCollector
+import com.intellij.codeInsight.hints.InlayHintsProvider
+import com.intellij.codeInsight.hints.InlayHintsSink
+import com.intellij.codeInsight.hints.NoSettings
+import com.intellij.codeInsight.hints.SettingsKey
 import com.intellij.codeInsight.hints.presentation.PresentationFactory
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
@@ -28,16 +35,16 @@ import javax.swing.JPanel
  */
 @Suppress("UnstableApiUsage")
 class AblReturnValueInlayHintsProvider : InlayHintsProvider<NoSettings> {
-
     override val key: SettingsKey<NoSettings> = SettingsKey("abl.return.hints")
-    override val name: String                  = "Function return type hints"
-    override val previewText: String           = """
+    override val name: String = "Function return type hints"
+    override val previewText: String =
+        """
         FUNCTION calcTax RETURNS DECIMAL (INPUT dAmount AS DECIMAL):
           RETURN dAmount * 0.2.
         END FUNCTION.
         DEFINE VARIABLE dTotal AS DECIMAL NO-UNDO.
         dTotal = calcTax(100).
-    """.trimIndent()
+        """.trimIndent()
 
     override fun createSettings(): NoSettings = NoSettings()
 
@@ -50,12 +57,13 @@ class AblReturnValueInlayHintsProvider : InlayHintsProvider<NoSettings> {
         file: PsiFile,
         editor: Editor,
         settings: NoSettings,
-        sink: InlayHintsSink
+        sink: InlayHintsSink,
     ): InlayHintsCollector? {
         if (file.language != AblLanguage) return null
         val uri = file.virtualFile?.url ?: return null
-        val scope = file.project.service<AblProjectAnalysisService>()
-            .getSemanticResult(uri)?.rootScope ?: return null
+        val scope =
+            file.project.service<AblProjectAnalysisService>()
+                .getSemanticResult(uri)?.rootScope ?: return null
 
         val returnTypes = buildReturnTypeMap(scope)
         if (returnTypes.isEmpty()) return null
@@ -65,16 +73,19 @@ class AblReturnValueInlayHintsProvider : InlayHintsProvider<NoSettings> {
 
     private fun buildReturnTypeMap(scope: TreeParserSymbolScope): Map<String, String> {
         val map = mutableMapOf<String, String>()
+
         fun addFrom(s: TreeParserSymbolScope) {
             try {
                 for (r in s.routines) {
-                    val type = runCatching {
-                        r.javaClass.getMethod("getReturnDatatype").invoke(r)?.toString()
-                    }.getOrNull()?.takeIf { it.isNotBlank() && it != "VOID" && it != "UNKNOWN" } ?: continue
+                    val type =
+                        runCatching {
+                            r.javaClass.getMethod("getReturnDatatype").invoke(r)?.toString()
+                        }.getOrNull()?.takeIf { it.isNotBlank() && it != "VOID" && it != "UNKNOWN" } ?: continue
                     map[r.name.uppercase()] = type
                 }
                 for (child in s.childScopes) addFrom(child)
-            } catch (_: Exception) {}
+            } catch (_: Exception) {
+            }
         }
         addFrom(scope)
         return map
@@ -86,12 +97,15 @@ class AblReturnValueInlayHintsProvider : InlayHintsProvider<NoSettings> {
 @Suppress("UnstableApiUsage")
 private class AblReturnHintsCollector(
     editor: Editor,
-    private val returnTypes: Map<String, String>
+    private val returnTypes: Map<String, String>,
 ) : FactoryInlayHintsCollector(editor) {
-
     private val pFactory = PresentationFactory(editor)
 
-    override fun collect(element: PsiElement, editor: Editor, sink: InlayHintsSink): Boolean {
+    override fun collect(
+        element: PsiElement,
+        editor: Editor,
+        sink: InlayHintsSink,
+    ): Boolean {
         if (element.node?.elementType != AblTokenTypes.IDENTIFIER) return true
         val name = element.text.trim()
         val retType = returnTypes[name.uppercase()] ?: return true
@@ -106,14 +120,17 @@ private class AblReturnHintsCollector(
         // Find the matching closing parenthesis offset
         val closeOffset = findMatchingClose(element) ?: return true
 
-        val presentation = pFactory.roundWithBackgroundAndSmallInset(
-            pFactory.smallText(": $retType")
-        )
+        val presentation =
+            pFactory.roundWithBackgroundAndSmallInset(
+                pFactory.smallText(": $retType"),
+            )
         sink.addInlineElement(
             closeOffset,
-            /* relatesToPrecedingText = */ true,
+            // relatesToPrecedingText =
+            true,
             presentation,
-            /* placeAfterIfSame = */ false
+            // placeAfterIfSame =
+            false,
         )
         return true
     }
@@ -145,15 +162,23 @@ private class AblReturnHintsCollector(
         var prev = element.prevSibling
         while (prev != null) {
             val text = prev.text?.trim()
-            if (text.isNullOrBlank()) { prev = prev.prevSibling; continue }
+            if (text.isNullOrBlank()) {
+                prev = prev.prevSibling
+                continue
+            }
             return text.uppercase() in DEFINITION_KEYWORDS
         }
         return false
     }
 
     companion object {
-        private val DEFINITION_KEYWORDS = setOf(
-            "FUNCTION", "PROCEDURE", "METHOD", "CONSTRUCTOR", "DESTRUCTOR"
-        )
+        private val DEFINITION_KEYWORDS =
+            setOf(
+                "FUNCTION",
+                "PROCEDURE",
+                "METHOD",
+                "CONSTRUCTOR",
+                "DESTRUCTOR",
+            )
     }
 }

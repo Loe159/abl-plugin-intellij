@@ -8,10 +8,8 @@ import com.intellij.lang.Language
  * cette instance (ex: SyntaxHighlighter, ParserDefinition, etc.)
  */
 object AblLanguage : Language("ABL") {
-
     override fun getDisplayName(): String = "ABL (Progress OpenEdge)"
 
     // MIME types reconnus pour les fichiers ABL
-    override fun getMimeTypes(): Array<String> =
-        arrayOf("text/x-abl", "application/x-openedge-abl")
+    override fun getMimeTypes(): Array<String> = arrayOf("text/x-abl", "application/x-openedge-abl")
 }

@@ -15,7 +15,6 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase
  * d'IntelliJ guidé par getWordsScanner.
  */
 class AblFindUsagesProviderTest : BasePlatformTestCase() {
-
     private val provider = AblFindUsagesProvider()
 
     // ─── canFindUsagesFor ─────────────────────────────────────────────────────
@@ -57,7 +56,7 @@ class AblFindUsagesProviderTest : BasePlatformTestCase() {
         assertNotNull("getWordsScanner() must return a non-null scanner", scanner)
         assertTrue(
             "Scanner should be DefaultWordsScanner (uses AblLexerAdapter for ABL-aware tokenization)",
-            scanner is DefaultWordsScanner
+            scanner is DefaultWordsScanner,
         )
     }
 

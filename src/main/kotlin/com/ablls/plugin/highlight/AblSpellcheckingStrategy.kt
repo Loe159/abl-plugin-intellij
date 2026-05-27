@@ -16,17 +16,16 @@ import com.intellij.spellchecker.tokenizer.Tokenizer
  * Activation : Settings → Editor → Inspections → Spelling → Typo.
  */
 class AblSpellcheckingStrategy : SpellcheckingStrategy() {
-
-    override fun isMyContext(element: PsiElement): Boolean =
-        element.language == AblLanguage
+    override fun isMyContext(element: PsiElement): Boolean = element.language == AblLanguage
 
     override fun getTokenizer(element: PsiElement): Tokenizer<out PsiElement> {
         val type = element.node?.elementType ?: return EMPTY_TOKENIZER
         return when (type) {
             AblTokenTypes.LINE_COMMENT,
-            AblTokenTypes.BLOCK_COMMENT -> TEXT_TOKENIZER
+            AblTokenTypes.BLOCK_COMMENT,
+            -> TEXT_TOKENIZER
 
-            AblTokenTypes.STRING        -> TEXT_TOKENIZER
+            AblTokenTypes.STRING -> TEXT_TOKENIZER
 
             else -> EMPTY_TOKENIZER
         }

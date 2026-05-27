@@ -9,44 +9,55 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase
  * Inspection highlights the LEAVE or NEXT keyword.
  */
 class AblUnlabeledLoopControlInspectionTest : BasePlatformTestCase() {
-
     override fun setUp() {
         super.setUp()
         myFixture.enableInspections(AblUnlabeledLoopControlInspection::class.java)
     }
 
     fun testLeaveInNestedDoLoopTriggersWarning() {
-        myFixture.configureByText("test.p", """DO:
+        myFixture.configureByText(
+            "test.p",
+            """DO:
   DO:
     <warning descr="LEAVE without label in nested loop — add a block label to make the target loop explicit">LEAVE</warning>.
   END.
-END.""")
+END.""",
+        )
         myFixture.checkHighlighting(true, false, false)
     }
 
     fun testNextInNestedDoLoopTriggersWarning() {
-        myFixture.configureByText("test.p", """DO:
+        myFixture.configureByText(
+            "test.p",
+            """DO:
   DO:
     <warning descr="NEXT without label in nested loop — add a block label to make the target loop explicit">NEXT</warning>.
   END.
-END.""")
+END.""",
+        )
         myFixture.checkHighlighting(true, false, false)
     }
 
     fun testLeaveWithLabelInNestedLoopProducesNoWarning() {
-        myFixture.configureByText("test.p", """outerLoop:
+        myFixture.configureByText(
+            "test.p",
+            """outerLoop:
 DO:
   DO:
     LEAVE outerLoop.
   END.
-END.""")
+END.""",
+        )
         myFixture.checkHighlighting(true, false, false)
     }
 
     fun testLeaveInSimpleDoLoopProducesNoWarning() {
-        myFixture.configureByText("test.p", """DO:
+        myFixture.configureByText(
+            "test.p",
+            """DO:
   LEAVE.
-END.""")
+END.""",
+        )
         myFixture.checkHighlighting(true, false, false)
     }
 }

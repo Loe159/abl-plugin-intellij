@@ -10,14 +10,13 @@ import org.prorefactor.core.ABLNodeType
  * Se met à jour automatiquement avec chaque version de proparse.
  */
 object AblKeywordList {
-
     val KEYWORDS: Set<String> by lazy {
         buildSet {
             for (type in ABLNodeType.values()) {
                 if (!type.isKeyword()) continue
                 val text = type.getText() ?: continue
                 if (text.isNotBlank()) add(text.uppercase())
-                type.alternate?.let  { alt -> if (alt.isNotBlank()) add(alt.uppercase()) }
+                type.alternate?.let { alt -> if (alt.isNotBlank()) add(alt.uppercase()) }
                 type.alternate2?.let { alt -> if (alt.isNotBlank()) add(alt.uppercase()) }
             }
         }

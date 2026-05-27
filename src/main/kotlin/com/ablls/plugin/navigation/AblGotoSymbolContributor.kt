@@ -2,7 +2,6 @@ package com.ablls.plugin.navigation
 
 import com.ablls.plugin.core.AblProjectAnalysisService
 import com.ablls.plugin.core.AblSymbol
-import com.ablls.plugin.language.AblIcons
 import com.intellij.icons.AllIcons
 import com.intellij.navigation.ChooseByNameContributor
 import com.intellij.navigation.ItemPresentation
@@ -21,8 +20,10 @@ import javax.swing.Icon
  * Les variables et paramètres sont exclus (trop nombreux, scope local).
  */
 class AblGotoSymbolContributor : ChooseByNameContributor {
-
-    override fun getNames(project: Project, includeNonProjectItems: Boolean): Array<String> =
+    override fun getNames(
+        project: Project,
+        includeNonProjectItems: Boolean,
+    ): Array<String> =
         project.service<AblProjectAnalysisService>()
             .symbolIndex
             .allSymbols()
@@ -35,7 +36,7 @@ class AblGotoSymbolContributor : ChooseByNameContributor {
         name: String,
         pattern: String,
         project: Project,
-        includeNonProjectItems: Boolean
+        includeNonProjectItems: Boolean,
     ): Array<NavigationItem> =
         project.service<AblProjectAnalysisService>()
             .symbolIndex
@@ -44,24 +45,28 @@ class AblGotoSymbolContributor : ChooseByNameContributor {
             .map { AblNavigationItem(it, project) }
             .toTypedArray()
 
-    private fun AblSymbol.isNavigable(): Boolean = when (kind) {
-        AblSymbol.Kind.PROCEDURE,
-        AblSymbol.Kind.FUNCTION,
-        AblSymbol.Kind.CLASS,
-        AblSymbol.Kind.METHOD,
-        AblSymbol.Kind.TABLE,
-        AblSymbol.Kind.TEMP_TABLE,
-        AblSymbol.Kind.EVENT -> true
-        else -> false
-    }
+    private fun AblSymbol.isNavigable(): Boolean =
+        when (kind) {
+            AblSymbol.Kind.PROCEDURE,
+            AblSymbol.Kind.FUNCTION,
+            AblSymbol.Kind.CLASS,
+            AblSymbol.Kind.METHOD,
+            AblSymbol.Kind.TABLE,
+            AblSymbol.Kind.TEMP_TABLE,
+            AblSymbol.Kind.EVENT,
+            -> true
+            else -> false
+        }
 }
 
 /**
  * Fournisseur "Go to Class" (Ctrl+N) pour ABL — restreint aux CLASS/INTERFACE/ENUM.
  */
 class AblGotoClassContributor : ChooseByNameContributor {
-
-    override fun getNames(project: Project, includeNonProjectItems: Boolean): Array<String> =
+    override fun getNames(
+        project: Project,
+        includeNonProjectItems: Boolean,
+    ): Array<String> =
         project.service<AblProjectAnalysisService>()
             .symbolIndex
             .allSymbols()
@@ -74,7 +79,7 @@ class AblGotoClassContributor : ChooseByNameContributor {
         name: String,
         pattern: String,
         project: Project,
-        includeNonProjectItems: Boolean
+        includeNonProjectItems: Boolean,
     ): Array<NavigationItem> =
         project.service<AblProjectAnalysisService>()
             .symbolIndex
@@ -88,29 +93,32 @@ class AblGotoClassContributor : ChooseByNameContributor {
 
 class AblNavigationItem(
     private val symbol: AblSymbol,
-    private val project: Project
+    private val project: Project,
 ) : NavigationItem {
-
     override fun getName(): String = symbol.name
 
-    override fun getPresentation(): ItemPresentation = object : ItemPresentation {
-        override fun getPresentableText(): String = symbol.name
-        override fun getLocationString(): String? = symbol.uri
-            ?.removePrefix("file://")
-            ?.removePrefix("db://")
-            ?.let { path ->
-                // Show only filename + dataType
-                val file = path.substringAfterLast('/')
-                if (symbol.dataType != null) "$file — ${symbol.dataType}" else file
-            }
-        override fun getIcon(unused: Boolean): Icon = iconFor(symbol.kind)
-    }
+    override fun getPresentation(): ItemPresentation =
+        object : ItemPresentation {
+            override fun getPresentableText(): String = symbol.name
+
+            override fun getLocationString(): String? =
+                symbol.uri
+                    ?.removePrefix("file://")
+                    ?.removePrefix("db://")
+                    ?.let { path ->
+                        // Show only filename + dataType
+                        val file = path.substringAfterLast('/')
+                        if (symbol.dataType != null) "$file — ${symbol.dataType}" else file
+                    }
+
+            override fun getIcon(unused: Boolean): Icon = iconFor(symbol.kind)
+        }
 
     override fun navigate(requestFocus: Boolean) {
         val uri = symbol.uri?.takeIf { !it.startsWith("db://") } ?: return
-        val vf  = VirtualFileManager.getInstance().findFileByUrl(uri) ?: return
+        val vf = VirtualFileManager.getInstance().findFileByUrl(uri) ?: return
         val line = (symbol.definitionRange?.startLine ?: 0).coerceAtLeast(0)
-        val col  = (symbol.definitionRange?.startCol  ?: 0).coerceAtLeast(0)
+        val col = (symbol.definitionRange?.startCol ?: 0).coerceAtLeast(0)
         OpenFileDescriptor(project, vf, line, col).navigate(requestFocus)
     }
 
@@ -121,14 +129,15 @@ class AblNavigationItem(
 
     override fun canNavigateToSource(): Boolean = canNavigate()
 
-    private fun iconFor(kind: AblSymbol.Kind): Icon = when (kind) {
-        AblSymbol.Kind.PROCEDURE  -> AllIcons.Nodes.Method
-        AblSymbol.Kind.FUNCTION   -> AllIcons.Nodes.Function
-        AblSymbol.Kind.CLASS      -> AllIcons.Nodes.Class
-        AblSymbol.Kind.METHOD     -> AllIcons.Nodes.Method
-        AblSymbol.Kind.TABLE      -> AllIcons.Nodes.DataTables
-        AblSymbol.Kind.TEMP_TABLE -> AllIcons.Nodes.DataTables
-        AblSymbol.Kind.EVENT      -> AllIcons.Nodes.Method
-        else                      -> AllIcons.Nodes.Unknown
-    }
+    private fun iconFor(kind: AblSymbol.Kind): Icon =
+        when (kind) {
+            AblSymbol.Kind.PROCEDURE -> AllIcons.Nodes.Method
+            AblSymbol.Kind.FUNCTION -> AllIcons.Nodes.Function
+            AblSymbol.Kind.CLASS -> AllIcons.Nodes.Class
+            AblSymbol.Kind.METHOD -> AllIcons.Nodes.Method
+            AblSymbol.Kind.TABLE -> AllIcons.Nodes.DataTables
+            AblSymbol.Kind.TEMP_TABLE -> AllIcons.Nodes.DataTables
+            AblSymbol.Kind.EVENT -> AllIcons.Nodes.Method
+            else -> AllIcons.Nodes.Unknown
+        }
 }

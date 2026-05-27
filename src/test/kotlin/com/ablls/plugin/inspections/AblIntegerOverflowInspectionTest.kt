@@ -9,39 +9,48 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase
  * Inspection highlights the variable name token.
  */
 class AblIntegerOverflowInspectionTest : BasePlatformTestCase() {
-
     override fun setUp() {
         super.setUp()
         myFixture.enableInspections(AblIntegerOverflowInspection::class.java)
     }
 
     fun testCountVariableTriggersWeakWarning() {
-        myFixture.configureByText("test.p",
-            "DEFINE VARIABLE <weak_warning>iCount</weak_warning> AS INTEGER NO-UNDO.")
+        myFixture.configureByText(
+            "test.p",
+            "DEFINE VARIABLE <weak_warning>iCount</weak_warning> AS INTEGER NO-UNDO.",
+        )
         myFixture.checkHighlighting(false, false, true)
     }
 
     fun testTotalVariableTriggersWeakWarning() {
-        myFixture.configureByText("test.p",
-            "DEFINE VARIABLE <weak_warning>iTotal</weak_warning> AS INTEGER NO-UNDO.")
+        myFixture.configureByText(
+            "test.p",
+            "DEFINE VARIABLE <weak_warning>iTotal</weak_warning> AS INTEGER NO-UNDO.",
+        )
         myFixture.checkHighlighting(false, false, true)
     }
 
     fun testDecimalTypeProducesNoWarning() {
-        myFixture.configureByText("test.p",
-            "DEFINE VARIABLE iCount AS DECIMAL NO-UNDO.")
+        myFixture.configureByText(
+            "test.p",
+            "DEFINE VARIABLE iCount AS DECIMAL NO-UNDO.",
+        )
         myFixture.checkHighlighting(false, false, true)
     }
 
     fun testInt64TypeProducesNoWarning() {
-        myFixture.configureByText("test.p",
-            "DEFINE VARIABLE iCount AS INT64 NO-UNDO.")
+        myFixture.configureByText(
+            "test.p",
+            "DEFINE VARIABLE iCount AS INT64 NO-UNDO.",
+        )
         myFixture.checkHighlighting(false, false, true)
     }
 
     fun testNeutralNameProducesNoWarning() {
-        myFixture.configureByText("test.p",
-            "DEFINE VARIABLE iMyVar AS INTEGER NO-UNDO.")
+        myFixture.configureByText(
+            "test.p",
+            "DEFINE VARIABLE iMyVar AS INTEGER NO-UNDO.",
+        )
         myFixture.checkHighlighting(false, false, true)
     }
 

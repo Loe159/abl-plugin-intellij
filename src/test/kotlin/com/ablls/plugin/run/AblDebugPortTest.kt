@@ -1,6 +1,8 @@
 package com.ablls.plugin.run
 
-import org.junit.Assert.*
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
 import org.junit.Test
 import java.net.ServerSocket
 
@@ -11,7 +13,6 @@ import java.net.ServerSocket
  * Ces tests sont purs JUnit sans dépendance IntelliJ.
  */
 class AblDebugPortTest {
-
     @Test
     fun `findFreePort returns a positive port`() {
         val port = AblProgramRunner.findFreePort()
@@ -32,8 +33,8 @@ class AblDebugPortTest {
             val port = AblProgramRunner.findFreePort()
             assertFalse(
                 "findFreePort a retourné $port (port privilégié < 1024). " +
-                "Ce type de port peut être bloqué sur Windows et empêche OE de démarrer avec -debugReady.",
-                port in 1..1023
+                    "Ce type de port peut être bloqué sur Windows et empêche OE de démarrer avec -debugReady.",
+                port in 1..1023,
             )
         }
     }
@@ -56,7 +57,7 @@ class AblDebugPortTest {
         val ports = (1..5).map { AblProgramRunner.findFreePort() }.toSet()
         assertTrue(
             "findFreePort devrait retourner des ports variés sur des appels consécutifs, obtenu: $ports",
-            ports.size >= 2
+            ports.size >= 2,
         )
     }
 
@@ -76,7 +77,7 @@ class AblDebugPortTest {
         val ephemeralMin = 1024
         assertFalse(
             "Le port 287 est dans la plage privilégiée — il ne doit pas être utilisé pour -debugReady",
-            287 >= ephemeralMin
+            287 >= ephemeralMin,
         )
     }
 }

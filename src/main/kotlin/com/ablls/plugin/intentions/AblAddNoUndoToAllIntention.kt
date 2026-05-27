@@ -3,11 +3,9 @@ package com.ablls.plugin.intentions
 import com.ablls.plugin.core.AblProjectAnalysisService
 import com.ablls.plugin.language.AblLanguage
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.antlr.v4.runtime.Token
 
@@ -21,27 +19,36 @@ import org.antlr.v4.runtime.Token
  * et insérer le mot-clé avant le `.` de fin de statement.
  */
 class AblAddNoUndoToAllIntention : IntentionAction {
+    override fun getText() = "Add NO-UNDO to all DEFINE VARIABLE in file"
 
-    override fun getText()             = "Add NO-UNDO to all DEFINE VARIABLE in file"
-    override fun getFamilyName()       = "ABL NO-UNDO"
-    override fun startInWriteAction()  = true
+    override fun getFamilyName() = "ABL NO-UNDO"
 
-    override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean {
+    override fun startInWriteAction() = true
+
+    override fun isAvailable(
+        project: Project,
+        editor: Editor?,
+        file: PsiFile?,
+    ): Boolean {
         if (file?.language != AblLanguage) return false
         val uri = file.virtualFile?.url ?: return false
         val service = project.service<AblProjectAnalysisService>()
-        val tokens  = service.analyzeFile(file.text, uri).tokens ?: return false
+        val tokens = service.analyzeFile(file.text, uri).tokens ?: return false
         return hasVariablesWithoutNoUndo(tokens)
     }
 
-    override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
+    override fun invoke(
+        project: Project,
+        editor: Editor?,
+        file: PsiFile?,
+    ) {
         file ?: return
         editor ?: return
         if (file.language != AblLanguage) return
-        val uri     = file.virtualFile?.url ?: return
+        val uri = file.virtualFile?.url ?: return
         val service = project.service<AblProjectAnalysisService>()
-        val tokens  = service.analyzeFile(file.text, uri).tokens ?: return
-        val doc     = editor.document
+        val tokens = service.analyzeFile(file.text, uri).tokens ?: return
+        val doc = editor.document
 
         // Collecter toutes les positions où insérer NO-UNDO (en ordre inverse pour ne pas décaler)
         val insertPositions = findInsertPositions(tokens, doc)
@@ -57,9 +64,16 @@ class AblAddNoUndoToAllIntention : IntentionAction {
         var i = 0
         while (i < size) {
             val t = tokens.get(i)
-            if (t.channel != Token.DEFAULT_CHANNEL) { i++; continue }
+            if (t.channel != Token.DEFAULT_CHANNEL) {
+                i++
+                continue
+            }
             if (!t.text.equals("DEFINE", ignoreCase = true) &&
-                !t.text.equals("DEF", ignoreCase = true)) { i++; continue }
+                !t.text.equals("DEF", ignoreCase = true)
+            ) {
+                i++
+                continue
+            }
 
             val (varEndIdx, hasNoUndo) = scanVariableStatement(tokens, i, size)
             if (varEndIdx > i && !hasNoUndo) return true
@@ -70,16 +84,23 @@ class AblAddNoUndoToAllIntention : IntentionAction {
 
     private fun findInsertPositions(
         tokens: org.antlr.v4.runtime.CommonTokenStream,
-        doc: com.intellij.openapi.editor.Document
+        doc: com.intellij.openapi.editor.Document,
     ): List<Int> {
         val positions = mutableListOf<Int>()
         val size = tokens.size()
         var i = 0
         while (i < size) {
             val t = tokens.get(i)
-            if (t.channel != Token.DEFAULT_CHANNEL) { i++; continue }
+            if (t.channel != Token.DEFAULT_CHANNEL) {
+                i++
+                continue
+            }
             if (!t.text.equals("DEFINE", ignoreCase = true) &&
-                !t.text.equals("DEF", ignoreCase = true)) { i++; continue }
+                !t.text.equals("DEF", ignoreCase = true)
+            ) {
+                i++
+                continue
+            }
 
             val (dotIdx, hasNoUndo) = scanVariableStatement(tokens, i, size)
             if (dotIdx > i && !hasNoUndo) {
@@ -104,7 +125,7 @@ class AblAddNoUndoToAllIntention : IntentionAction {
     private fun scanVariableStatement(
         tokens: org.antlr.v4.runtime.CommonTokenStream,
         defIdx: Int,
-        size: Int
+        size: Int,
     ): Pair<Int, Boolean> {
         // Vérifier que le mot-clé suivant est VARIABLE (ou VAR)
         var j = defIdx + 1
@@ -137,9 +158,10 @@ class AblAddNoUndoToAllIntention : IntentionAction {
     }
 
     companion object {
-        private val TOP_LEVEL_KEYWORDS = setOf(
-            "PROCEDURE", "FUNCTION", "CLASS", "METHOD", "IF", "FOR", "DO", "END",
-            "DEFINE", "MESSAGE", "RUN", "RETURN", "ASSIGN", "FIND"
-        )
+        private val TOP_LEVEL_KEYWORDS =
+            setOf(
+                "PROCEDURE", "FUNCTION", "CLASS", "METHOD", "IF", "FOR", "DO", "END",
+                "DEFINE", "MESSAGE", "RUN", "RETURN", "ASSIGN", "FIND",
+            )
     }
 }

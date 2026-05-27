@@ -15,19 +15,22 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
  * l'environnement proparse (PROPATH) et l'index de symboles.
  */
 class AblProjectListener : ProjectActivity {
-
     override suspend fun execute(project: Project) {
         val connection = project.messageBus.connect()
-        connection.subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
-            override fun after(events: List<VFileEvent>) {
-                val shouldReload = events.any { event ->
-                    event.file?.name == "openedge-project.json"
+        connection.subscribe(
+            VirtualFileManager.VFS_CHANGES,
+            object : BulkFileListener {
+                override fun after(events: List<VFileEvent>) {
+                    val shouldReload =
+                        events.any { event ->
+                            event.file?.name == "openedge-project.json"
+                        }
+                    if (shouldReload) {
+                        onConfigChanged(project)
+                    }
                 }
-                if (shouldReload) {
-                    onConfigChanged(project)
-                }
-            }
-        })
+            },
+        )
     }
 
     private fun onConfigChanged(project: Project) {

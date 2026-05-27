@@ -10,12 +10,11 @@ import com.ablls.plugin.core.AblParseResult
  * et les mêmes tokens normalisés, elles constituent un duplicat.
  */
 class AblDuplicationDetector(val minTokens: Int = 50) {
-
     data class Fragment(
         val uri: String,
         val startLine: Int,
         val endLine: Int,
-        val tokenCount: Int
+        val tokenCount: Int,
     )
 
     data class DuplicatePair(val a: Fragment, val b: Fragment)
@@ -26,12 +25,12 @@ class AblDuplicationDetector(val minTokens: Int = 50) {
 
         for ((uri, result) in files) {
             val rawTokens = result.tokens ?: continue
-            val tokens    = AblTokenNormalizer.normalize(rawTokens)
+            val tokens = AblTokenNormalizer.normalize(rawTokens)
             if (tokens.size < minTokens) continue
 
             for (start in 0..tokens.size - minTokens) {
                 val window = tokens.subList(start, start + minTokens)
-                val hash   = computeHash(window)
+                val hash = computeHash(window)
                 buckets.getOrPut(hash) { mutableListOf() } += uri to window
             }
         }
@@ -49,24 +48,27 @@ class AblDuplicationDetector(val minTokens: Int = 50) {
                 // Vérification exacte (évite les collisions de hash)
                 if (wA.map { it.text } != wB.map { it.text }) continue
 
-                pairs += DuplicatePair(
-                    Fragment(uriA, wA.first().line, wA.last().line, minTokens),
-                    Fragment(uriB, wB.first().line, wB.last().line, minTokens)
-                )
+                pairs +=
+                    DuplicatePair(
+                        Fragment(uriA, wA.first().line, wA.last().line, minTokens),
+                        Fragment(uriB, wB.first().line, wB.last().line, minTokens),
+                    )
             }
         }
 
         return pairs.distinctBy {
             setOf(
                 it.a.uri to it.a.startLine,
-                it.b.uri to it.b.startLine
+                it.b.uri to it.b.startLine,
             )
         }
     }
 
     private fun computeHash(tokens: List<AblTokenNormalizer.NormalToken>): Long {
         var hash = 17L
-        for (t in tokens) { hash = hash * 31 + t.text.hashCode() }
+        for (t in tokens) {
+            hash = hash * 31 + t.text.hashCode()
+        }
         return hash
     }
 }

@@ -5,7 +5,6 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
-import org.antlr.v4.runtime.Token
 
 /**
  * Intention Action : "Optimize USING statements"
@@ -19,17 +18,26 @@ import org.antlr.v4.runtime.Token
  *   3. Supprimer les lignes USING inutilisées.
  */
 class AblOptimizeUsingsIntention : IntentionAction {
+    override fun getText() = "Optimize USING statements (remove unused)"
 
-    override fun getText()            = "Optimize USING statements (remove unused)"
-    override fun getFamilyName()      = "ABL USING"
+    override fun getFamilyName() = "ABL USING"
+
     override fun startInWriteAction() = true
 
-    override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean {
+    override fun isAvailable(
+        project: Project,
+        editor: Editor?,
+        file: PsiFile?,
+    ): Boolean {
         if (file?.language != AblLanguage) return false
         return file.text.lines().any { it.trim().uppercase().startsWith("USING ") }
     }
 
-    override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
+    override fun invoke(
+        project: Project,
+        editor: Editor?,
+        file: PsiFile?,
+    ) {
         file ?: return
         editor ?: return
         if (file.language != AblLanguage) return
@@ -56,23 +64,25 @@ class AblOptimizeUsingsIntention : IntentionAction {
 
         // Construire le texte sans les lignes USING pour vérifier les usages
         val usingLineIndices = usings.map { it.lineIndex }.toSet()
-        val codeWithoutUsings = lines.filterIndexed { idx, _ -> idx !in usingLineIndices }
-            .joinToString("\n")
+        val codeWithoutUsings =
+            lines.filterIndexed { idx, _ -> idx !in usingLineIndices }
+                .joinToString("\n")
 
         // Trouver les USING inutilisés
-        val unusedLines = usings.filter { info ->
-            // Wildcard USING (e.g. USING Progress.Lang.*) → toujours garder
-            if (info.typeShort == "*") return@filter false
-            // Vérifier si le type court apparaît dans le code (hors lignes USING)
-            !codeWithoutUsings.contains(info.typeShort, ignoreCase = true)
-        }.map { it.lineIndex }.sortedDescending()  // ordre décroissant pour ne pas décaler
+        val unusedLines =
+            usings.filter { info ->
+                // Wildcard USING (e.g. USING Progress.Lang.*) → toujours garder
+                if (info.typeShort == "*") return@filter false
+                // Vérifier si le type court apparaît dans le code (hors lignes USING)
+                !codeWithoutUsings.contains(info.typeShort, ignoreCase = true)
+            }.map { it.lineIndex }.sortedDescending() // ordre décroissant pour ne pas décaler
 
         if (unusedLines.isEmpty()) return
 
         // Supprimer les lignes en ordre décroissant
         for (lineIdx in unusedLines) {
             val lineStart = doc.getLineStartOffset(lineIdx)
-            val lineEnd   = if (lineIdx + 1 < doc.lineCount) doc.getLineStartOffset(lineIdx + 1) else doc.textLength
+            val lineEnd = if (lineIdx + 1 < doc.lineCount) doc.getLineStartOffset(lineIdx + 1) else doc.textLength
             doc.deleteString(lineStart, lineEnd)
         }
     }

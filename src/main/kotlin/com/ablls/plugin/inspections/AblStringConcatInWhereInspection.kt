@@ -2,7 +2,9 @@ package com.ablls.plugin.inspections
 
 import com.ablls.plugin.core.AblProjectAnalysisService
 import com.ablls.plugin.language.AblLanguage
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.LocalInspectionTool
+import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.components.service
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElementVisitor
@@ -23,20 +25,24 @@ import org.prorefactor.core.ABLNodeType
  * WHERE et PLUS sont des ABLNodeTypes précis — pas de faux positifs.
  */
 class AblStringConcatInWhereInspection : LocalInspectionTool() {
+    override fun getDisplayName() = "String concatenation in WHERE clause"
 
-    override fun getDisplayName()      = "String concatenation in WHERE clause"
-    override fun getShortName()        = "AblStringConcatInWhere"
+    override fun getShortName() = "AblStringConcatInWhere"
+
     override fun getGroupDisplayName() = "ABL Best Practices"
 
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
+    override fun buildVisitor(
+        holder: ProblemsHolder,
+        isOnTheFly: Boolean,
+    ): PsiElementVisitor =
         object : PsiElementVisitor() {
             override fun visitFile(file: PsiFile) {
                 if (file.language != AblLanguage) return
-                val uri     = file.virtualFile?.url ?: return
+                val uri = file.virtualFile?.url ?: return
                 val service = file.project.service<AblProjectAnalysisService>()
-                val result  = service.analyzeFile(file.text, uri)
+                val result = service.analyzeFile(file.text, uri)
                 val topNode = result.topNode ?: return
-                val doc     = PsiDocumentManager.getInstance(file.project).getDocument(file) ?: return
+                val doc = PsiDocumentManager.getInstance(file.project).getDocument(file) ?: return
 
                 for (whereNode in topNode.query(ABLNodeType.WHERE)) {
                     if (whereNode.getStatement().hasProparseDirective("NOANALYSIS")) continue
@@ -46,7 +52,7 @@ class AblStringConcatInWhereInspection : LocalInspectionTool() {
                             file,
                             "String concatenation (+) in WHERE clause disables index usage — evaluate expression before the query",
                             ProblemHighlightType.WARNING,
-                            range
+                            range,
                         )
                     }
                 }

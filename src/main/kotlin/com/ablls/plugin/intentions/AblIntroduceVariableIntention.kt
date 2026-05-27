@@ -18,12 +18,17 @@ import com.intellij.psi.PsiFile
  * Pour simplifier, insère juste avant la ligne courante.
  */
 class AblIntroduceVariableIntention : IntentionAction {
+    override fun getText() = "Introduce variable for selection"
 
-    override fun getText()            = "Introduce variable for selection"
-    override fun getFamilyName()      = "ABL Refactor"
+    override fun getFamilyName() = "ABL Refactor"
+
     override fun startInWriteAction() = true
 
-    override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean {
+    override fun isAvailable(
+        project: Project,
+        editor: Editor?,
+        file: PsiFile?,
+    ): Boolean {
         if (file?.language != AblLanguage) return false
         val sel = editor?.selectionModel ?: return false
         if (!sel.hasSelection()) return false
@@ -32,7 +37,11 @@ class AblIntroduceVariableIntention : IntentionAction {
         return selectedText.isNotBlank() && !selectedText.contains('\n')
     }
 
-    override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
+    override fun invoke(
+        project: Project,
+        editor: Editor?,
+        file: PsiFile?,
+    ) {
         editor ?: return
         file ?: return
         if (file.language != AblLanguage) return
@@ -48,23 +57,27 @@ class AblIntroduceVariableIntention : IntentionAction {
 
         // Trouver le début de la ligne courante pour insérer la déclaration
         val currentLine = doc.getLineNumber(selStart)
-        val lineStart   = doc.getLineStartOffset(currentLine)
+        val lineStart = doc.getLineStartOffset(currentLine)
 
         // Détecter l'indentation
         val lineText = doc.text.substring(lineStart, selStart)
-        val indent   = lineText.takeWhile { it == ' ' || it == '\t' }
+        val indent = lineText.takeWhile { it == ' ' || it == '\t' }
 
         // Insérer la déclaration et l'assignation avant la ligne courante
-        val declaration = "${indent}DEFINE VARIABLE $varName AS CHARACTER NO-UNDO.\n" +
-                          "${indent}ASSIGN $varName = $expression.\n"
+        val declaration =
+            "${indent}DEFINE VARIABLE $varName AS CHARACTER NO-UNDO.\n" +
+                "${indent}ASSIGN $varName = $expression.\n"
         doc.insertString(lineStart, declaration)
 
         // Remplacer l'expression sélectionnée par le nom de variable
         // (les offsets ont été décalés par l'insertion)
         val newSelStart = selStart + declaration.length
-        val newSelEnd   = newSelStart + expression.length
-        doc.replaceString(newSelStart, newSelEnd + (sel.selectionEnd - sel.selectionStart - expression.length),
-            varName)
+        val newSelEnd = newSelStart + expression.length
+        doc.replaceString(
+            newSelStart,
+            newSelEnd + (sel.selectionEnd - sel.selectionStart - expression.length),
+            varName,
+        )
 
         sel.removeSelection()
         // Positionner sur le nom de la variable dans la déclaration pour renommage

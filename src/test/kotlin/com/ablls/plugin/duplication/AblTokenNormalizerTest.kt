@@ -6,7 +6,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class AblTokenNormalizerTest {
-
     private val facade = AblParserFacade()
 
     private fun normalize(code: String): List<AblTokenNormalizer.NormalToken> {
@@ -58,7 +57,7 @@ class AblTokenNormalizerTest {
 
     @Test
     fun `comments are excluded from output`() {
-        val with    = normalize("/* a comment */ DEFINE VARIABLE x AS INTEGER NO-UNDO.")
+        val with = normalize("/* a comment */ DEFINE VARIABLE x AS INTEGER NO-UNDO.")
         val without = normalize("DEFINE VARIABLE x AS INTEGER NO-UNDO.")
         assertEquals(with.map { it.text }, without.map { it.text })
     }

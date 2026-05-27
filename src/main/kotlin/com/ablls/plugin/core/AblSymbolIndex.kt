@@ -10,7 +10,6 @@ import java.util.concurrent.CopyOnWriteArrayList
  * Utilisé par la complétion, hover, go to definition.
  */
 class AblSymbolIndex {
-
     /** URI → symboles définis dans ce fichier */
     private val byFile = ConcurrentHashMap<String, List<AblSymbol>>()
 
@@ -19,7 +18,10 @@ class AblSymbolIndex {
 
     // ─── Mise à jour ──────────────────────────────────────────────────────────
 
-    fun updateFile(uri: String, symbols: List<AblSymbol>) {
+    fun updateFile(
+        uri: String,
+        symbols: List<AblSymbol>,
+    ) {
         val old = byFile.put(uri, symbols) ?: emptyList()
         // Retirer les anciens symboles
         old.forEach { s ->
@@ -46,7 +48,10 @@ class AblSymbolIndex {
     // ─── Recherche ────────────────────────────────────────────────────────────
 
     /** Tous les symboles dont le nom commence par [prefix]. Fichier courant en premier. */
-    fun findByPrefix(prefix: String, currentUri: String): List<AblSymbol> {
+    fun findByPrefix(
+        prefix: String,
+        currentUri: String,
+    ): List<AblSymbol> {
         val lp = prefix.lowercase()
         val result = mutableListOf<AblSymbol>()
         // Locaux d'abord
@@ -61,15 +66,17 @@ class AblSymbolIndex {
     }
 
     /** Tous les symboles portant exactement ce nom (case-insensitive). Fichier courant en premier. */
-    fun findByName(name: String, currentUri: String): List<AblSymbol> {
+    fun findByName(
+        name: String,
+        currentUri: String,
+    ): List<AblSymbol> {
         if (name.isBlank()) return emptyList()
         val all = byName[name.lowercase()] ?: return emptyList()
         return all.sortedWith(compareBy { if (it.uri == currentUri) 0 else 1 })
     }
 
     /** Symboles définis dans un fichier. */
-    fun getSymbolsForFile(uri: String): List<AblSymbol> =
-        byFile[uri] ?: emptyList()
+    fun getSymbolsForFile(uri: String): List<AblSymbol> = byFile[uri] ?: emptyList()
 
     /** Nombre total de symboles indexés. */
     val symbolCount: Int get() = byFile.values.sumOf { it.size }

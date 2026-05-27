@@ -48,24 +48,30 @@ import java.net.ServerSocket
  *   7. Le programme utilisateur démarre, OE envoie MSG_ENTER aux breakpoints.
  */
 class AblProgramRunner : GenericProgramRunner<RunnerSettings>() {
-
     private val log = thisLogger()
 
     override fun getRunnerId() = "AblProgramRunner"
 
-    override fun canRun(executorId: String, profile: RunProfile): Boolean =
-        profile is AblRunConfiguration && executorId == DefaultDebugExecutor.EXECUTOR_ID
+    override fun canRun(
+        executorId: String,
+        profile: RunProfile,
+    ): Boolean = profile is AblRunConfiguration && executorId == DefaultDebugExecutor.EXECUTOR_ID
 
     @Throws(ExecutionException::class)
-    override fun doExecute(state: RunProfileState, environment: ExecutionEnvironment): RunContentDescriptor? {
+    override fun doExecute(
+        state: RunProfileState,
+        environment: ExecutionEnvironment,
+    ): RunContentDescriptor? {
         val config = environment.runProfile as AblRunConfiguration
         val runState = state as AblRunState
 
         return XDebuggerManager.getInstance(environment.project)
-            .startSession(environment, object : XDebugProcessStarter() {
-                override fun start(session: XDebugSession): XDebugProcess =
-                    launch(session, runState, config)
-            })
+            .startSession(
+                environment,
+                object : XDebugProcessStarter() {
+                    override fun start(session: XDebugSession): XDebugProcess = launch(session, runState, config)
+                },
+            )
             .runContentDescriptor
     }
 
@@ -81,24 +87,31 @@ class AblProgramRunner : GenericProgramRunner<RunnerSettings>() {
         val bootstrap = extractBootstrap()
 
         // 3. PROPATH éventuel pour le programme utilisateur.
-        val propath = runCatching {
-            session.project.service<OpenEdgeProjectService>().config.propath.joinToString(",")
-        }.getOrDefault("")
+        val propath =
+            runCatching {
+                session.project.service<OpenEdgeProjectService>().config.propath.joinToString(",")
+            }.getOrDefault("")
 
         // 4. Construction de la ligne de commande _progres.exe.
         val cmdLine = buildBootstrapCommandLine(runState, config, bootstrap, port, propath)
 
         // 5. Spawn OE.
-        val processHandler = ProcessHandlerFactory.getInstance()
-            .createColoredProcessHandler(cmdLine)
+        val processHandler =
+            ProcessHandlerFactory.getInstance()
+                .createColoredProcessHandler(cmdLine)
         ProcessTerminatedListener.attach(processHandler)
 
         val oeOutput = StringBuilder()
-        processHandler.addProcessListener(object : ProcessAdapter() {
-            override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
-                oeOutput.append(event.text)
-            }
-        })
+        processHandler.addProcessListener(
+            object : ProcessAdapter() {
+                override fun onTextAvailable(
+                    event: ProcessEvent,
+                    outputType: Key<*>,
+                ) {
+                    oeOutput.append(event.text)
+                }
+            },
+        )
         processHandler.startNotify()
         log.info("ABL debug: spawned OE, awaiting connection on port $port")
 
@@ -111,16 +124,20 @@ class AblProgramRunner : GenericProgramRunner<RunnerSettings>() {
             val first = oeOutput.lines().firstOrNull { it.isNotBlank() } ?: "(no output)"
             throw ExecutionException(
                 "Could not connect to OpenEdge debugger on port $port (exit=$exit).\n  $first\n\n" +
-                "Vérifie que _progres.exe accepte -debugReady (variable d'environnement " +
-                "ENABLE_OPENEDGE_DEBUGGER=1 requise pour certaines versions OE)."
+                    "Vérifie que _progres.exe accepte -debugReady (variable d'environnement " +
+                    "ENABLE_OPENEDGE_DEBUGGER=1 requise pour certaines versions OE).",
             )
         }
         log.info("ABL debug: connected to OE on port $port")
 
         // 7. Fermer la connexion proprement quand le process meurt.
-        processHandler.addProcessListener(object : ProcessAdapter() {
-            override fun processTerminated(event: ProcessEvent) { conn.close() }
-        })
+        processHandler.addProcessListener(
+            object : ProcessAdapter() {
+                override fun processTerminated(event: ProcessEvent) {
+                    conn.close()
+                }
+            },
+        )
 
         return AblDebugProcess(session, conn, processHandler, bootstrap.absolutePath)
     }
@@ -160,10 +177,12 @@ class AblProgramRunner : GenericProgramRunner<RunnerSettings>() {
      */
     private fun pickClientExecutable(dlc: String): String {
         val isWindows = System.getProperty("os.name").lowercase().contains("win")
-        val candidates = if (isWindows)
-            listOf("bin/_progres.exe", "bin/prowin.exe", "bin/prowin32.exe")
-        else
-            listOf("bin/_progres", "bin/mpro")
+        val candidates =
+            if (isWindows) {
+                listOf("bin/_progres.exe", "bin/prowin.exe", "bin/prowin32.exe")
+            } else {
+                listOf("bin/_progres", "bin/mpro")
+            }
         return candidates.map { File(dlc, it) }.firstOrNull { it.exists() }?.absolutePath
             ?: File(dlc, candidates.first()).absolutePath
     }
@@ -176,9 +195,10 @@ class AblProgramRunner : GenericProgramRunner<RunnerSettings>() {
         val dir = File(PathManager.getTempPath(), "abl-debug")
         dir.mkdirs()
         val target = File(dir, "oe-debug-bootstrap.p")
-        val resource = AblProgramRunner::class.java.classLoader
-            .getResourceAsStream("abl/oe-debug-bootstrap.p")
-            ?: throw ExecutionException("Bootstrap resource abl/oe-debug-bootstrap.p missing from plugin JAR")
+        val resource =
+            AblProgramRunner::class.java.classLoader
+                .getResourceAsStream("abl/oe-debug-bootstrap.p")
+                ?: throw ExecutionException("Bootstrap resource abl/oe-debug-bootstrap.p missing from plugin JAR")
         target.outputStream().use { out -> resource.use { it.copyTo(out) } }
         return target
     }
@@ -195,9 +215,11 @@ class AblProgramRunner : GenericProgramRunner<RunnerSettings>() {
                     ServerSocket(0).use { s ->
                         if (s.localPort >= 1024) return s.localPort
                     }
-                } catch (_: Exception) { /* retry */ }
+                } catch (_: Exception) {
+                    // retry
+                }
             }
-            return 3075  // fallback raisonnable
+            return 3075 // fallback raisonnable
         }
     }
 }

@@ -2,7 +2,11 @@ package com.ablls.plugin.inspections
 
 import com.ablls.plugin.core.AblProjectAnalysisService
 import com.ablls.plugin.language.AblLanguage
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.LocalInspectionTool
+import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
@@ -24,37 +28,46 @@ import org.prorefactor.core.ABLNodeType
  * Note ABLNodeType : GT → GTHAN, LT → LTHAN (noms issus de la grammaire proparse).
  */
 class AblFortranOperatorsInspection : LocalInspectionTool() {
+    override fun getDisplayName() = "Fortran-style comparison operator"
 
-    override fun getDisplayName()      = "Fortran-style comparison operator"
-    override fun getShortName()        = "AblFortranOperators"
+    override fun getShortName() = "AblFortranOperators"
+
     override fun getGroupDisplayName() = "ABL Best Practices"
 
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
+    override fun buildVisitor(
+        holder: ProblemsHolder,
+        isOnTheFly: Boolean,
+    ): PsiElementVisitor =
         object : PsiElementVisitor() {
             override fun visitFile(file: PsiFile) {
                 if (file.language != AblLanguage) return
-                val uri     = file.virtualFile?.url ?: return
+                val uri = file.virtualFile?.url ?: return
                 val service = file.project.service<AblProjectAnalysisService>()
-                val result  = service.analyzeFile(file.text, uri)
+                val result = service.analyzeFile(file.text, uri)
                 val topNode = result.topNode ?: return
-                val doc     = PsiDocumentManager.getInstance(file.project).getDocument(file) ?: return
+                val doc = PsiDocumentManager.getInstance(file.project).getDocument(file) ?: return
 
-                for (node in topNode.query(ABLNodeType.EQ, ABLNodeType.NE,
-                                           ABLNodeType.GTHAN, ABLNodeType.LTHAN,
-                                           ABLNodeType.GE, ABLNodeType.LE)) {
+                for (node in topNode.query(
+                    ABLNodeType.EQ,
+                    ABLNodeType.NE,
+                    ABLNodeType.GTHAN,
+                    ABLNodeType.LTHAN,
+                    ABLNodeType.GE,
+                    ABLNodeType.LE,
+                )) {
                     if (node.getStatement().hasProparseDirective("NOANALYSIS")) continue
-                    val old    = FORTRAN_TEXT[node.nodeType] ?: continue
-                    val modern = MODERN_MAP[node.nodeType]   ?: continue
+                    val old = FORTRAN_TEXT[node.nodeType] ?: continue
+                    val modern = MODERN_MAP[node.nodeType] ?: continue
                     // proparse assigns the same ABLNodeType to both the keyword (EQ, GT…)
                     // and the modern symbol (=, >…). Filter on source text to avoid false positives.
                     if (!node.text.equals(old, ignoreCase = true)) continue
-                    val range  = AblInspectionHelper.toRange(doc, node.line, node.column, old.length)
+                    val range = AblInspectionHelper.toRange(doc, node.line, node.column, old.length)
                     holder.registerProblem(
                         file,
                         "Deprecated Fortran-style operator '$old' — use '$modern' instead",
                         ProblemHighlightType.WARNING,
                         range,
-                        ReplaceFortranOperatorFix(old, modern, range.startOffset, range.endOffset)
+                        ReplaceFortranOperatorFix(old, modern, range.startOffset, range.endOffset),
                     )
                 }
             }
@@ -62,33 +75,38 @@ class AblFortranOperatorsInspection : LocalInspectionTool() {
 
     companion object {
         // Texte canonique (minuscules) de chaque opérateur Fortran — source : ABLNodeType
-        private val FORTRAN_TEXT = mapOf(
-            ABLNodeType.EQ    to "eq",
-            ABLNodeType.NE    to "ne",
-            ABLNodeType.GTHAN to "gt",
-            ABLNodeType.LTHAN to "lt",
-            ABLNodeType.GE    to "ge",
-            ABLNodeType.LE    to "le"
-        )
-        private val MODERN_MAP = mapOf(
-            ABLNodeType.EQ    to "=",
-            ABLNodeType.NE    to "<>",
-            ABLNodeType.GTHAN to ">",
-            ABLNodeType.LTHAN to "<",
-            ABLNodeType.GE    to ">=",
-            ABLNodeType.LE    to "<="
-        )
+        private val FORTRAN_TEXT =
+            mapOf(
+                ABLNodeType.EQ to "eq",
+                ABLNodeType.NE to "ne",
+                ABLNodeType.GTHAN to "gt",
+                ABLNodeType.LTHAN to "lt",
+                ABLNodeType.GE to "ge",
+                ABLNodeType.LE to "le",
+            )
+        private val MODERN_MAP =
+            mapOf(
+                ABLNodeType.EQ to "=",
+                ABLNodeType.NE to "<>",
+                ABLNodeType.GTHAN to ">",
+                ABLNodeType.LTHAN to "<",
+                ABLNodeType.GE to ">=",
+                ABLNodeType.LE to "<=",
+            )
     }
 
     private class ReplaceFortranOperatorFix(
         private val old: String,
         private val modern: String,
         private val startOffset: Int,
-        private val endOffset: Int
+        private val endOffset: Int,
     ) : LocalQuickFix {
         override fun getFamilyName() = "Replace '$old' with '$modern'"
 
-        override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+        override fun applyFix(
+            project: Project,
+            descriptor: ProblemDescriptor,
+        ) {
             val doc = descriptor.psiElement.containingFile?.viewProvider?.document ?: return
             if (endOffset <= doc.textLength) {
                 doc.replaceString(startOffset, endOffset, modern)

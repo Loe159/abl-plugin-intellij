@@ -1,5 +1,6 @@
 package com.ablls.plugin.parser
 
+import com.ablls.plugin.language.AblFileType
 import com.ablls.plugin.language.AblLanguage
 import com.intellij.extapi.psi.ASTWrapperPsiElement
 import com.intellij.extapi.psi.PsiFileBase
@@ -11,13 +12,13 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.psi.FileViewProvider
 import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.IElementType
-import com.ablls.plugin.language.AblFileType
 import org.prorefactor.core.ABLNodeType
 
 // ─── Fichier PSI racine ───────────────────────────────────────────────────────
 
 class AblFile(viewProvider: FileViewProvider) : PsiFileBase(viewProvider, AblLanguage) {
     override fun getFileType(): FileType = AblFileType.INSTANCE
+
     override fun toString(): String = "ABL File"
 }
 
@@ -52,13 +53,18 @@ class AblFile(viewProvider: FileViewProvider) : PsiFileBase(viewProvider, AblLan
  *       DOT          "."
  */
 class AblPsiParser : PsiParser, LightPsiParser {
-
-    override fun parse(root: IElementType, builder: PsiBuilder): ASTNode {
+    override fun parse(
+        root: IElementType,
+        builder: PsiBuilder,
+    ): ASTNode {
         parseLight(root, builder)
         return builder.treeBuilt
     }
 
-    override fun parseLight(root: IElementType, builder: PsiBuilder) {
+    override fun parseLight(
+        root: IElementType,
+        builder: PsiBuilder,
+    ) {
         val rootMarker = builder.mark()
         val blockStack = ArrayDeque<Pair<PsiBuilder.Marker, IElementType>>()
 
@@ -122,10 +128,10 @@ class AblPsiParser : PsiParser, LightPsiParser {
         var depth = 0
         for (i in 1..MAX_LOOKAHEAD) {
             when (builder.rawLookup(i) ?: return false) {
-                AblTokenTypes.LPAREN  -> depth++
-                AblTokenTypes.RPAREN  -> if (depth > 0) depth--
-                AblTokenTypes.COLON   -> if (depth == 0) return true
-                AblTokenTypes.DOT     -> return false
+                AblTokenTypes.LPAREN -> depth++
+                AblTokenTypes.RPAREN -> if (depth > 0) depth--
+                AblTokenTypes.COLON -> if (depth == 0) return true
+                AblTokenTypes.DOT -> return false
             }
         }
         return false
@@ -139,32 +145,34 @@ class AblPsiParser : PsiParser, LightPsiParser {
          * Using ABLNodeType (not raw strings) means abbreviations are handled automatically
          * via ABLNodeType.getLiteral() in the parse loop (e.g. "PROC" → PROCEDURE_BLOCK).
          */
-        private val OPENER_NODE_TYPES: Map<ABLNodeType, IElementType> = mapOf(
-            ABLNodeType.PROCEDURE   to AblTokenTypes.PROCEDURE_BLOCK,
-            ABLNodeType.FUNCTION    to AblTokenTypes.FUNCTION_BLOCK,
-            ABLNodeType.CLASS       to AblTokenTypes.CLASS_BLOCK,
-            ABLNodeType.INTERFACE   to AblTokenTypes.INTERFACE_BLOCK,
-            ABLNodeType.METHOD      to AblTokenTypes.METHOD_BLOCK,
-            ABLNodeType.CONSTRUCTOR to AblTokenTypes.CONSTRUCTOR_BLOCK,
-            ABLNodeType.DESTRUCTOR  to AblTokenTypes.DESTRUCTOR_BLOCK,
-            ABLNodeType.DO          to AblTokenTypes.DO_BLOCK,
-            ABLNodeType.REPEAT      to AblTokenTypes.REPEAT_BLOCK,
-            ABLNodeType.FOR         to AblTokenTypes.FOR_BLOCK,
-            ABLNodeType.CATCH       to AblTokenTypes.CATCH_BLOCK,
-            ABLNodeType.FINALLY     to AblTokenTypes.FINALLY_BLOCK,
-            ABLNodeType.CASE        to AblTokenTypes.CASE_BLOCK,
-        )
+        private val OPENER_NODE_TYPES: Map<ABLNodeType, IElementType> =
+            mapOf(
+                ABLNodeType.PROCEDURE to AblTokenTypes.PROCEDURE_BLOCK,
+                ABLNodeType.FUNCTION to AblTokenTypes.FUNCTION_BLOCK,
+                ABLNodeType.CLASS to AblTokenTypes.CLASS_BLOCK,
+                ABLNodeType.INTERFACE to AblTokenTypes.INTERFACE_BLOCK,
+                ABLNodeType.METHOD to AblTokenTypes.METHOD_BLOCK,
+                ABLNodeType.CONSTRUCTOR to AblTokenTypes.CONSTRUCTOR_BLOCK,
+                ABLNodeType.DESTRUCTOR to AblTokenTypes.DESTRUCTOR_BLOCK,
+                ABLNodeType.DO to AblTokenTypes.DO_BLOCK,
+                ABLNodeType.REPEAT to AblTokenTypes.REPEAT_BLOCK,
+                ABLNodeType.FOR to AblTokenTypes.FOR_BLOCK,
+                ABLNodeType.CATCH to AblTokenTypes.CATCH_BLOCK,
+                ABLNodeType.FINALLY to AblTokenTypes.FINALLY_BLOCK,
+                ABLNodeType.CASE to AblTokenTypes.CASE_BLOCK,
+            )
 
         /**
          * ABLNodeType qualifier keywords that can follow END (END PROCEDURE, END CLASS…).
          * Using ABLNodeType mirrors AblFoldingBuilder.END_QUALIFIER_TYPES and handles
          * abbreviated forms (END PROC. etc.) via ABLNodeType.getLiteral().
          */
-        private val END_QUALIFIER_TYPES: Set<ABLNodeType> = java.util.EnumSet.of(
-            ABLNodeType.PROCEDURE, ABLNodeType.FUNCTION, ABLNodeType.CLASS, ABLNodeType.INTERFACE,
-            ABLNodeType.METHOD, ABLNodeType.CONSTRUCTOR, ABLNodeType.DESTRUCTOR,
-            ABLNodeType.CATCH, ABLNodeType.FINALLY, ABLNodeType.CASE
-        )
+        private val END_QUALIFIER_TYPES: Set<ABLNodeType> =
+            java.util.EnumSet.of(
+                ABLNodeType.PROCEDURE, ABLNodeType.FUNCTION, ABLNodeType.CLASS, ABLNodeType.INTERFACE,
+                ABLNodeType.METHOD, ABLNodeType.CONSTRUCTOR, ABLNodeType.DESTRUCTOR,
+                ABLNodeType.CATCH, ABLNodeType.FINALLY, ABLNodeType.CASE,
+            )
     }
 }
 

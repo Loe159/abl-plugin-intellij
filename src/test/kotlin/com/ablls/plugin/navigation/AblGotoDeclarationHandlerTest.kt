@@ -5,7 +5,6 @@ import com.intellij.openapi.components.service
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
 class AblGotoDeclarationHandlerTest : BasePlatformTestCase() {
-
     private val handler = AblGotoDeclarationHandler()
 
     // ─── Navigation vers la définition ───────────────────────────────────────
@@ -21,8 +20,10 @@ class AblGotoDeclarationHandlerTest : BasePlatformTestCase() {
     }
 
     fun testNavigatesToProcedureDefinition() {
-        myFixture.configureByText("test.p",
-            "PROCEDURE myProc:\nEND PROCEDURE.\nRUN my<caret>Proc.")
+        myFixture.configureByText(
+            "test.p",
+            "PROCEDURE myProc:\nEND PROCEDURE.\nRUN my<caret>Proc.",
+        )
         prewarmSemantic()
 
         val targets = callHandler()
@@ -34,13 +35,16 @@ class AblGotoDeclarationHandlerTest : BasePlatformTestCase() {
     // ─── Discrimination de scope (THE key semantic test) ─────────────────────
 
     fun testScopeDiscriminationPrefersLocalVariable() {
-        myFixture.configureByText("test.p", """
+        myFixture.configureByText(
+            "test.p",
+            """
             DEFINE VARIABLE myVar AS INTEGER NO-UNDO.
             PROCEDURE foo:
               DEFINE VARIABLE myVar AS INTEGER NO-UNDO.
               my<caret>Var = 5.
             END PROCEDURE.
-        """.trimIndent())
+            """.trimIndent(),
+        )
         prewarmSemantic()
 
         val targets = callHandler()
@@ -48,7 +52,8 @@ class AblGotoDeclarationHandlerTest : BasePlatformTestCase() {
         val targetLine = myFixture.editor.document.getLineNumber(targets!![0].textOffset)
         assertEquals(
             "Semantic resolution must navigate to local myVar (line 2), not global (line 0)",
-            2, targetLine
+            2,
+            targetLine,
         )
     }
 

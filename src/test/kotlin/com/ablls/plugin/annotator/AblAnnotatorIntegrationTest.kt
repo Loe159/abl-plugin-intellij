@@ -2,7 +2,6 @@ package com.ablls.plugin.annotator
 
 import com.ablls.plugin.core.AblParserFacade
 import com.ablls.plugin.core.AblProjectAnalysisService
-import com.ablls.plugin.core.SyntaxError
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.project.Project
@@ -10,15 +9,20 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.LightVirtualFile
+import org.junit.Assert.assertEquals
+import org.junit.Before
 import org.junit.Ignore
 import org.junit.Test
-import org.junit.Before
-import org.mockito.Mockito.*
 import org.mockito.ArgumentCaptor
-import org.junit.Assert.assertEquals
+import org.mockito.Mockito.any
+import org.mockito.Mockito.anyString
+import org.mockito.Mockito.eq
+import org.mockito.Mockito.mock
+import org.mockito.Mockito.times
+import org.mockito.Mockito.verify
+import org.mockito.Mockito.`when`
 
 class AblAnnotatorIntegrationTest {
-
     private lateinit var mockProject: Project
     private lateinit var mockPsiFile: PsiFile
     private lateinit var mockAnnotationHolder: AnnotationHolder

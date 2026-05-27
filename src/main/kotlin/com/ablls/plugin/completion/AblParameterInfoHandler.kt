@@ -2,7 +2,10 @@ package com.ablls.plugin.completion
 
 import com.ablls.plugin.core.AblProjectAnalysisService
 import com.ablls.plugin.language.AblLanguage
-import com.intellij.lang.parameterInfo.*
+import com.intellij.lang.parameterInfo.CreateParameterInfoContext
+import com.intellij.lang.parameterInfo.ParameterInfoHandler
+import com.intellij.lang.parameterInfo.ParameterInfoUIContext
+import com.intellij.lang.parameterInfo.UpdateParameterInfoContext
 import com.intellij.openapi.components.service
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -28,17 +31,16 @@ import org.prorefactor.treeparser.symbols.Routine
  *      le paramètre actif.
  */
 class AblParameterInfoHandler : ParameterInfoHandler<PsiElement, AblParameterInfoHandler.AblCallInfo> {
-
     data class AblCallInfo(
         val routineName: String,
         val params: List<String>,
-        val fullSignature: String
+        val fullSignature: String,
     )
 
     // ─── Recherche de l'élément porteur de l'info ────────────────────────────
 
     override fun findElementForParameterInfo(context: CreateParameterInfoContext): PsiElement? {
-        val file   = context.file ?: return null
+        val file = context.file ?: return null
         if (file.language != AblLanguage) return null
         val offset = context.offset
         return findCallAnchor(file, offset)
@@ -51,45 +53,59 @@ class AblParameterInfoHandler : ParameterInfoHandler<PsiElement, AblParameterInf
 
     // ─── Affichage initial ────────────────────────────────────────────────────
 
-    override fun showParameterInfo(element: PsiElement, context: CreateParameterInfoContext) {
+    override fun showParameterInfo(
+        element: PsiElement,
+        context: CreateParameterInfoContext,
+    ) {
         val callInfo = buildCallInfo(element) ?: return
         context.itemsToShow = arrayOf(callInfo)
     }
 
     // ─── Mise à jour du paramètre actif ──────────────────────────────────────
 
-    override fun updateParameterInfo(parameterOwner: PsiElement, context: UpdateParameterInfoContext) {
-        val text     = parameterOwner.containingFile?.text ?: return
-        val offset   = context.offset
+    override fun updateParameterInfo(
+        parameterOwner: PsiElement,
+        context: UpdateParameterInfoContext,
+    ) {
+        val text = parameterOwner.containingFile?.text ?: return
+        val offset = context.offset
         val openParen = findOpenParenOffset(text, offset) ?: return
-        val paramIdx  = countCommas(text, openParen + 1, offset)
+        val paramIdx = countCommas(text, openParen + 1, offset)
         context.setCurrentParameter(paramIdx)
     }
 
     // ─── Rendu de la popup ────────────────────────────────────────────────────
 
-    override fun updateUI(callInfo: AblCallInfo?, context: ParameterInfoUIContext) {
+    override fun updateUI(
+        callInfo: AblCallInfo?,
+        context: ParameterInfoUIContext,
+    ) {
         callInfo ?: return
         if (callInfo.params.isEmpty()) {
             context.setupUIComponentPresentation(
-                "(no parameters)", 0, 0, false, false, false,
-                context.defaultParameterColor
+                "(no parameters)",
+                0,
+                0,
+                false,
+                false,
+                false,
+                context.defaultParameterColor,
             )
             return
         }
 
         val currentIdx = context.currentParameterIndex
-        val text       = callInfo.params.joinToString(", ")
-        var start      = 0
-        var end        = text.length
+        val text = callInfo.params.joinToString(", ")
+        var start = 0
+        var end = text.length
 
         if (currentIdx in callInfo.params.indices) {
             var pos = 0
             for (i in 0 until currentIdx) {
-                pos += callInfo.params[i].length + 2  // +2 for ", "
+                pos += callInfo.params[i].length + 2 // +2 for ", "
             }
             start = pos
-            end   = pos + callInfo.params[currentIdx].length
+            end = pos + callInfo.params[currentIdx].length
         }
 
         context.setupUIComponentPresentation(
@@ -99,7 +115,7 @@ class AblParameterInfoHandler : ParameterInfoHandler<PsiElement, AblParameterInf
             !context.isUIComponentEnabled,
             false,
             currentIdx < 0 || currentIdx >= callInfo.params.size,
-            context.defaultParameterColor
+            context.defaultParameterColor,
         )
     }
 
@@ -109,7 +125,10 @@ class AblParameterInfoHandler : ParameterInfoHandler<PsiElement, AblParameterInf
      * Trouve le PsiElement correspondant au nom de la routine appelée
      * (le token juste avant le `(` non fermé le plus proche du curseur).
      */
-    private fun findCallAnchor(file: PsiFile, offset: Int): PsiElement? {
+    private fun findCallAnchor(
+        file: PsiFile,
+        offset: Int,
+    ): PsiElement? {
         val text = file.text
         val openParenPos = findOpenParenOffset(text, offset) ?: return null
         if (openParenPos < 1) return null
@@ -126,7 +145,10 @@ class AblParameterInfoHandler : ParameterInfoHandler<PsiElement, AblParameterInf
     /**
      * Cherche le décalage du `(` non fermé le plus proche avant [offset].
      */
-    private fun findOpenParenOffset(text: String, offset: Int): Int? {
+    private fun findOpenParenOffset(
+        text: String,
+        offset: Int,
+    ): Int? {
         var depth = 0
         var i = minOf(offset - 1, text.length - 1)
         while (i >= 0) {
@@ -146,7 +168,11 @@ class AblParameterInfoHandler : ParameterInfoHandler<PsiElement, AblParameterInf
      * Compte les virgules de niveau 0 dans [text] entre [from] et [to]
      * pour déterminer l'index du paramètre actif.
      */
-    private fun countCommas(text: String, from: Int, to: Int): Int {
+    private fun countCommas(
+        text: String,
+        from: Int,
+        to: Int,
+    ): Int {
         var count = 0
         var depth = 0
         for (i in from until minOf(to, text.length)) {
@@ -165,21 +191,25 @@ class AblParameterInfoHandler : ParameterInfoHandler<PsiElement, AblParameterInf
      */
     private fun buildCallInfo(element: PsiElement): AblCallInfo? {
         val routineName = element.text?.trim()?.takeIf { it.isNotBlank() } ?: return null
-        val uri         = element.containingFile?.virtualFile?.url ?: return null
-        val service     = element.project.service<AblProjectAnalysisService>()
-        val scope       = service.getSemanticResult(uri)?.rootScope ?: return null
+        val uri = element.containingFile?.virtualFile?.url ?: return null
+        val service = element.project.service<AblProjectAnalysisService>()
+        val scope = service.getSemanticResult(uri)?.rootScope ?: return null
 
         val routine = findRoutineInScope(scope, routineName) ?: return null
-        val params  = buildParamLabels(routine)
+        val params = buildParamLabels(routine)
 
-        val sig = runCatching { routine.ideSignature }.getOrNull()
-            ?: runCatching { routine.signature }.getOrNull()
-            ?: routineName
+        val sig =
+            runCatching { routine.ideSignature }.getOrNull()
+                ?: runCatching { routine.signature }.getOrNull()
+                ?: routineName
 
         return AblCallInfo(routineName, params, sig)
     }
 
-    private fun findRoutineInScope(scope: TreeParserSymbolScope, name: String): Routine? {
+    private fun findRoutineInScope(
+        scope: TreeParserSymbolScope,
+        name: String,
+    ): Routine? {
         for (r in runCatching { scope.routines }.getOrNull() ?: emptyList()) {
             if (r.name.equals(name, ignoreCase = true)) return r
         }
@@ -192,17 +222,20 @@ class AblParameterInfoHandler : ParameterInfoHandler<PsiElement, AblParameterInf
     private fun buildParamLabels(routine: Routine): List<String> {
         val params = runCatching { routine.parameters }.getOrNull() ?: return emptyList()
         return params.mapNotNull { param ->
-            val name = runCatching {
-                param.javaClass.getMethod("getName").invoke(param) as? String
-            }.getOrNull() ?: return@mapNotNull null
-            val dir = runCatching {
-                param.javaClass.methods
-                    .firstOrNull { it.name == "getDirectionILB" || it.name == "getDirection" }
-                    ?.invoke(param)?.toString()
-            }.getOrNull() ?: "INPUT"
-            val type = runCatching {
-                param.javaClass.getMethod("getDataType").invoke(param)?.toString()
-            }.getOrNull()
+            val name =
+                runCatching {
+                    param.javaClass.getMethod("getName").invoke(param) as? String
+                }.getOrNull() ?: return@mapNotNull null
+            val dir =
+                runCatching {
+                    param.javaClass.methods
+                        .firstOrNull { it.name == "getDirectionILB" || it.name == "getDirection" }
+                        ?.invoke(param)?.toString()
+                }.getOrNull() ?: "INPUT"
+            val type =
+                runCatching {
+                    param.javaClass.getMethod("getDataType").invoke(param)?.toString()
+                }.getOrNull()
             if (type != null) "$dir $name AS $type" else "$dir $name"
         }
     }

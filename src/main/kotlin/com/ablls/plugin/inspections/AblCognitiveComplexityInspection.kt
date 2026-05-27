@@ -2,7 +2,9 @@ package com.ablls.plugin.inspections
 
 import com.ablls.plugin.core.AblProjectAnalysisService
 import com.ablls.plugin.language.AblLanguage
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.LocalInspectionTool
+import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.components.service
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElementVisitor
@@ -24,18 +26,22 @@ import org.prorefactor.proparse.CognitiveComplexityListener
  * Suppression : ajouter `/* proparse NOANALYSIS */` avant la PROCEDURE ou FUNCTION.
  */
 class AblCognitiveComplexityInspection : LocalInspectionTool() {
+    override fun getDisplayName() = "High cognitive complexity (RSSW)"
 
-    override fun getDisplayName()      = "High cognitive complexity (RSSW)"
-    override fun getShortName()        = "AblCognitiveComplexity"
+    override fun getShortName() = "AblCognitiveComplexity"
+
     override fun getGroupDisplayName() = "ABL Best Practices"
 
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
+    override fun buildVisitor(
+        holder: ProblemsHolder,
+        isOnTheFly: Boolean,
+    ): PsiElementVisitor =
         object : PsiElementVisitor() {
             override fun visitFile(file: PsiFile) {
                 if (file.language != AblLanguage) return
-                val uri     = file.virtualFile?.url ?: return
+                val uri = file.virtualFile?.url ?: return
                 val service = file.project.service<AblProjectAnalysisService>()
-                val result  = service.analyzeFileSemantic(file.text, uri)
+                val result = service.analyzeFileSemantic(file.text, uri)
                 val topNode = result.topNode ?: return
                 if (!topNode.isIStatementBlock) return
                 val doc = PsiDocumentManager.getInstance(file.project).getDocument(file) ?: return
@@ -62,7 +68,7 @@ class AblCognitiveComplexityInspection : LocalInspectionTool() {
         label: String,
         holder: ProblemsHolder,
         file: PsiFile,
-        doc: com.intellij.openapi.editor.Document
+        doc: com.intellij.openapi.editor.Document,
     ) {
         val listener = CognitiveComplexityListener(block)
         listener.walkStatementBlock(block)
@@ -72,13 +78,13 @@ class AblCognitiveComplexityInspection : LocalInspectionTool() {
         // Mettre en évidence le mot-clé du bloc (PROCEDURE, FUNCTION, ou début de fichier)
         val node = block.asJPNode()
         val keyword = node.text?.takeIf { it.isNotBlank() } ?: "PROGRAM"
-        val range   = AblInspectionHelper.toRange(doc, node.line, node.column, keyword.length)
+        val range = AblInspectionHelper.toRange(doc, node.line, node.column, keyword.length)
 
         holder.registerProblem(
             file,
             "$label has cognitive complexity $complexity (threshold: $THRESHOLD) — consider splitting into smaller routines",
             ProblemHighlightType.WEAK_WARNING,
-            range
+            range,
         )
     }
 

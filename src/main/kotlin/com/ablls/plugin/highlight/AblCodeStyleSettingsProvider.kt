@@ -7,9 +7,9 @@ import com.intellij.application.options.TabbedLanguageCodeStylePanel
 import com.intellij.psi.codeStyle.CodeStyleConfigurable
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 
 /**
  * Fournisseur de paramètres de style de code ABL.
@@ -22,16 +22,16 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings
  *   - [AblLanguageCodeStyleSettingsProvider] → définit les options disponibles
  */
 class AblCodeStyleSettingsProvider : CodeStyleSettingsProvider() {
-
     override fun getLanguage() = AblLanguage
 
     override fun createConfigurable(
         settings: CodeStyleSettings,
-        modelSettings: CodeStyleSettings
+        modelSettings: CodeStyleSettings,
     ): CodeStyleConfigurable =
         object : CodeStyleAbstractConfigurable(settings, modelSettings, "OpenEdge ABL") {
-            override fun createPanel(settings: CodeStyleSettings): CodeStyleAbstractPanel =
-                AblCodeStyleMainPanel(currentSettings, settings)
+            override fun createPanel(settings: CodeStyleSettings): CodeStyleAbstractPanel {
+                return AblCodeStyleMainPanel(currentSettings, settings)
+            }
         }
 
     override fun createCustomSettings(settings: CodeStyleSettings): CustomCodeStyleSettings? = null
@@ -43,9 +43,8 @@ class AblCodeStyleSettingsProvider : CodeStyleSettingsProvider() {
  */
 private class AblCodeStyleMainPanel(
     currentSettings: CodeStyleSettings,
-    settings: CodeStyleSettings
+    settings: CodeStyleSettings,
 ) : TabbedLanguageCodeStylePanel(AblLanguage, currentSettings, settings) {
-
     override fun initTabs(settings: CodeStyleSettings) {
         addIndentOptionsTab(settings)
         addSpacesTab(settings)
@@ -59,10 +58,10 @@ private class AblCodeStyleMainPanel(
  * Déclare les options disponibles et fournit un extrait de code de prévisualisation.
  */
 class AblLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider() {
-
     override fun getLanguage() = AblLanguage
 
-    override fun getCodeSample(settingsType: SettingsType): String = """
+    override fun getCodeSample(settingsType: SettingsType): String =
+        """
         CLASS com.example.MyClass:
 
             DEFINE VARIABLE iCount AS INTEGER NO-UNDO.
@@ -81,11 +80,11 @@ class AblLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider()
             END METHOD.
 
         END CLASS.
-    """.trimIndent()
+        """.trimIndent()
 
     override fun customizeSettings(
         consumer: com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable,
-        settingsType: SettingsType
+        settingsType: SettingsType,
     ) {
         when (settingsType) {
             SettingsType.INDENT_SETTINGS -> {
@@ -93,7 +92,7 @@ class AblLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider()
                     "USE_TAB_CHARACTER",
                     "INDENT_SIZE",
                     "CONTINUATION_INDENT_SIZE",
-                    "TAB_SIZE"
+                    "TAB_SIZE",
                 )
             }
             SettingsType.SPACING_SETTINGS -> {
@@ -104,7 +103,7 @@ class AblLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider()
                     "SPACE_AROUND_EQUALITY_OPERATORS",
                     "SPACE_AROUND_RELATIONAL_OPERATORS",
                     "SPACE_AROUND_ADDITIVE_OPERATORS",
-                    "SPACE_AROUND_MULTIPLICATIVE_OPERATORS"
+                    "SPACE_AROUND_MULTIPLICATIVE_OPERATORS",
                 )
             }
             SettingsType.WRAPPING_AND_BRACES_SETTINGS -> {
@@ -118,9 +117,9 @@ class AblLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider()
     override fun getDefaultCommonSettings(): CommonCodeStyleSettings =
         CommonCodeStyleSettings(AblLanguage).apply {
             val opts = initIndentOptions()
-            opts.INDENT_SIZE             = 4
-            opts.TAB_SIZE                = 4
+            opts.INDENT_SIZE = 4
+            opts.TAB_SIZE = 4
             opts.CONTINUATION_INDENT_SIZE = 8
-            opts.USE_TAB_CHARACTER       = false
+            opts.USE_TAB_CHARACTER = false
         }
 }

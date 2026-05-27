@@ -20,15 +20,21 @@ import com.intellij.psi.PsiFile
  *   → Alt+Entrée → "Add USING com.mypackage.CustomerManager."
  */
 class AblAddUsingIntention : IntentionAction {
+    override fun getText() = "Add USING statement"
 
-    override fun getText()            = "Add USING statement"
-    override fun getFamilyName()      = "ABL USING"
+    override fun getFamilyName() = "ABL USING"
+
     override fun startInWriteAction() = true
 
     private var foundClassName: String? = null
-    private var foundFullName: String?  = null
+    private var foundFullName: String? = null
 
-    override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean {
+    @Suppress("ReturnCount")
+    override fun isAvailable(
+        project: Project,
+        editor: Editor?,
+        file: PsiFile?,
+    ): Boolean {
         if (file?.language != AblLanguage) return false
         editor ?: return false
 
@@ -41,25 +47,31 @@ class AblAddUsingIntention : IntentionAction {
         val uri = file.virtualFile?.url ?: return false
 
         // Chercher dans l'index les classes portant ce nom court
-        val classSymbols = service.symbolIndex.findByName(name, uri)
-            .filter { it.kind == AblSymbol.Kind.CLASS && it.name.contains('.') }
+        val classSymbols =
+            service.symbolIndex.findByName(name, uri)
+                .filter { it.kind == AblSymbol.Kind.CLASS && it.name.contains('.') }
 
         if (classSymbols.isEmpty()) return false
 
         // Vérifier qu'aucun USING ne l'importe déjà
         val text = file.text
-        val alreadyImported = text.lines().any { line ->
-            line.trim().uppercase().startsWith("USING ") &&
-            line.contains(name, ignoreCase = true)
-        }
+        val alreadyImported =
+            text.lines().any { line ->
+                line.trim().uppercase().startsWith("USING ") &&
+                    line.contains(name, ignoreCase = true)
+            }
         if (alreadyImported) return false
 
         foundClassName = name
-        foundFullName  = classSymbols.first().name
+        foundFullName = classSymbols.first().name
         return true
     }
 
-    override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
+    override fun invoke(
+        project: Project,
+        editor: Editor?,
+        file: PsiFile?,
+    ) {
         editor ?: return
         file ?: return
         if (file.language != AblLanguage) return
@@ -80,13 +92,16 @@ class AblAddUsingIntention : IntentionAction {
             }
         }
 
-        val insertOffset = if (insertLine < lines.size) {
-            var offset = 0
-            for (i in 0 until insertLine) {
-                offset += lines[i].length + 1  // +1 for newline
+        val insertOffset =
+            if (insertLine < lines.size) {
+                var offset = 0
+                for (i in 0 until insertLine) {
+                    offset += lines[i].length + 1 // +1 for newline
+                }
+                offset
+            } else {
+                0
             }
-            offset
-        } else 0
 
         doc.insertString(insertOffset, "USING $fullName.\n")
     }

@@ -5,7 +5,6 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.prorefactor.core.ABLNodeType
 
 class AblCognitiveComplexityInspectionTest : BasePlatformTestCase() {
-
     override fun setUp() {
         super.setUp()
         myFixture.enableInspections(AblCognitiveComplexityInspection::class.java)
@@ -30,7 +29,9 @@ END PROCEDURE."""
 
     fun testHighComplexityProcedureTriggersWeakWarning() {
         // 10 levels of nesting: 1+2+…+10 = 55 >> threshold(15)
-        myFixture.configureByText("test.p", """<weak_warning>PROCEDURE</weak_warning> complexProc:
+        myFixture.configureByText(
+            "test.p",
+            """<weak_warning>PROCEDURE</weak_warning> complexProc:
     IF a1 THEN DO:
         IF a2 THEN DO:
             IF a3 THEN DO:
@@ -50,15 +51,19 @@ END PROCEDURE."""
             END.
         END.
     END.
-END PROCEDURE.""")
+END PROCEDURE.""",
+        )
         myFixture.checkHighlighting(false, false, true)
     }
 
     fun testSimpleProcedureProducesNoWeakWarning() {
-        myFixture.configureByText("test.p", """PROCEDURE simpleProc:
+        myFixture.configureByText(
+            "test.p",
+            """PROCEDURE simpleProc:
     IF a THEN MESSAGE "yes".
     IF b THEN MESSAGE "no".
-END PROCEDURE.""")
+END PROCEDURE.""",
+        )
         myFixture.checkHighlighting(false, false, true)
     }
 }

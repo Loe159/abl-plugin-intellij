@@ -19,8 +19,11 @@ import com.intellij.psi.PsiFile
  *  - IF TRUE THEN DO: ... END.
  */
 class AblSurroundDescriptor : SurroundDescriptor {
-
-    override fun getElementsToSurround(file: PsiFile, startOffset: Int, endOffset: Int): Array<PsiElement> {
+    override fun getElementsToSurround(
+        file: PsiFile,
+        startOffset: Int,
+        endOffset: Int,
+    ): Array<PsiElement> {
         if (file.language != AblLanguage) return PsiElement.EMPTY_ARRAY
         if (startOffset >= endOffset) return PsiElement.EMPTY_ARRAY
         // Pour un PSI plat, on retourne simplement l'élément à la position de début de sélection
@@ -28,13 +31,14 @@ class AblSurroundDescriptor : SurroundDescriptor {
         return arrayOf(element)
     }
 
-    override fun getSurrounders(): Array<Surrounder> = arrayOf(
-        AblDoEndSurrounder("DO:", "END."),
-        AblDoEndSurrounder("DO TRANSACTION:", "END."),
-        AblDoEndSurrounder("DO ON ERROR UNDO, THROW:", "END."),
-        AblDoEndSurrounder("DO ON STOP UNDO, RETURN:", "END."),
-        AblDoEndSurrounder("IF TRUE THEN DO:", "END."),
-    )
+    override fun getSurrounders(): Array<Surrounder> =
+        arrayOf(
+            AblDoEndSurrounder("DO:", "END."),
+            AblDoEndSurrounder("DO TRANSACTION:", "END."),
+            AblDoEndSurrounder("DO ON ERROR UNDO, THROW:", "END."),
+            AblDoEndSurrounder("DO ON STOP UNDO, RETURN:", "END."),
+            AblDoEndSurrounder("IF TRUE THEN DO:", "END."),
+        )
 
     override fun isExclusive() = false
 }
@@ -43,9 +47,8 @@ class AblSurroundDescriptor : SurroundDescriptor {
 
 private class AblDoEndSurrounder(
     private val openKeyword: String,
-    private val closeKeyword: String
+    private val closeKeyword: String,
 ) : Surrounder {
-
     override fun getTemplateDescription(): String = "$openKeyword ... $closeKeyword"
 
     override fun isApplicable(elements: Array<out PsiElement>): Boolean = elements.isNotEmpty()
@@ -53,26 +56,27 @@ private class AblDoEndSurrounder(
     override fun surroundElements(
         project: Project,
         editor: Editor,
-        elements: Array<out PsiElement>
+        elements: Array<out PsiElement>,
     ): TextRange? {
         val selectionModel = editor.selectionModel
         if (!selectionModel.hasSelection()) return null
 
         val doc = editor.document
         val selStart = selectionModel.selectionStart
-        val selEnd   = selectionModel.selectionEnd
+        val selEnd = selectionModel.selectionEnd
 
         // Indentation de la ligne de début (pour aligner END.)
         val lineStart = doc.getLineStartOffset(doc.getLineNumber(selStart))
-        val lineText  = doc.text.substring(lineStart, selStart)
-        val indent    = lineText.takeWhile { it == ' ' || it == '\t' }
+        val lineText = doc.text.substring(lineStart, selStart)
+        val indent = lineText.takeWhile { it == ' ' || it == '\t' }
 
         // Construire le nouveau texte
         val selectedText = doc.text.substring(selStart, selEnd)
         // Indenter le contenu d'un niveau
-        val indentedContent = selectedText
-            .lines()
-            .joinToString("\n") { line -> if (line.isBlank()) line else "  $line" }
+        val indentedContent =
+            selectedText
+                .lines()
+                .joinToString("\n") { line -> if (line.isBlank()) line else "  $line" }
         val newText = "$openKeyword\n$indentedContent\n${indent}$closeKeyword"
 
         // Remplacer la sélection

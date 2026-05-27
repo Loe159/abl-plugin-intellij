@@ -22,12 +22,17 @@ import org.antlr.v4.runtime.Token
  *   MESSAGE lv_name.         → MESSAGE Customer.Name.
  */
 class AblInlineVariableIntention : IntentionAction {
+    override fun getText() = "Inline variable"
 
-    override fun getText()            = "Inline variable"
-    override fun getFamilyName()      = "ABL Refactor"
+    override fun getFamilyName() = "ABL Refactor"
+
     override fun startInWriteAction() = true
 
-    override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean {
+    override fun isAvailable(
+        project: Project,
+        editor: Editor?,
+        file: PsiFile?,
+    ): Boolean {
         if (file?.language != AblLanguage) return false
         editor ?: return false
         val element = file.findElementAt(editor.caretModel.offset) ?: return false
@@ -41,7 +46,12 @@ class AblInlineVariableIntention : IntentionAction {
         return occurrences in 2..3
     }
 
-    override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
+    @Suppress("ReturnCount")
+    override fun invoke(
+        project: Project,
+        editor: Editor?,
+        file: PsiFile?,
+    ) {
         editor ?: return
         file ?: return
         if (file.language != AblLanguage) return
@@ -52,7 +62,7 @@ class AblInlineVariableIntention : IntentionAction {
 
         val service = project.service<AblProjectAnalysisService>()
         val uri = file.virtualFile?.url ?: return
-        val tokens  = service.analyzeFile(file.text, uri).tokens ?: return
+        val tokens = service.analyzeFile(file.text, uri).tokens ?: return
         val doc = editor.document
 
         // Trouver l'expression d'assignation (ASSIGN varName = expr.)
@@ -85,7 +95,10 @@ class AblInlineVariableIntention : IntentionAction {
         }
     }
 
-    private fun countOccurrences(tokens: org.antlr.v4.runtime.CommonTokenStream, name: String): Int {
+    private fun countOccurrences(
+        tokens: org.antlr.v4.runtime.CommonTokenStream,
+        name: String,
+    ): Int {
         var count = 0
         val size = tokens.size()
         for (i in 0 until size) {
@@ -99,7 +112,7 @@ class AblInlineVariableIntention : IntentionAction {
     private fun findAssignExpression(
         tokens: org.antlr.v4.runtime.CommonTokenStream,
         varName: String,
-        doc: com.intellij.openapi.editor.Document
+        doc: com.intellij.openapi.editor.Document,
     ): String? {
         val text = doc.text
         val regex = Regex("(?i)ASSIGN\\s+$varName\\s*=\\s*([^.]+)\\.")
@@ -111,7 +124,7 @@ class AblInlineVariableIntention : IntentionAction {
         text: String,
         varName: String,
         defRegex: Regex,
-        assignRegex: Regex
+        assignRegex: Regex,
     ): Pair<Int, Int>? {
         // Trouver la première occurrence qui n'est ni la définition ni l'assignation
         var searchStart = 0
@@ -135,9 +148,11 @@ class AblInlineVariableIntention : IntentionAction {
         return null
     }
 
-    private fun findLineOf(text: String, regex: Regex): Int {
+    private fun findLineOf(
+        text: String,
+        regex: Regex,
+    ): Int {
         val match = regex.find(text) ?: return -1
         return text.substring(0, match.range.first).count { it == '\n' }
     }
-
 }

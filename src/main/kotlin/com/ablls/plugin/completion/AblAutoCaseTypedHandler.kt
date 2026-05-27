@@ -9,8 +9,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 
 class AblAutoCaseTypedHandler : TypedHandlerDelegate() {
-
-    override fun charTyped(c: Char, project: Project, editor: Editor, file: PsiFile): Result {
+    override fun charTyped(
+        c: Char,
+        project: Project,
+        editor: Editor,
+        file: PsiFile,
+    ): Result {
         if (file.language != AblLanguage) return Result.CONTINUE
 
         // On ne déclenche l'auto-casing que si l'utilisateur a tapé un espace ou une tabulation
@@ -43,7 +47,7 @@ class AblAutoCaseTypedHandler : TypedHandlerDelegate() {
         if (startOffset >= endOffset) return Result.CONTINUE
 
         val wordTyped = document.getText(com.intellij.openapi.util.TextRange(startOffset, endOffset))
-        
+
         // Si le mot est en minuscules/camelCase et correspond à un mot clé ABL
         val upperWord = wordTyped.uppercase()
         if (wordTyped != upperWord && AblKeywordList.KEYWORDS.contains(upperWord)) {

@@ -15,27 +15,29 @@ import com.intellij.openapi.vfs.LocalFileSystem
  *   ** ERROR Customer.p (line 42, column 10)
  */
 class AblConsoleFilterProvider : ConsoleFilterProvider {
-    override fun getDefaultFilters(project: Project): Array<Filter> =
-        arrayOf(AblErrorConsoleFilter(project))
+    override fun getDefaultFilters(project: Project): Array<Filter> = arrayOf(AblErrorConsoleFilter(project))
 }
 
 class AblErrorConsoleFilter(private val project: Project) : Filter {
-
     // ** <optional words> <file.ext> (line N) ou (line N, col M)
-    private val pattern = Regex(
-        """\*\*\s+(?:\w+\s+)?([^\s(]+\.[a-zA-Z]+)\s+\(line\s+(\d+)""",
-        RegexOption.IGNORE_CASE
-    )
+    private val pattern =
+        Regex(
+            """\*\*\s+(?:\w+\s+)?([^\s(]+\.[a-zA-Z]+)\s+\(line\s+(\d+)""",
+            RegexOption.IGNORE_CASE,
+        )
 
-    override fun applyFilter(line: String, entireLength: Int): Filter.Result? {
+    override fun applyFilter(
+        line: String,
+        entireLength: Int,
+    ): Filter.Result? {
         val m = pattern.find(line) ?: return null
 
         val fileName = m.groupValues[1]
-        val lineNum  = m.groupValues[2].toIntOrNull()?.minus(1) ?: return null
+        val lineNum = m.groupValues[2].toIntOrNull()?.minus(1) ?: return null
 
         val lineStart = entireLength - line.length
-        val start     = lineStart + m.range.first
-        val end       = lineStart + m.range.last + 1
+        val start = lineStart + m.range.first
+        val end = lineStart + m.range.last + 1
 
         val vFile = resolveFile(fileName) ?: return null
         val info: HyperlinkInfo = OpenFileHyperlinkInfo(project, vFile, lineNum)
@@ -57,7 +59,7 @@ class AblErrorConsoleFilter(private val project: Project) : Filter {
 
     private fun findRecursive(
         dir: com.intellij.openapi.vfs.VirtualFile,
-        name: String
+        name: String,
     ): com.intellij.openapi.vfs.VirtualFile? {
         for (child in dir.children) {
             if (child.isDirectory) {

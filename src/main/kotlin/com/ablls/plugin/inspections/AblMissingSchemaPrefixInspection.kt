@@ -3,7 +3,9 @@ package com.ablls.plugin.inspections
 import com.ablls.plugin.core.AblProjectAnalysisService
 import com.ablls.plugin.language.AblLanguage
 import com.ablls.plugin.project.OpenEdgeProjectService
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.LocalInspectionTool
+import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.components.service
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElementVisitor
@@ -23,12 +25,16 @@ import org.prorefactor.core.ABLNodeType
  * Sans NAMEDOT fils → la table est référencée sans préfixe de base.
  */
 class AblMissingSchemaPrefixInspection : LocalInspectionTool() {
+    override fun getDisplayName() = "Table reference without database prefix (multi-db)"
 
-    override fun getDisplayName()      = "Table reference without database prefix (multi-db)"
-    override fun getShortName()        = "AblMissingSchemaPrefix"
+    override fun getShortName() = "AblMissingSchemaPrefix"
+
     override fun getGroupDisplayName() = "ABL Security"
 
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
+    override fun buildVisitor(
+        holder: ProblemsHolder,
+        isOnTheFly: Boolean,
+    ): PsiElementVisitor =
         object : PsiElementVisitor() {
             override fun visitFile(file: PsiFile) {
                 if (file.language != AblLanguage) return
@@ -36,11 +42,11 @@ class AblMissingSchemaPrefixInspection : LocalInspectionTool() {
                 val projectService = file.project.service<OpenEdgeProjectService>()
                 if (projectService.config.databases.size <= 1) return
 
-                val uri     = file.virtualFile?.url ?: return
+                val uri = file.virtualFile?.url ?: return
                 val service = file.project.service<AblProjectAnalysisService>()
-                val result  = service.analyzeFile(file.text, uri)
+                val result = service.analyzeFile(file.text, uri)
                 val topNode = result.topNode ?: return
-                val doc     = PsiDocumentManager.getInstance(file.project).getDocument(file) ?: return
+                val doc = PsiDocumentManager.getInstance(file.project).getDocument(file) ?: return
                 val dbNames = projectService.config.databases.map { it.logicalName.uppercase() }.toSet()
 
                 for (recordNode in topNode.query(ABLNodeType.RECORD_NAME)) {
@@ -48,14 +54,14 @@ class AblMissingSchemaPrefixInspection : LocalInspectionTool() {
                     // proparse does not expose NAMEDOT as a direct child of RECORD_NAME for
                     // qualified references (e.g. sports.Customer). Use text content instead.
                     val name = recordNode.text?.takeIf { it.isNotBlank() && it.first().isLetter() } ?: continue
-                    if (name.contains('.')) continue  // already has a database prefix
-                    val range  = AblInspectionHelper.toRange(doc, recordNode.line, recordNode.column, name.length)
+                    if (name.contains('.')) continue // already has a database prefix
+                    val range = AblInspectionHelper.toRange(doc, recordNode.line, recordNode.column, name.length)
                     val dbHint = if (dbNames.size <= 3) " (${dbNames.joinToString(", ")})" else ""
                     holder.registerProblem(
                         file,
                         "Table '$name' referenced without database prefix in multi-db environment$dbHint — use 'dbname.$name'",
                         ProblemHighlightType.WARNING,
-                        range
+                        range,
                     )
                 }
             }

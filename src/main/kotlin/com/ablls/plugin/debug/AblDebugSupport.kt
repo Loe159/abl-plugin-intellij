@@ -1,6 +1,7 @@
 package com.ablls.plugin.debug
 
 import com.ablls.plugin.language.AblFileType
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -12,7 +13,6 @@ import com.intellij.xdebugger.breakpoints.XBreakpointProperties
 import com.intellij.xdebugger.breakpoints.XBreakpointType
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import com.intellij.xdebugger.frame.XCompositeNode
 import com.intellij.xdebugger.frame.XExecutionStack
@@ -25,28 +25,35 @@ import com.intellij.xdebugger.frame.XValuePlace
 
 // ─── Type de breakpoint ───────────────────────────────────────────────────────
 
-class AblLineBreakpointType
-    : XLineBreakpointType<XBreakpointProperties<*>>("abl-line", "ABL Line Breakpoints") {
+class AblLineBreakpointType :
+    XLineBreakpointType<XBreakpointProperties<*>>("abl-line", "ABL Line Breakpoints") {
+    override fun canPutAt(
+        file: VirtualFile,
+        line: Int,
+        project: Project,
+    ): Boolean = file.extension?.lowercase() in setOf("p", "cls", "w", "i")
 
-    override fun canPutAt(file: VirtualFile, line: Int, project: Project): Boolean =
-        file.extension?.lowercase() in setOf("p", "cls", "w", "i")
-
-    override fun createBreakpointProperties(file: VirtualFile, line: Int): XBreakpointProperties<*>? = null
+    override fun createBreakpointProperties(
+        file: VirtualFile,
+        line: Int,
+    ): XBreakpointProperties<*>? = null
 }
 
 // ─── Handler de breakpoints ───────────────────────────────────────────────────
 
 @Suppress("UNCHECKED_CAST")
-class AblBreakpointHandler(private val conn: AblDebugConnection)
-    : XBreakpointHandler<XLineBreakpoint<*>>(
-        AblLineBreakpointType::class.java as Class<out XBreakpointType<XLineBreakpoint<*>, *>>
+class AblBreakpointHandler(private val conn: AblDebugConnection) :
+    XBreakpointHandler<XLineBreakpoint<*>>(
+        AblLineBreakpointType::class.java as Class<out XBreakpointType<XLineBreakpoint<*>, *>>,
     ) {
-
     override fun registerBreakpoint(breakpoint: XLineBreakpoint<*>) {
         conn.setBreakpoint(normalize(breakpoint.fileUrl), breakpoint.line + 1)
     }
 
-    override fun unregisterBreakpoint(breakpoint: XLineBreakpoint<*>, temporary: Boolean) {
+    override fun unregisterBreakpoint(
+        breakpoint: XLineBreakpoint<*>,
+        temporary: Boolean,
+    ) {
         conn.clearBreakpoint(normalize(breakpoint.fileUrl), breakpoint.line + 1)
     }
 
@@ -70,16 +77,19 @@ class AblValue(
     private val variable: OeVariable,
     private val conn: AblDebugConnection? = null,
 ) : XNamedValue(variable.name) {
-
-    override fun computePresentation(node: XValueNode, place: XValuePlace) {
+    override fun computePresentation(
+        node: XValueNode,
+        place: XValuePlace,
+    ) {
         val isArray = variable.kind == OeVarKind.ARRAY
-        val displayValue = when {
-            isArray                          -> "${variable.type}[]"
-            variable.value == "?"            -> "?"
-            variable.type == "CHARACTER" ||
-            variable.type == "LONGCHAR"      -> "\"${variable.value}\""
-            else                             -> variable.value
-        }
+        val displayValue =
+            when {
+                isArray -> "${variable.type}[]"
+                variable.value == "?" -> "?"
+                variable.type == "CHARACTER" ||
+                    variable.type == "LONGCHAR" -> "\"${variable.value}\""
+                else -> variable.value
+            }
         // hasChildren = true pour les arrays → ▶ cliquable dans le panneau Variables.
         node.setPresentation(null, variable.type, displayValue, isArray)
     }
@@ -95,12 +105,13 @@ class AblValue(
             val list = XValueChildrenList()
             values.forEachIndexed { idx, value ->
                 // ABL indexe à partir de 1.
-                val element = OeVariable(
-                    name  = "[${idx + 1}]",
-                    type  = variable.type,
-                    value = value,
-                    kind  = OeVarKind.VARIABLE,
-                )
+                val element =
+                    OeVariable(
+                        name = "[${idx + 1}]",
+                        type = variable.type,
+                        value = value,
+                        kind = OeVarKind.VARIABLE,
+                    )
                 list.add(AblValue(element, conn))
             }
             node.addChildren(list, true)
@@ -112,10 +123,9 @@ class AblValue(
 
 class AblStackFrame(
     private val frame: OeStackFrame,
-    private val conn:  AblDebugConnection,
+    private val conn: AblDebugConnection,
     private val project: Project,
 ) : XStackFrame() {
-
     private val sourcePos: XSourcePosition? by lazy {
         resolveFile(frame.file, project)?.let { vf ->
             XDebuggerUtil.getInstance().createPosition(vf, frame.line - 1)
@@ -129,25 +139,30 @@ class AblStackFrame(
         val list = XValueChildrenList()
 
         for (p in conn.listParameters()) list.add(AblValue(p, conn))
-        for (v in conn.listVariables())  list.add(AblValue(v, conn))
+        for (v in conn.listVariables()) list.add(AblValue(v, conn))
 
         node.addChildren(list, true)
     }
 
     override fun toString(): String =
-        if (frame.file != null) "${frame.function} — ${frame.file}:${frame.line}"
-        else "${frame.function}:${frame.line}"
+        if (frame.file != null) {
+            "${frame.function} — ${frame.file}:${frame.line}"
+        } else {
+            "${frame.function}:${frame.line}"
+        }
 }
 
 // ─── Pile d'exécution ─────────────────────────────────────────────────────────
 
 class AblExecutionStack(
-    private val frames: List<AblStackFrame>
+    private val frames: List<AblStackFrame>,
 ) : XExecutionStack("ABL") {
-
     override fun getTopFrame(): XStackFrame? = frames.firstOrNull()
 
-    override fun computeStackFrames(firstFrameIndex: Int, container: XStackFrameContainer) {
+    override fun computeStackFrames(
+        firstFrameIndex: Int,
+        container: XStackFrameContainer,
+    ) {
         val sub = if (firstFrameIndex < frames.size) frames.subList(firstFrameIndex, frames.size) else emptyList()
         container.addStackFrames(sub, true)
     }
@@ -156,14 +171,17 @@ class AblExecutionStack(
 // ─── Contexte de suspension ───────────────────────────────────────────────────
 
 class AblSuspendContext(
-    private val stack: AblExecutionStack
+    private val stack: AblExecutionStack,
 ) : XSuspendContext() {
     override fun getActiveExecutionStack(): XExecutionStack = stack
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-internal fun resolveFile(filePath: String?, project: Project): VirtualFile? {
+internal fun resolveFile(
+    filePath: String?,
+    project: Project,
+): VirtualFile? {
     if (filePath.isNullOrBlank()) return null
     val lfs = LocalFileSystem.getInstance()
     return lfs.findFileByPath(filePath)

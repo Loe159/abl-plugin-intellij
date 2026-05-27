@@ -23,7 +23,7 @@ class AblParseResult(
     val syntaxErrors: List<SyntaxError>,
     val uri: String,
     private val content: String = "",
-    private val session: IProparseEnvironment? = null
+    private val session: IProparseEnvironment? = null,
 ) {
     val hasTree: Boolean get() = tree != null
     val hasSyntaxErrors: Boolean get() = syntaxErrors.isNotEmpty()

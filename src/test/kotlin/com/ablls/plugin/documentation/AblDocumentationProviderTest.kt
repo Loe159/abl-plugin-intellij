@@ -1,12 +1,10 @@
 package com.ablls.plugin.documentation
 
 import com.ablls.plugin.core.AblProjectAnalysisService
-
 import com.intellij.openapi.components.service
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
 class AblDocumentationProviderTest : BasePlatformTestCase() {
-
     private val provider = AblDocumentationProvider()
 
     private fun prewarmSemantic() {
@@ -14,8 +12,11 @@ class AblDocumentationProviderTest : BasePlatformTestCase() {
         service.analyzeFileSemantic(myFixture.file.text, myFixture.file.virtualFile.url)
     }
 
-    private fun docAtWord(word: String, lastOccurrence: Boolean = true): String? {
-        val text   = myFixture.file.text
+    private fun docAtWord(
+        word: String,
+        lastOccurrence: Boolean = true,
+    ): String? {
+        val text = myFixture.file.text
         val offset = if (lastOccurrence) text.lastIndexOf(word) else text.indexOf(word)
         assertTrue("Word '$word' not found in file", offset >= 0)
         val element = myFixture.file.findElementAt(offset) ?: return null
@@ -25,12 +26,15 @@ class AblDocumentationProviderTest : BasePlatformTestCase() {
     // ─── Chemin sémantique : Routine.getIDESignature ─────────────────────────
 
     fun testProcedureDocFromSemanticScope() {
-        myFixture.configureByText("test.p", """
+        myFixture.configureByText(
+            "test.p",
+            """
             PROCEDURE myProc:
               DEFINE INPUT PARAMETER p1 AS INTEGER NO-UNDO.
               MESSAGE p1.
             END PROCEDURE.
-        """.trimIndent())
+            """.trimIndent(),
+        )
         prewarmSemantic()
 
         // Semantic path must be taken — doc comes from scope, not just AblSymbol index
@@ -40,11 +44,14 @@ class AblDocumentationProviderTest : BasePlatformTestCase() {
     }
 
     fun testFunctionDocFromSemanticScope() {
-        myFixture.configureByText("test.p", """
+        myFixture.configureByText(
+            "test.p",
+            """
             FUNCTION addNums RETURNS INTEGER (INPUT a AS INTEGER, INPUT b AS INTEGER):
               RETURN a + b.
             END FUNCTION.
-        """.trimIndent())
+            """.trimIndent(),
+        )
         prewarmSemantic()
 
         val doc = docAtWord("addNums", lastOccurrence = false)
@@ -55,10 +62,13 @@ class AblDocumentationProviderTest : BasePlatformTestCase() {
     // ─── Chemin sémantique : Variable avec EXTENT ─────────────────────────────
 
     fun testVariableWithExtentShowsExtent() {
-        myFixture.configureByText("test.p", """
+        myFixture.configureByText(
+            "test.p",
+            """
             DEFINE VARIABLE arr AS INTEGER EXTENT 5 NO-UNDO.
             arr[1] = 42.
-        """.trimIndent())
+            """.trimIndent(),
+        )
         prewarmSemantic()
 
         val doc = docAtWord("arr")
@@ -68,10 +78,13 @@ class AblDocumentationProviderTest : BasePlatformTestCase() {
     }
 
     fun testVariableShowsDataType() {
-        myFixture.configureByText("test.p", """
+        myFixture.configureByText(
+            "test.p",
+            """
             DEFINE VARIABLE myVar AS CHARACTER NO-UNDO.
             myVar = "hello".
-        """.trimIndent())
+            """.trimIndent(),
+        )
         prewarmSemantic()
 
         val doc = docAtWord("myVar")
@@ -82,8 +95,10 @@ class AblDocumentationProviderTest : BasePlatformTestCase() {
     // ─── Fallback : AblSymbol index sans résultat sémantique ─────────────────
 
     fun testFallsBackToSymbolIndexWithoutSemanticResult() {
-        myFixture.configureByText("test.p",
-            "DEFINE VARIABLE myVar AS INTEGER NO-UNDO.\nmyVar = 1.")
+        myFixture.configureByText(
+            "test.p",
+            "DEFINE VARIABLE myVar AS INTEGER NO-UNDO.\nmyVar = 1.",
+        )
         // Analyse syntaxique uniquement — pas de résultat sémantique
         val service = project.service<AblProjectAnalysisService>()
         service.analyzeFile(myFixture.file.text, myFixture.file.virtualFile.url)

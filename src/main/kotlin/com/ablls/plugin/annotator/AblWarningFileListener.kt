@@ -11,7 +11,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
  * pour afficher les avertissements compilateur dans l'éditeur.
  */
 class AblWarningFileListener(private val project: Project) : BulkFileListener {
-
     override fun after(events: List<VFileEvent>) {
         val hasWarnings = events.any { it.file?.extension == "warnings" }
         if (!hasWarnings) return

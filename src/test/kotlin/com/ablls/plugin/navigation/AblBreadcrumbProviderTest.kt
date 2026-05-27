@@ -12,7 +12,6 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase
  * parent chain rather than text-based sibling scanning.
  */
 class AblBreadcrumbProviderTest : BasePlatformTestCase() {
-
     private val provider = AblBreadcrumbProvider()
 
     // ─── acceptElement ────────────────────────────────────────────────────────
@@ -50,8 +49,10 @@ class AblBreadcrumbProviderTest : BasePlatformTestCase() {
     }
 
     fun testGetParentOfLeafInsideProcedureIsProcedureBlock() {
-        myFixture.configureByText("test.p",
-            "PROCEDURE foo:\n  DEFINE VARIABLE x AS INTEGER NO-UNDO.\nEND PROCEDURE.")
+        myFixture.configureByText(
+            "test.p",
+            "PROCEDURE foo:\n  DEFINE VARIABLE x AS INTEGER NO-UNDO.\nEND PROCEDURE.",
+        )
         val block = topLevelBlock(AblTokenTypes.PROCEDURE_BLOCK)
         assertNotNull("Must find PROCEDURE_BLOCK", block)
         // A leaf inside the procedure block
@@ -59,26 +60,36 @@ class AblBreadcrumbProviderTest : BasePlatformTestCase() {
         assertNotNull("Block must have leaf children", leaf)
         val parent = provider.getParent(leaf!!)
         assertNotNull("Leaf inside PROCEDURE_BLOCK should have a breadcrumb parent", parent)
-        assertEquals("Parent breadcrumb should be PROCEDURE_BLOCK",
-            AblTokenTypes.PROCEDURE_BLOCK, parent!!.node.elementType)
+        assertEquals(
+            "Parent breadcrumb should be PROCEDURE_BLOCK",
+            AblTokenTypes.PROCEDURE_BLOCK,
+            parent!!.node.elementType,
+        )
     }
 
     fun testGetParentOfDoBlockInsideProcedureIsProcedureBlock() {
-        myFixture.configureByText("test.p",
-            "PROCEDURE foo:\n  DO:\n  END.\nEND PROCEDURE.")
+        myFixture.configureByText(
+            "test.p",
+            "PROCEDURE foo:\n  DO:\n  END.\nEND PROCEDURE.",
+        )
         val procBlock = topLevelBlock(AblTokenTypes.PROCEDURE_BLOCK)
         assertNotNull("Must find PROCEDURE_BLOCK", procBlock)
         val doBlock = firstChildBlock(procBlock!!, AblTokenTypes.DO_BLOCK)
         assertNotNull("Must find DO_BLOCK inside PROCEDURE_BLOCK", doBlock)
         val parent = provider.getParent(doBlock!!)
         assertNotNull("DO_BLOCK should have PROCEDURE_BLOCK as parent", parent)
-        assertEquals("Parent of DO_BLOCK should be PROCEDURE_BLOCK",
-            AblTokenTypes.PROCEDURE_BLOCK, parent!!.node.elementType)
+        assertEquals(
+            "Parent of DO_BLOCK should be PROCEDURE_BLOCK",
+            AblTokenTypes.PROCEDURE_BLOCK,
+            parent!!.node.elementType,
+        )
     }
 
     fun testGetParentOfLeafInsideNestedDoBlock() {
-        myFixture.configureByText("test.p",
-            "PROCEDURE foo:\n  DO:\n    DEFINE VARIABLE x AS INTEGER NO-UNDO.\n  END.\nEND PROCEDURE.")
+        myFixture.configureByText(
+            "test.p",
+            "PROCEDURE foo:\n  DO:\n    DEFINE VARIABLE x AS INTEGER NO-UNDO.\n  END.\nEND PROCEDURE.",
+        )
         val procBlock = topLevelBlock(AblTokenTypes.PROCEDURE_BLOCK)
         assertNotNull("Must find PROCEDURE_BLOCK", procBlock)
         val doBlock = firstChildBlock(procBlock!!, AblTokenTypes.DO_BLOCK)
@@ -89,14 +100,20 @@ class AblBreadcrumbProviderTest : BasePlatformTestCase() {
         assertNotNull("DO_BLOCK must have leaf children", leaf)
         val doParent = provider.getParent(leaf!!)
         assertNotNull("Leaf inside DO_BLOCK should have parent", doParent)
-        assertEquals("Immediate parent breadcrumb should be DO_BLOCK",
-            AblTokenTypes.DO_BLOCK, doParent!!.node.elementType)
+        assertEquals(
+            "Immediate parent breadcrumb should be DO_BLOCK",
+            AblTokenTypes.DO_BLOCK,
+            doParent!!.node.elementType,
+        )
 
         // DO_BLOCK's parent → PROCEDURE_BLOCK
         val procParent = provider.getParent(doParent)
         assertNotNull("DO_BLOCK should have PROCEDURE_BLOCK as parent", procParent)
-        assertEquals("DO_BLOCK's parent should be PROCEDURE_BLOCK",
-            AblTokenTypes.PROCEDURE_BLOCK, procParent!!.node.elementType)
+        assertEquals(
+            "DO_BLOCK's parent should be PROCEDURE_BLOCK",
+            AblTokenTypes.PROCEDURE_BLOCK,
+            procParent!!.node.elementType,
+        )
     }
 
     // ─── getElementInfo ───────────────────────────────────────────────────────
@@ -131,7 +148,10 @@ class AblBreadcrumbProviderTest : BasePlatformTestCase() {
     }
 
     /** Returns the first direct child of [parent] with the given composite element type. */
-    private fun firstChildBlock(parent: PsiElement, type: IElementType): PsiElement? {
+    private fun firstChildBlock(
+        parent: PsiElement,
+        type: IElementType,
+    ): PsiElement? {
         var el: PsiElement? = parent.firstChild
         while (el != null) {
             if (el.node.elementType == type) return el

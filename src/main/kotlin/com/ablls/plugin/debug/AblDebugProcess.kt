@@ -38,10 +38,9 @@ class AblDebugProcess(
      */
     private val bootstrapPath: String? = null,
 ) : XDebugProcess(session) {
-
-    private val editors    = AblDebugEditorsProvider()
+    private val editors = AblDebugEditorsProvider()
     private val breakpoint = AblBreakpointHandler(conn)
-    private val evaluator  = AblDebugEvaluator(conn)
+    private val evaluator = AblDebugEvaluator(conn)
 
     init {
         conn.onStopped = {
@@ -50,8 +49,9 @@ class AblDebugProcess(
                 val filtered = raw.filterNot { isBootstrapFrame(it) }
                 // Si filtrer le bootstrap vide la pile (cas où OE est encore dans
                 // le bootstrap, ex. arrêt sur READKEY), on garde la pile brute.
-                val frames = (if (filtered.isNotEmpty()) filtered else raw)
-                    .map { AblStackFrame(it, conn, session.project) }
+                val frames =
+                    (if (filtered.isNotEmpty()) filtered else raw)
+                        .map { AblStackFrame(it, conn, session.project) }
                 val context = AblSuspendContext(AblExecutionStack(frames))
                 session.positionReached(context)
             }
@@ -96,8 +96,11 @@ class AblDebugProcess(
     }
 
     override fun doGetProcessHandler(): ProcessHandler = processHandler
+
     override fun getEditorsProvider(): XDebuggerEditorsProvider = editors
+
     override fun getBreakpointHandlers(): Array<XBreakpointHandler<*>> = arrayOf(breakpoint)
+
     override fun getEvaluator(): XDebuggerEvaluator = evaluator
 
     /**
@@ -106,20 +109,25 @@ class AblDebugProcess(
      * et les MESSAGEs ABL n'apparaissent nulle part.
      */
     override fun createConsole(): ExecutionConsole {
-        val console: ConsoleView = TextConsoleBuilderFactory.getInstance()
-            .createBuilder(session.project)
-            .console
+        val console: ConsoleView =
+            TextConsoleBuilderFactory.getInstance()
+                .createBuilder(session.project)
+                .console
         console.attachToProcess(processHandler)
         return console
     }
 
     // ── Contrôle d'exécution ──────────────────────────────────────────────────
 
-    override fun resume(context: XSuspendContext?)        = conn.cont()
+    override fun resume(context: XSuspendContext?) = conn.cont()
+
     override fun startStepOver(context: XSuspendContext?) = conn.stepOver()
+
     override fun startStepInto(context: XSuspendContext?) = conn.stepInto()
-    override fun startStepOut(context: XSuspendContext?)  = conn.stepReturn()
-    override fun startPausing()                           = conn.interrupt()
+
+    override fun startStepOut(context: XSuspendContext?) = conn.stepReturn()
+
+    override fun startPausing() = conn.interrupt()
 
     override fun stop() {
         conn.close()
@@ -130,19 +138,23 @@ class AblDebugProcess(
 // ─── Évaluateur d'expression (Alt+F8 / hover) ────────────────────────────────
 
 class AblDebugEvaluator(private val conn: AblDebugConnection) : XDebuggerEvaluator() {
-
     override fun evaluate(
         expression: String,
         callback: XEvaluationCallback,
-        expressionPosition: com.intellij.xdebugger.XSourcePosition?
+        expressionPosition: com.intellij.xdebugger.XSourcePosition?,
     ) {
         // OE ne fournit pas d'API d'évaluation directe — on transmet l'expression brute
         // (ex. "ASSIGN x = 42"). La valeur sera reflétée dans le prochain MSG_VARIABLES.
         conn.sendRaw(expression)
-        callback.evaluated(object : XValue() {
-            override fun computePresentation(node: XValueNode, place: XValuePlace) {
-                node.setPresentation(null, "", "(sent to OE)", false)
-            }
-        })
+        callback.evaluated(
+            object : XValue() {
+                override fun computePresentation(
+                    node: XValueNode,
+                    place: XValuePlace,
+                ) {
+                    node.setPresentation(null, "", "(sent to OE)", false)
+                }
+            },
+        )
     }
 }

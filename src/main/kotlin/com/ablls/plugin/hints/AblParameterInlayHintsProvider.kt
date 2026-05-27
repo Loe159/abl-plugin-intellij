@@ -3,7 +3,14 @@ package com.ablls.plugin.hints
 import com.ablls.plugin.core.AblProjectAnalysisService
 import com.ablls.plugin.language.AblLanguage
 import com.ablls.plugin.parser.AblTokenTypes
-import com.intellij.codeInsight.hints.*
+import com.intellij.codeInsight.hints.ChangeListener
+import com.intellij.codeInsight.hints.FactoryInlayHintsCollector
+import com.intellij.codeInsight.hints.ImmediateConfigurable
+import com.intellij.codeInsight.hints.InlayHintsCollector
+import com.intellij.codeInsight.hints.InlayHintsProvider
+import com.intellij.codeInsight.hints.InlayHintsSink
+import com.intellij.codeInsight.hints.NoSettings
+import com.intellij.codeInsight.hints.SettingsKey
 import com.intellij.codeInsight.hints.presentation.PresentationFactory
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Document
@@ -26,16 +33,16 @@ import javax.swing.JPanel
  */
 @Suppress("UnstableApiUsage")
 class AblParameterInlayHintsProvider : InlayHintsProvider<NoSettings> {
-
     override val key: SettingsKey<NoSettings> = SettingsKey("abl.parameter.hints")
-    override val name: String                  = "Call parameter name hints"
-    override val previewText: String           = """
+    override val name: String = "Call parameter name hints"
+    override val previewText: String =
+        """
         FUNCTION max RETURNS INTEGER(INPUT a AS INTEGER, INPUT b AS INTEGER):
           RETURN IF a > b THEN a ELSE b.
         END FUNCTION.
         DEFINE VARIABLE x AS INTEGER NO-UNDO.
         x = max(5, 3).
-    """.trimIndent()
+        """.trimIndent()
 
     override fun createSettings(): NoSettings = NoSettings()
 
@@ -48,7 +55,7 @@ class AblParameterInlayHintsProvider : InlayHintsProvider<NoSettings> {
         file: PsiFile,
         editor: Editor,
         settings: NoSettings,
-        sink: InlayHintsSink
+        sink: InlayHintsSink,
     ): InlayHintsCollector? {
         if (file.language != AblLanguage) return null
         val uri = file.virtualFile?.url ?: return null
@@ -75,16 +82,17 @@ class AblParameterInlayHintsProvider : InlayHintsProvider<NoSettings> {
 
     private fun collectRoutineParamsFromScope(
         scope: TreeParserSymbolScope,
-        map: MutableMap<String, List<String>>
+        map: MutableMap<String, List<String>>,
     ) {
         for (routine in runCatching { scope.routines }.getOrNull() ?: emptyList()) {
             val params = runCatching { routine.parameters }.getOrNull() ?: continue
             if (params.isEmpty()) continue
-            val labels = params.mapNotNull { param ->
-                runCatching { param.javaClass.getMethod("getName").invoke(param) as? String }
-                    .getOrNull()
-                    ?.takeIf { it.isNotBlank() }
-            }
+            val labels =
+                params.mapNotNull { param ->
+                    runCatching { param.javaClass.getMethod("getName").invoke(param) as? String }
+                        .getOrNull()
+                        ?.takeIf { it.isNotBlank() }
+                }
             if (labels.isNotEmpty()) map[routine.name.uppercase()] = labels
         }
         for (child in runCatching { scope.childScopes }.getOrNull() ?: emptyList()) {
@@ -94,10 +102,11 @@ class AblParameterInlayHintsProvider : InlayHintsProvider<NoSettings> {
 
     // ─── Scan du token stream pour trouver les sites d'appel ─────────────────
 
+    @Suppress("CyclomaticComplexMethod", "NestedBlockDepth")
     private fun buildHintMap(
         tokens: org.antlr.v4.runtime.CommonTokenStream,
         routineParams: Map<String, List<String>>,
-        document: Document
+        document: Document,
     ): Map<Int, String> {
         val hintMap = mutableMapOf<Int, String>()
         val size = tokens.size()
@@ -105,16 +114,25 @@ class AblParameterInlayHintsProvider : InlayHintsProvider<NoSettings> {
         var i = 0
         while (i < size) {
             val tok = tokens.get(i)
-            if (tok.channel != Token.DEFAULT_CHANNEL) { i++; continue }
+            if (tok.channel != Token.DEFAULT_CHANNEL) {
+                i++
+                continue
+            }
 
             val routineName = tok.text?.uppercase()
             val params = if (routineName != null) routineParams[routineName] else null
-            if (params == null) { i++; continue }
+            if (params == null) {
+                i++
+                continue
+            }
 
             // Le prochain token du default channel doit être "("
             var j = i + 1
             while (j < size && tokens.get(j).channel != Token.DEFAULT_CHANNEL) j++
-            if (j >= size || tokens.get(j).text != "(") { i++; continue }
+            if (j >= size || tokens.get(j).text != "(") {
+                i++
+                continue
+            }
 
             // Analyser les arguments
             j++ // dépasse "("
@@ -162,17 +180,21 @@ class AblParameterInlayHintsProvider : InlayHintsProvider<NoSettings> {
         return hintMap
     }
 
-    private fun tokenOffset(token: Token, document: Document): Int {
+    private fun tokenOffset(
+        token: Token,
+        document: Document,
+    ): Int {
         val line = (token.line - 1).coerceAtLeast(0)
         if (line >= document.lineCount) return -1
         return document.getLineStartOffset(line) + token.charPositionInLine
     }
 
     companion object {
-        private val DIRECTION_KEYWORDS = setOf(
-            "INPUT", "OUTPUT", "INPUT-OUTPUT",
-            "BY-VALUE", "BY-REFERENCE", "TABLE", "TABLE-HANDLE", "DATASET", "DATASET-HANDLE"
-        )
+        private val DIRECTION_KEYWORDS =
+            setOf(
+                "INPUT", "OUTPUT", "INPUT-OUTPUT",
+                "BY-VALUE", "BY-REFERENCE", "TABLE", "TABLE-HANDLE", "DATASET", "DATASET-HANDLE",
+            )
     }
 }
 
@@ -181,19 +203,23 @@ class AblParameterInlayHintsProvider : InlayHintsProvider<NoSettings> {
 @Suppress("UnstableApiUsage")
 private class AblParamHintsCollector(
     editor: Editor,
-    private val hintMap: Map<Int, String>
+    private val hintMap: Map<Int, String>,
 ) : FactoryInlayHintsCollector(editor) {
-
     private val presentationFactory = PresentationFactory(editor)
 
-    override fun collect(element: PsiElement, editor: Editor, sink: InlayHintsSink): Boolean {
+    override fun collect(
+        element: PsiElement,
+        editor: Editor,
+        sink: InlayHintsSink,
+    ): Boolean {
         if (element.node?.elementType != AblTokenTypes.IDENTIFIER) return true
         val startOffset = element.textRange.startOffset
         val hint = hintMap[startOffset] ?: return true
 
-        val presentation = presentationFactory.roundWithBackgroundAndSmallInset(
-            presentationFactory.smallText(hint)
-        )
+        val presentation =
+            presentationFactory.roundWithBackgroundAndSmallInset(
+                presentationFactory.smallText(hint),
+            )
         sink.addInlineElement(startOffset, false, presentation, false)
         return true
     }

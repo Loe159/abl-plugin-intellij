@@ -13,7 +13,6 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase
  * tests using [AblRenameHandler.testNewName] to bypass the dialog.
  */
 class AblRenameHandlerTest : BasePlatformTestCase() {
-
     private lateinit var handler: AblRenameHandler
 
     override fun setUp() {
@@ -47,12 +46,15 @@ class AblRenameHandlerTest : BasePlatformTestCase() {
     }
 
     fun testFindNearestDefPrefersLocalOverGlobal() {
-        myFixture.configureByText("test.p", """
+        myFixture.configureByText(
+            "test.p",
+            """
             DEFINE VARIABLE myVar AS INTEGER NO-UNDO.
             PROCEDURE foo:
               DEFINE VARIABLE myVar AS INTEGER NO-UNDO.
             END PROCEDURE.
-        """.trimIndent())
+            """.trimIndent(),
+        )
         val service = project.service<AblProjectAnalysisService>()
         service.analyzeFileSemantic(myFixture.file.text, myFixture.file.virtualFile.url)
 
@@ -63,20 +65,23 @@ class AblRenameHandlerTest : BasePlatformTestCase() {
         // The local define is on the 3rd line (1-based); global is on line 1 — local wins
         assertTrue(
             "Local myVar (line 3) should win over global (line 1)",
-            (node!!.token?.line ?: 0) > 1
+            (node!!.token?.line ?: 0) > 1,
         )
     }
 
     // ─── performScopeAwareRename ─────────────────────────────────────────────
 
     fun testRenamesLocalVariableWithoutTouchingGlobal() {
-        myFixture.configureByText("test.p", """
+        myFixture.configureByText(
+            "test.p",
+            """
             DEFINE VARIABLE myVar AS INTEGER NO-UNDO.
             PROCEDURE foo:
               DEFINE VARIABLE myVar AS INTEGER NO-UNDO.
               myVar = 5.
             END PROCEDURE.
-        """.trimIndent())
+            """.trimIndent(),
+        )
         val service = project.service<AblProjectAnalysisService>()
         service.analyzeFileSemantic(myFixture.file.text, myFixture.file.virtualFile.url)
 
@@ -94,14 +99,17 @@ class AblRenameHandlerTest : BasePlatformTestCase() {
     }
 
     fun testRenamesGlobalVariableWithoutTouchingLocal() {
-        myFixture.configureByText("test.p", """
+        myFixture.configureByText(
+            "test.p",
+            """
             DEFINE VARIABLE myVar AS INTEGER NO-UNDO.
             myVar = 1.
             PROCEDURE foo:
               DEFINE VARIABLE myVar AS INTEGER NO-UNDO.
               myVar = 5.
             END PROCEDURE.
-        """.trimIndent())
+            """.trimIndent(),
+        )
         val service = project.service<AblProjectAnalysisService>()
         service.analyzeFileSemantic(myFixture.file.text, myFixture.file.virtualFile.url)
 
@@ -116,18 +124,25 @@ class AblRenameHandlerTest : BasePlatformTestCase() {
         val result = myFixture.file.text
         assertTrue("Global DEFINE should be renamed", result.contains("DEFINE VARIABLE globalRenamed"))
         assertTrue("Global usage should be renamed", result.contains("globalRenamed = 1"))
-        assertTrue("Local DEFINE inside procedure must NOT be renamed",
-            result.contains("DEFINE VARIABLE myVar"))
-        assertTrue("Local usage inside procedure must NOT be renamed",
-            result.contains("myVar = 5"))
+        assertTrue(
+            "Local DEFINE inside procedure must NOT be renamed",
+            result.contains("DEFINE VARIABLE myVar"),
+        )
+        assertTrue(
+            "Local usage inside procedure must NOT be renamed",
+            result.contains("myVar = 5"),
+        )
     }
 
     fun testRenameIsInsensitiveToCaseVariants() {
-        myFixture.configureByText("test.p", """
+        myFixture.configureByText(
+            "test.p",
+            """
             DEFINE VARIABLE myVar AS INTEGER NO-UNDO.
             myvar = 1.
             MYVAR = 2.
-        """.trimIndent())
+            """.trimIndent(),
+        )
         val service = project.service<AblProjectAnalysisService>()
         service.analyzeFileSemantic(myFixture.file.text, myFixture.file.virtualFile.url)
 
@@ -158,10 +173,13 @@ class AblRenameHandlerTest : BasePlatformTestCase() {
     }
 
     fun testFindNearestDefFindsTempTable() {
-        myFixture.configureByText("test.p", """
+        myFixture.configureByText(
+            "test.p",
+            """
             DEFINE TEMP-TABLE ttCust
                 FIELD custId AS INTEGER.
-        """.trimIndent())
+            """.trimIndent(),
+        )
         val service = project.service<AblProjectAnalysisService>()
         service.analyzeFileSemantic(myFixture.file.text, myFixture.file.virtualFile.url)
 
@@ -197,8 +215,11 @@ class AblRenameHandlerTest : BasePlatformTestCase() {
 
     fun testFallbackDoesNotRenameKeywordsOrStrings() {
         // The fallback uses AblLexerAdapter — strings and keywords must not be touched
-        myFixture.configureByText("test.p", "DEFINE VARIABLE my<caret>Var AS INTEGER NO-UNDO.\n" +
-            "MESSAGE \"myVar is a string\".\nmyVar = 1.")
+        myFixture.configureByText(
+            "test.p",
+            "DEFINE VARIABLE my<caret>Var AS INTEGER NO-UNDO.\n" +
+                "MESSAGE \"myVar is a string\".\nmyVar = 1.",
+        )
 
         handler.testNewName = "x"
         try {
@@ -233,13 +254,16 @@ class AblRenameHandlerTest : BasePlatformTestCase() {
     }
 
     fun testEndToEndInvokePreservesHomonymInOtherScope() {
-        myFixture.configureByText("test.p", """
+        myFixture.configureByText(
+            "test.p",
+            """
             DEFINE VARIABLE myVar AS INTEGER NO-UNDO.
             PROCEDURE foo:
               DEFINE VARIABLE my<caret>Var AS INTEGER NO-UNDO.
               myVar = 5.
             END PROCEDURE.
-        """.trimIndent())
+            """.trimIndent(),
+        )
         val service = project.service<AblProjectAnalysisService>()
         service.analyzeFileSemantic(myFixture.file.text, myFixture.file.virtualFile.url)
 
@@ -252,7 +276,9 @@ class AblRenameHandlerTest : BasePlatformTestCase() {
 
         val result = myFixture.file.text
         assertTrue("Local DEFINE should be renamed to localVar", result.contains("DEFINE VARIABLE localVar"))
-        assertTrue("Global DEFINE must be preserved as myVar",
-            result.contains("DEFINE VARIABLE myVar"))
+        assertTrue(
+            "Global DEFINE must be preserved as myVar",
+            result.contains("DEFINE VARIABLE myVar"),
+        )
     }
 }

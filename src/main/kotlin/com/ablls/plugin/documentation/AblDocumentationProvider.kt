@@ -24,7 +24,6 @@ import org.prorefactor.treeparser.symbols.Variable
  * le token sous le curseur même sans référence résolue (arbre PSI plat).
  */
 class AblDocumentationProvider : AbstractDocumentationProvider() {
-
     /**
      * Indique à IntelliJ quel élément utiliser comme cible de documentation
      * quand il n'y a pas de référence résolue (cas d'un arbre PSI plat).
@@ -34,13 +33,16 @@ class AblDocumentationProvider : AbstractDocumentationProvider() {
         editor: Editor,
         file: PsiFile,
         contextElement: PsiElement?,
-        targetOffset: Int
+        targetOffset: Int,
     ): PsiElement? {
         if (file.language != AblLanguage) return null
         return contextElement
     }
 
-    override fun generateDoc(element: PsiElement?, originalElement: PsiElement?): String? {
+    override fun generateDoc(
+        element: PsiElement?,
+        originalElement: PsiElement?,
+    ): String? {
         val target = originalElement ?: element ?: return null
         if (target.containingFile?.language != AblLanguage) return null
 
@@ -48,8 +50,8 @@ class AblDocumentationProvider : AbstractDocumentationProvider() {
         if (word.isBlank() || word.length < 2) return null
 
         val project = target.project
-        val file    = target.containingFile ?: return null
-        val uri     = file.virtualFile?.url ?: return null
+        val file = target.containingFile ?: return null
+        val uri = file.virtualFile?.url ?: return null
 
         val service = project.service<AblProjectAnalysisService>()
 
@@ -76,23 +78,26 @@ class AblDocumentationProvider : AbstractDocumentationProvider() {
      * Lien vers la documentation Progress (Shift+F1 ou icône "External docs").
      * Disponible pour les built-ins ABL documentés dans [AblBuiltinDocs].
      */
-    override fun getUrlFor(element: PsiElement?, originalElement: PsiElement?): List<String> {
+    override fun getUrlFor(
+        element: PsiElement?,
+        originalElement: PsiElement?,
+    ): List<String> {
         val word = (originalElement ?: element)?.text?.trim()?.uppercase() ?: return emptyList()
         if (!AblBuiltinDocs.has(word)) return emptyList()
         val slug = word.lowercase().replace("-", "")
-        return listOf("https://docs.progress.com/bundle/openedge-abl-reference/page/${slug}.html")
+        return listOf("https://docs.progress.com/bundle/openedge-abl-reference/page/$slug.html")
     }
 
     override fun getDocumentationElementForLookupItem(
         psiManager: com.intellij.psi.PsiManager,
         `object`: Any?,
-        element: PsiElement?
+        element: PsiElement?,
     ): PsiElement? = element
 
     override fun getDocumentationElementForLink(
         psiManager: com.intellij.psi.PsiManager,
         link: String?,
-        context: PsiElement?
+        context: PsiElement?,
     ): PsiElement? = null
 
     // ─── Construction HTML ────────────────────────────────────────────────────
@@ -109,7 +114,7 @@ class AblDocumentationProvider : AbstractDocumentationProvider() {
 
         if (symbol.uri != null) {
             val short = symbol.uri.substringAfterLast('/')
-            val line  = (symbol.definitionRange?.startLine ?: -1) + 1
+            val line = (symbol.definitionRange?.startLine ?: -1) + 1
             if (line > 0) {
                 sb.append("<p><i>Défini dans <code>$short</code> ligne $line</i></p>")
             }
@@ -117,41 +122,46 @@ class AblDocumentationProvider : AbstractDocumentationProvider() {
         return sb.toString()
     }
 
-    private fun buildSignature(symbol: AblSymbol): String = when (symbol.kind) {
-        AblSymbol.Kind.VARIABLE   -> "DEFINE VARIABLE ${symbol.name} AS ${symbol.dataType}"
-        AblSymbol.Kind.PARAMETER  -> "DEFINE PARAMETER ${symbol.name} AS ${symbol.dataType}"
-        AblSymbol.Kind.PROCEDURE  -> "PROCEDURE ${symbol.name}"
-        AblSymbol.Kind.FUNCTION   -> {
-            val ret = symbol.dataType?.replace("FUNCTION RETURNS ", "") ?: "VOID"
-            "FUNCTION ${symbol.name} RETURNS $ret"
-        }
-        AblSymbol.Kind.CLASS      -> {
-            val kw = when {
-                symbol.dataType?.startsWith("INTERFACE") == true -> "INTERFACE"
-                symbol.dataType?.startsWith("ENUM")      == true -> "ENUM"
-                else -> "CLASS"
+    private fun buildSignature(symbol: AblSymbol): String =
+        when (symbol.kind) {
+            AblSymbol.Kind.VARIABLE -> "DEFINE VARIABLE ${symbol.name} AS ${symbol.dataType}"
+            AblSymbol.Kind.PARAMETER -> "DEFINE PARAMETER ${symbol.name} AS ${symbol.dataType}"
+            AblSymbol.Kind.PROCEDURE -> "PROCEDURE ${symbol.name}"
+            AblSymbol.Kind.FUNCTION -> {
+                val ret = symbol.dataType?.replace("FUNCTION RETURNS ", "") ?: "VOID"
+                "FUNCTION ${symbol.name} RETURNS $ret"
             }
-            "$kw ${symbol.name}"
+            AblSymbol.Kind.CLASS -> {
+                val kw =
+                    when {
+                        symbol.dataType?.startsWith("INTERFACE") == true -> "INTERFACE"
+                        symbol.dataType?.startsWith("ENUM") == true -> "ENUM"
+                        else -> "CLASS"
+                    }
+                "$kw ${symbol.name}"
+            }
+            AblSymbol.Kind.METHOD -> {
+                val ret = symbol.dataType?.replace("METHOD RETURNS ", "") ?: "VOID"
+                "METHOD ${symbol.name} RETURNS $ret"
+            }
+            AblSymbol.Kind.FIELD -> {
+                val type = symbol.dataType?.replace("PROPERTY ", "") ?: ""
+                if (symbol.name.contains(".")) {
+                    "FIELD ${symbol.name} AS $type"
+                } else {
+                    "PROPERTY ${symbol.name} AS $type"
+                }
+            }
+            AblSymbol.Kind.TEMP_TABLE -> "DEFINE TEMP-TABLE ${symbol.name}"
+            AblSymbol.Kind.DATASET -> "DEFINE DATASET ${symbol.name}"
+            AblSymbol.Kind.QUERY -> "DEFINE QUERY ${symbol.name}"
+            AblSymbol.Kind.BUFFER -> {
+                val tbl = symbol.dataType?.replace("BUFFER FOR ", "") ?: "?"
+                "DEFINE BUFFER ${symbol.name} FOR $tbl"
+            }
+            AblSymbol.Kind.EVENT -> "EVENT ${symbol.name}"
+            else -> "${symbol.kind} ${symbol.name}"
         }
-        AblSymbol.Kind.METHOD     -> {
-            val ret = symbol.dataType?.replace("METHOD RETURNS ", "") ?: "VOID"
-            "METHOD ${symbol.name} RETURNS $ret"
-        }
-        AblSymbol.Kind.FIELD      -> {
-            val type = symbol.dataType?.replace("PROPERTY ", "") ?: ""
-            if (symbol.name.contains(".")) "FIELD ${symbol.name} AS $type"
-            else "PROPERTY ${symbol.name} AS $type"
-        }
-        AblSymbol.Kind.TEMP_TABLE -> "DEFINE TEMP-TABLE ${symbol.name}"
-        AblSymbol.Kind.DATASET    -> "DEFINE DATASET ${symbol.name}"
-        AblSymbol.Kind.QUERY      -> "DEFINE QUERY ${symbol.name}"
-        AblSymbol.Kind.BUFFER     -> {
-            val tbl = symbol.dataType?.replace("BUFFER FOR ", "") ?: "?"
-            "DEFINE BUFFER ${symbol.name} FOR $tbl"
-        }
-        AblSymbol.Kind.EVENT      -> "EVENT ${symbol.name}"
-        else                      -> "${symbol.kind} ${symbol.name}"
-    }
 
     /** Conversion Markdown basique → HTML pour les built-ins. */
     private fun markdownToHtml(md: String): String {
@@ -167,22 +177,28 @@ class AblDocumentationProvider : AbstractDocumentationProvider() {
         return html
     }
 
-    private fun escapeHtml(text: String): String = text
-        .replace("&", "&amp;")
-        .replace("<", "&lt;")
-        .replace(">", "&gt;")
-        .replace("\"", "&quot;")
+    private fun escapeHtml(text: String): String =
+        text
+            .replace("&", "&amp;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+            .replace("\"", "&quot;")
 
     // ─── Accès direct aux objets RSSW ────────────────────────────────────────
 
-    private fun buildRoutineDoc(name: String, scope: TreeParserSymbolScope, uri: String): String? {
+    private fun buildRoutineDoc(
+        name: String,
+        scope: TreeParserSymbolScope,
+        uri: String,
+    ): String? {
         val routine = findRoutineInScope(name, scope) ?: return null
         // Prefer ideSignature (full sig with params); fall back to nodeType + name
-        val sig = runCatching { routine.getIDESignature() }.getOrNull()?.takeIf { it.isNotBlank() }
-            ?: runCatching {
-                val nodeType = routine.getNodeType()?.text?.uppercase() ?: "PROCEDURE"
-                "$nodeType ${routine.name}"
-            }.getOrElse { routine.name }
+        val sig =
+            runCatching { routine.getIDESignature() }.getOrNull()?.takeIf { it.isNotBlank() }
+                ?: runCatching {
+                    val nodeType = routine.getNodeType()?.text?.uppercase() ?: "PROCEDURE"
+                    "$nodeType ${routine.name}"
+                }.getOrElse { routine.name }
         val sb = StringBuilder()
         sb.append("<pre><code>").append(escapeHtml(sig)).append("</code></pre>")
         val line = runCatching { routine.getDefineNode()?.token?.line ?: 0 }.getOrNull() ?: 0
@@ -190,10 +206,14 @@ class AblDocumentationProvider : AbstractDocumentationProvider() {
         return sb.toString()
     }
 
-    private fun buildVariableDoc(name: String, scope: TreeParserSymbolScope, uri: String): String? {
+    private fun buildVariableDoc(
+        name: String,
+        scope: TreeParserSymbolScope,
+        uri: String,
+    ): String? {
         val variable = findVariableInScope(name, scope) ?: return null
         val dataType = runCatching { variable.dataType?.toString() }.getOrNull() ?: return null
-        val extent   = runCatching { variable.extent }.getOrNull() ?: 0
+        val extent = runCatching { variable.extent }.getOrNull() ?: 0
         val extentPart = if (extent > 0) " EXTENT $extent" else ""
         val sig = "DEFINE VARIABLE ${variable.name} AS $dataType$extentPart NO-UNDO"
         val sb = StringBuilder()
@@ -203,7 +223,10 @@ class AblDocumentationProvider : AbstractDocumentationProvider() {
         return sb.toString()
     }
 
-    private fun findRoutineInScope(name: String, scope: TreeParserSymbolScope): Routine? {
+    private fun findRoutineInScope(
+        name: String,
+        scope: TreeParserSymbolScope,
+    ): Routine? {
         runCatching { scope.routines }.getOrNull()
             ?.find { it.name.equals(name, ignoreCase = true) }
             ?.let { return it }
@@ -213,7 +236,10 @@ class AblDocumentationProvider : AbstractDocumentationProvider() {
         return null
     }
 
-    private fun findVariableInScope(name: String, scope: TreeParserSymbolScope): Variable? {
+    private fun findVariableInScope(
+        name: String,
+        scope: TreeParserSymbolScope,
+    ): Variable? {
         runCatching { scope.variables }.getOrNull()
             ?.find { it.name.equals(name, ignoreCase = true) }
             ?.let { return it }

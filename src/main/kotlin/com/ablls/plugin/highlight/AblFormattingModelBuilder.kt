@@ -1,7 +1,16 @@
 package com.ablls.plugin.highlight
 
 import com.ablls.plugin.parser.AblTokenTypes
-import com.intellij.formatting.*
+import com.intellij.formatting.Alignment
+import com.intellij.formatting.Block
+import com.intellij.formatting.FormattingContext
+import com.intellij.formatting.FormattingModel
+import com.intellij.formatting.FormattingModelBuilder
+import com.intellij.formatting.FormattingModelProvider
+import com.intellij.formatting.Indent
+import com.intellij.formatting.Spacing
+import com.intellij.formatting.Wrap
+import com.intellij.formatting.WrapType
 import com.intellij.lang.ASTNode
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.formatter.common.AbstractBlock
@@ -22,16 +31,15 @@ import com.intellij.psi.formatter.common.AbstractBlock
  * L'algorithme est identique à celui de [AblFoldingBuilder] — mais en O(n) par fichier.
  */
 class AblFormattingModelBuilder : FormattingModelBuilder {
-
     override fun createModel(formattingContext: FormattingContext): FormattingModel {
         val settings = formattingContext.codeStyleSettings
-        val psiFile  = formattingContext.psiElement.containingFile
-        val root     = psiFile.node
+        val psiFile = formattingContext.psiElement.containingFile
+        val root = psiFile.node
 
         return FormattingModelProvider.createFormattingModelForPsiFile(
             psiFile,
             AblRootBlock(root, settings),
-            settings
+            settings,
         )
     }
 }
@@ -40,24 +48,28 @@ class AblFormattingModelBuilder : FormattingModelBuilder {
 
 private class AblRootBlock(
     node: ASTNode,
-    private val settings: CodeStyleSettings
+    private val settings: CodeStyleSettings,
 ) : AbstractBlock(node, Wrap.createWrap(WrapType.NONE, false), Alignment.createAlignment()) {
-
     override fun buildChildren(): List<Block> {
-        val tokens   = collectTokens(node)
-        val depths   = computeDepths(tokens)
+        val tokens = collectTokens(node)
+        val depths = computeDepths(tokens)
         return tokens.indices.map { i -> AblLeafBlock(tokens[i], settings, depths[i]) }
     }
 
-    override fun getSpacing(child1: Block?, child2: Block): Spacing? = null
+    override fun getSpacing(
+        child1: Block?,
+        child2: Block,
+    ): Spacing? = null
+
     override fun isLeaf(): Boolean = false
+
     override fun getIndent(): Indent = Indent.getNoneIndent()
 
     // ── Collecte des tokens non-whitespace ────────────────────────────────────
 
     private fun collectTokens(parent: ASTNode): List<ASTNode> {
         val result = mutableListOf<ASTNode>()
-        var child  = parent.firstChildNode
+        var child = parent.firstChildNode
         while (child != null) {
             if (child.elementType != AblTokenTypes.WHITE_SPACE) result.add(child)
             child = child.treeNext
@@ -75,8 +87,8 @@ private class AblRootBlock(
      */
     private fun computeDepths(tokens: List<ASTNode>): IntArray {
         val depths = IntArray(tokens.size)
-        var depth  = 0
-        var i      = 0
+        var depth = 0
+        var i = 0
 
         while (i < tokens.size) {
             val text = tokens[i].text.trim().uppercase()
@@ -89,11 +101,15 @@ private class AblRootBlock(
                     // Sauter le qualificateur optionnel (END PROCEDURE, END CLASS…)
                     val next = tokens.getOrNull(i + 1)?.text?.trim()?.uppercase()
                     if (next != null && next in END_QUALIFIERS) {
-                        i++; depths[i] = depth
+                        i++
+                        depths[i] = depth
                     }
                     // Sauter le point terminal si présent
                     val afterQual = tokens.getOrNull(i + 1)?.text?.trim()
-                    if (afterQual == ".") { i++; depths[i] = depth }
+                    if (afterQual == ".") {
+                        i++
+                        depths[i] = depth
+                    }
                 }
 
                 // ── Ouverture de bloc ─────────────────────────────────────────
@@ -105,8 +121,14 @@ private class AblRootBlock(
                     while (j < tokens.size) {
                         val t = tokens[j].text.trim()
                         when {
-                            t == "(" -> { depths[j] = depth; parenDepth++ }
-                            t == ")" -> { if (parenDepth > 0) parenDepth--; depths[j] = depth }
+                            t == "(" -> {
+                                depths[j] = depth
+                                parenDepth++
+                            }
+                            t == ")" -> {
+                                if (parenDepth > 0) parenDepth--
+                                depths[j] = depth
+                            }
                             t == ":" && parenDepth == 0 -> {
                                 depths[j] = depth
                                 i = j
@@ -134,7 +156,10 @@ private class AblRootBlock(
      * Retourne true si un `:` apparaît avant le prochain `END` ou `.` (terminateur),
      * en ignorant les `:` dans les parenthèses (expressions OO).
      */
-    private fun hasColonAhead(tokens: List<ASTNode>, startIdx: Int): Boolean {
+    private fun hasColonAhead(
+        tokens: List<ASTNode>,
+        startIdx: Int,
+    ): Boolean {
         var parenDepth = 0
         val limit = minOf(tokens.size, startIdx + 50)
         for (i in startIdx + 1 until limit) {
@@ -150,16 +175,18 @@ private class AblRootBlock(
     }
 
     companion object {
-        private val BLOCK_STARTERS = setOf(
-            "PROCEDURE", "FUNCTION", "CLASS", "INTERFACE", "ENUM",
-            "METHOD", "CONSTRUCTOR", "DESTRUCTOR",
-            "DO", "FOR", "REPEAT",
-            "CATCH", "FINALLY", "CASE"
-        )
-        private val END_QUALIFIERS = setOf(
-            "PROCEDURE", "FUNCTION", "CLASS", "INTERFACE", "METHOD",
-            "CONSTRUCTOR", "DESTRUCTOR", "CATCH", "FINALLY", "CASE"
-        )
+        private val BLOCK_STARTERS =
+            setOf(
+                "PROCEDURE", "FUNCTION", "CLASS", "INTERFACE", "ENUM",
+                "METHOD", "CONSTRUCTOR", "DESTRUCTOR",
+                "DO", "FOR", "REPEAT",
+                "CATCH", "FINALLY", "CASE",
+            )
+        private val END_QUALIFIERS =
+            setOf(
+                "PROCEDURE", "FUNCTION", "CLASS", "INTERFACE", "METHOD",
+                "CONSTRUCTOR", "DESTRUCTOR", "CATCH", "FINALLY", "CASE",
+            )
     }
 }
 
@@ -168,17 +195,21 @@ private class AblRootBlock(
 private class AblLeafBlock(
     node: ASTNode,
     private val settings: CodeStyleSettings,
-    private val blockDepth: Int
+    private val blockDepth: Int,
 ) : AbstractBlock(node, Wrap.createWrap(WrapType.NONE, false), Alignment.createAlignment()) {
-
     override fun buildChildren(): List<Block> = emptyList()
-    override fun getSpacing(child1: Block?, child2: Block): Spacing? = null
+
+    override fun getSpacing(
+        child1: Block?,
+        child2: Block,
+    ): Spacing? = null
+
     override fun isLeaf(): Boolean = true
 
     override fun getIndent(): Indent? {
         if (node.elementType == AblTokenTypes.BLOCK_COMMENT) return Indent.getNoneIndent()
         return when (blockDepth) {
-            0    -> Indent.getNoneIndent()
+            0 -> Indent.getNoneIndent()
             else -> Indent.getNormalIndent()
         }
     }

@@ -18,7 +18,7 @@ dependencyResolutionManagement {
         mavenCentral()
         maven {
             name = "riverside-software"
-            url  = uri("https://dl.cloudsmith.io/public/riverside-software/openedge-dev/maven/")
+            url = uri("https://dl.cloudsmith.io/public/riverside-software/openedge-dev/maven/")
         }
         intellijPlatform {
             defaultRepositories()

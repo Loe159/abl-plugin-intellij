@@ -25,7 +25,6 @@ import org.prorefactor.treeparser.symbols.Variable
  *      Utilisé quand l'analyse sémantique est disponible.
  */
 object AblSymbolCollector {
-
     private val LOG = Logger.getInstance(AblSymbolCollector::class.java)
 
     // ─── Source 1 : arbre ANTLR4 ─────────────────────────────────────────────
@@ -57,24 +56,28 @@ object AblSymbolCollector {
             for (db in schema.databases) {
                 val dbUri = "db://${db.name}"
                 for (table in db.tableSet) {
-                    symbols.add(AblSymbol(
-                        name = table.name,
-                        kind = AblSymbol.Kind.TABLE,
-                        uri  = dbUri,
-                        definitionRange = null,
-                        dataType = "TABLE (${db.name})",
-                        documentation = null
-                    ))
+                    symbols.add(
+                        AblSymbol(
+                            name = table.name,
+                            kind = AblSymbol.Kind.TABLE,
+                            uri = dbUri,
+                            definitionRange = null,
+                            dataType = "TABLE (${db.name})",
+                            documentation = null,
+                        ),
+                    )
                     for (field in runCatching { table.fieldSet }.getOrNull() ?: emptySet()) {
                         val typeStr = runCatching { field.dataType?.toString() }.getOrNull() ?: "UNKNOWN"
-                        symbols.add(AblSymbol(
-                            name = "${table.name}.${field.name}",
-                            kind = AblSymbol.Kind.FIELD,
-                            uri  = dbUri,
-                            definitionRange = null,
-                            dataType = typeStr,
-                            documentation = null
-                        ))
+                        symbols.add(
+                            AblSymbol(
+                                name = "${table.name}.${field.name}",
+                                kind = AblSymbol.Kind.FIELD,
+                                uri = dbUri,
+                                definitionRange = null,
+                                dataType = typeStr,
+                                documentation = null,
+                            ),
+                        )
                     }
                 }
             }
@@ -94,7 +97,10 @@ object AblSymbolCollector {
      *   - Signatures complètes des routines via [Routine.getIDESignature]
      *   - Types des variables via [Variable.getDataType]
      */
-    fun collectFromScope(scope: TreeParserSymbolScope?, uri: String): List<AblSymbol> {
+    fun collectFromScope(
+        scope: TreeParserSymbolScope?,
+        uri: String,
+    ): List<AblSymbol> {
         if (scope == null) return emptyList()
         val symbols = mutableListOf<AblSymbol>()
         try {
@@ -108,69 +114,79 @@ object AblSymbolCollector {
     private fun collectScopeRecursive(
         scope: TreeParserSymbolScope,
         uri: String,
-        symbols: MutableList<AblSymbol>
+        symbols: MutableList<AblSymbol>,
     ) {
         for (variable in runCatching { scope.variables }.getOrNull() ?: emptyList()) {
             runCatching {
                 val defNode: JPNode? = variable.getDefineNode()
-                val range = defNode?.let { node ->
-                    val line = node.token?.line ?: 1
-                    val col = node.token?.charPositionInLine ?: 0
-                    AblRange(line - 1, col, line - 1, col + variable.name.length)
-                }
-                symbols.add(AblSymbol(
-                    name = variable.name,
-                    kind = if (variable.javaClass.simpleName == "Parameter") AblSymbol.Kind.PARAMETER else AblSymbol.Kind.VARIABLE,
-                    uri = uri,
-                    definitionRange = range,
-                    dataType = variable.dataType?.toString() ?: "UNKNOWN",
-                    documentation = null
-                ))
+                val range =
+                    defNode?.let { node ->
+                        val line = node.token?.line ?: 1
+                        val col = node.token?.charPositionInLine ?: 0
+                        AblRange(line - 1, col, line - 1, col + variable.name.length)
+                    }
+                symbols.add(
+                    AblSymbol(
+                        name = variable.name,
+                        kind = if (variable.javaClass.simpleName == "Parameter") AblSymbol.Kind.PARAMETER else AblSymbol.Kind.VARIABLE,
+                        uri = uri,
+                        definitionRange = range,
+                        dataType = variable.dataType?.toString() ?: "UNKNOWN",
+                        documentation = null,
+                    ),
+                )
             }
         }
 
         for (routine in runCatching { scope.routines }.getOrNull() ?: emptyList()) {
             runCatching {
                 val defNode: JPNode? = routine.getDefineNode()
-                val range = defNode?.let { node ->
-                    val line = node.token?.line ?: 1
-                    val col = node.token?.charPositionInLine ?: 0
-                    AblRange(line - 1, col, line - 1, col + routine.name.length)
-                }
+                val range =
+                    defNode?.let { node ->
+                        val line = node.token?.line ?: 1
+                        val col = node.token?.charPositionInLine ?: 0
+                        AblRange(line - 1, col, line - 1, col + routine.name.length)
+                    }
                 val (kind, sig) = routineKindAndSig(routine)
-                symbols.add(AblSymbol(
-                    name = routine.name,
-                    kind = kind,
-                    uri = uri,
-                    definitionRange = range,
-                    dataType = sig,
-                    documentation = null
-                ))
+                symbols.add(
+                    AblSymbol(
+                        name = routine.name,
+                        kind = kind,
+                        uri = uri,
+                        definitionRange = range,
+                        dataType = sig,
+                        documentation = null,
+                    ),
+                )
             }
         }
 
         @Suppress("UNCHECKED_CAST")
-        val bufferList: Collection<TableBuffer> = runCatching {
-            scope.javaClass.getMethod("getBufferList").invoke(scope) as? Collection<TableBuffer>
-        }.getOrNull() ?: emptyList()
+        val bufferList: Collection<TableBuffer> =
+            runCatching {
+                scope.javaClass.getMethod("getBufferList").invoke(scope) as? Collection<TableBuffer>
+            }.getOrNull() ?: emptyList()
 
         for (buffer in bufferList) {
             runCatching {
                 val defNode: JPNode? = buffer.getDefineNode()
-                val range = defNode?.let { node ->
-                    val line = node.token?.line ?: 1
-                    val col = node.token?.charPositionInLine ?: 0
-                    AblRange(line - 1, col, line - 1, col + buffer.name.length)
-                }
+                val range =
+                    defNode?.let { node ->
+                        val line = node.token?.line ?: 1
+                        val col = node.token?.charPositionInLine ?: 0
+                        AblRange(line - 1, col, line - 1, col + buffer.name.length)
+                    }
                 val tableName = runCatching { buffer.getTable()?.name }.getOrNull() ?: "?"
-                symbols.add(AblSymbol(
-                    name = buffer.name,
-                    kind = AblSymbol.Kind.BUFFER,
-                    uri = uri,
-                    definitionRange = range,
-                    dataType = "BUFFER FOR $tableName",
-                    documentation = null
-                ))
+                symbols.add(
+                    AblSymbol(
+                        name = buffer.name,
+                        kind = AblSymbol.Kind.BUFFER,
+                        uri = uri,
+                        definitionRange = range,
+                        dataType = "BUFFER FOR $tableName",
+                        documentation = null,
+                    ),
+                )
             }
         }
 
@@ -180,14 +196,16 @@ object AblSymbolCollector {
     }
 
     private fun routineKindAndSig(routine: Routine): Pair<AblSymbol.Kind, String> {
-        val sig = runCatching { routine.ideSignature }.getOrNull()
-            ?: routine.signature
-            ?: routine.name
-        val kind = when {
-            routine.name.contains("::") -> AblSymbol.Kind.METHOD
-            sig.contains("FUNCTION") || sig.contains("RETURNS") -> AblSymbol.Kind.FUNCTION
-            else -> AblSymbol.Kind.PROCEDURE
-        }
+        val sig =
+            runCatching { routine.ideSignature }.getOrNull()
+                ?: routine.signature
+                ?: routine.name
+        val kind =
+            when {
+                routine.name.contains("::") -> AblSymbol.Kind.METHOD
+                sig.contains("FUNCTION") || sig.contains("RETURNS") -> AblSymbol.Kind.FUNCTION
+                else -> AblSymbol.Kind.PROCEDURE
+            }
         return kind to sig
     }
 }
@@ -206,27 +224,26 @@ object AblSymbolCollector {
 private class AblSymbolVisitor(
     private val symbols: MutableList<AblSymbol>,
     private val uri: String,
-    private val tokens: TokenStream?
+    private val tokens: TokenStream?,
 ) : ProparseBaseVisitor<Void?>() {
-
     private val scopeStack = ArrayDeque<String>()
 
     // ─── DEFINE VARIABLE ─────────────────────────────────────────────────────
 
     override fun visitDefineVariableStatement(ctx: Proparse.DefineVariableStatementContext): Void? {
         val name = ctx.newIdentifier()?.text ?: return visitChildren(ctx)
-        val type = ctx.fieldOption()
-            ?.firstOrNull { it.datatype() != null }
-            ?.datatype()?.text?.uppercase() ?: "UNKNOWN"
+        val type =
+            ctx.fieldOption()
+                ?.firstOrNull { it.datatype() != null }
+                ?.datatype()?.text?.uppercase() ?: "UNKNOWN"
         addSymbol(name, AblSymbol.Kind.VARIABLE, type, ctx)
         return visitChildren(ctx)
     }
 
     // ─── DEFINE PARAMETER ────────────────────────────────────────────────────
 
-    override fun visitDefineParameterStatementSub2Variable(
-        ctx: Proparse.DefineParameterStatementSub2VariableContext
-    ): Void? {
+    @Suppress("MaxLineLength")
+    override fun visitDefineParameterStatementSub2Variable(ctx: Proparse.DefineParameterStatementSub2VariableContext): Void? {
         val name = ctx.identifier()?.text ?: return visitChildren(ctx)
         val type = ctx.defineParamVar()?.datatype()?.text?.uppercase() ?: "UNKNOWN"
         addSymbol(name, AblSymbol.Kind.PARAMETER, type, ctx)
@@ -305,7 +322,7 @@ private class AblSymbolVisitor(
         val declText = ctx.text ?: ""
         val colonIdx = declText.indexOf(':').takeIf { it > 0 } ?: declText.length
         val declHead = declText.substring(0, colonIdx).uppercase()
-        val inherits  = extractKeywordArg(declHead, "INHERITS")
+        val inherits = extractKeywordArg(declHead, "INHERITS")
         val implements = extractKeywordArgs(declHead, "IMPLEMENTS")
         val dataType = buildClassDataType("CLASS", inherits, implements)
         addSymbol(name, AblSymbol.Kind.CLASS, dataType, ctx)
@@ -320,8 +337,8 @@ private class AblSymbolVisitor(
         val declText = ctx.text ?: ""
         val colonIdx = declText.indexOf(':').takeIf { it > 0 } ?: declText.length
         val declHead = declText.substring(0, colonIdx).uppercase()
-        val inherits  = extractKeywordArg(declHead, "INHERITS")
-        val dataType  = buildClassDataType("INTERFACE", inherits, emptyList())
+        val inherits = extractKeywordArg(declHead, "INHERITS")
+        val dataType = buildClassDataType("INTERFACE", inherits, emptyList())
         addSymbol(name, AblSymbol.Kind.CLASS, dataType, ctx)
         scopeStack.addLast(name)
         visitChildren(ctx)
@@ -399,22 +416,32 @@ private class AblSymbolVisitor(
 
     // ─── Utilitaires ──────────────────────────────────────────────────────────
 
-    private fun addSymbol(name: String, kind: AblSymbol.Kind, dataType: String, ctx: ParserRuleContext) {
+    private fun addSymbol(
+        name: String,
+        kind: AblSymbol.Kind,
+        dataType: String,
+        ctx: ParserRuleContext,
+    ) {
         val doc = extractPrecedingComment(ctx)
-        symbols.add(AblSymbol(
-            name = name,
-            kind = kind,
-            uri = uri,
-            definitionRange = toRange(ctx),
-            dataType = dataType,
-            documentation = doc
-        ))
+        symbols.add(
+            AblSymbol(
+                name = name,
+                kind = kind,
+                uri = uri,
+                definitionRange = toRange(ctx),
+                dataType = dataType,
+                documentation = doc,
+            ),
+        )
     }
 
     private fun currentScope(): String = scopeStack.lastOrNull() ?: ""
 
     /** Ex: "CLASS Foo INHERITS Bar IMPLEMENTS IFoo" → extractKeywordArg("INHERITS") → "Bar" */
-    private fun extractKeywordArg(text: String, keyword: String): String? {
+    private fun extractKeywordArg(
+        text: String,
+        keyword: String,
+    ): String? {
         val idx = text.indexOf(keyword)
         if (idx < 0) return null
         return text.substring(idx + keyword.length)
@@ -424,12 +451,19 @@ private class AblSymbolVisitor(
     }
 
     /** Ex: "IMPLEMENTS IFoo,IBar" → ["IFoo", "IBar"] */
-    private fun extractKeywordArgs(text: String, keyword: String): List<String> {
+    private fun extractKeywordArgs(
+        text: String,
+        keyword: String,
+    ): List<String> {
         val first = extractKeywordArg(text, keyword) ?: return emptyList()
         return first.split(',').map { it.trim() }.filter { it.isNotBlank() }
     }
 
-    private fun buildClassDataType(base: String, inherits: String?, implements: List<String>): String {
+    private fun buildClassDataType(
+        base: String,
+        inherits: String?,
+        implements: List<String>,
+    ): String {
         val sb = StringBuilder(base)
         if (!inherits.isNullOrBlank()) sb.append(" INHERITS ").append(inherits)
         if (implements.isNotEmpty()) sb.append(" IMPLEMENTS ").append(implements.joinToString(","))
@@ -438,12 +472,12 @@ private class AblSymbolVisitor(
 
     private fun toRange(ctx: ParserRuleContext): AblRange {
         val start = ctx.start
-        val stop  = ctx.stop ?: start
+        val stop = ctx.stop ?: start
         return AblRange(
             startLine = (start.line - 1).coerceAtLeast(0),
-            startCol  = start.charPositionInLine,
-            endLine   = (stop.line - 1).coerceAtLeast(0),
-            endCol    = stop.charPositionInLine + stop.text.length
+            startCol = start.charPositionInLine,
+            endLine = (stop.line - 1).coerceAtLeast(0),
+            endCol = stop.charPositionInLine + stop.text.length,
         )
     }
 

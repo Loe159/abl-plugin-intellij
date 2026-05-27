@@ -12,30 +12,30 @@ import org.prorefactor.core.ABLNodeType
  * - Met tout en majuscules (case-insensitive)
  */
 object AblTokenNormalizer {
-
     data class NormalToken(
         val text: String,
         val type: Int,
         val line: Int,
-        val index: Int
+        val index: Int,
     )
 
     private val QSTRING_TYPE = ABLNodeType.QSTRING.getType()
-    private val NUMBER_TYPE  = ABLNodeType.NUMBER.getType()
+    private val NUMBER_TYPE = ABLNodeType.NUMBER.getType()
 
     fun normalize(tokens: TokenStream): List<NormalToken> {
         val result = mutableListOf<NormalToken>()
-        val size   = tokens.size()
+        val size = tokens.size()
         for (i in 0 until size) {
             val t = tokens.get(i)
             if (t.channel != Token.DEFAULT_CHANNEL) continue
             if (t.type == Token.EOF) break
 
-            val normalized = when (t.type) {
-                QSTRING_TYPE -> "<STR>"
-                NUMBER_TYPE  -> "<NUM>"
-                else         -> t.text?.uppercase() ?: continue
-            }
+            val normalized =
+                when (t.type) {
+                    QSTRING_TYPE -> "<STR>"
+                    NUMBER_TYPE -> "<NUM>"
+                    else -> t.text?.uppercase() ?: continue
+                }
             result += NormalToken(normalized, t.type, t.line, i)
         }
         return result

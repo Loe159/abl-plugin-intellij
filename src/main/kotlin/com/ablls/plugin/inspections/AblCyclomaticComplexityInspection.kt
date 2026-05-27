@@ -2,7 +2,9 @@ package com.ablls.plugin.inspections
 
 import com.ablls.plugin.core.AblProjectAnalysisService
 import com.ablls.plugin.language.AblLanguage
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.LocalInspectionTool
+import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.components.service
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElementVisitor
@@ -23,20 +25,24 @@ import org.prorefactor.core.JPNode
  * qui mesure la lisibilité subjective plutôt que le nombre de chemins.
  */
 class AblCyclomaticComplexityInspection : LocalInspectionTool() {
+    override fun getDisplayName() = "High cyclomatic complexity (McCabe, CC > $MAX_CC)"
 
-    override fun getDisplayName()      = "High cyclomatic complexity (McCabe, CC > $MAX_CC)"
-    override fun getShortName()        = "AblCyclomaticComplexity"
+    override fun getShortName() = "AblCyclomaticComplexity"
+
     override fun getGroupDisplayName() = "ABL Best Practices"
 
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
+    override fun buildVisitor(
+        holder: ProblemsHolder,
+        isOnTheFly: Boolean,
+    ): PsiElementVisitor =
         object : PsiElementVisitor() {
             override fun visitFile(file: PsiFile) {
                 if (file.language != AblLanguage) return
-                val uri     = file.virtualFile?.url ?: return
+                val uri = file.virtualFile?.url ?: return
                 val service = file.project.service<AblProjectAnalysisService>()
-                val result  = service.analyzeFile(file.text, uri)
+                val result = service.analyzeFile(file.text, uri)
                 val topNode = result.topNode ?: return
-                val doc     = PsiDocumentManager.getInstance(file.project).getDocument(file) ?: return
+                val doc = PsiDocumentManager.getInstance(file.project).getDocument(file) ?: return
 
                 val routineNodes = topNode.queryStateHead(ABLNodeType.PROCEDURE, ABLNodeType.FUNCTION)
 
@@ -51,7 +57,7 @@ class AblCyclomaticComplexityInspection : LocalInspectionTool() {
                             file,
                             "$kind has cyclomatic complexity $cc (threshold: $MAX_CC) — consider breaking it into smaller units",
                             ProblemHighlightType.WEAK_WARNING,
-                            range
+                            range,
                         )
                     }
                 }
@@ -62,19 +68,21 @@ class AblCyclomaticComplexityInspection : LocalInspectionTool() {
         const val MAX_CC = 10
 
         // Types de nœuds qui incrémentent la complexité cyclomatique
-        private val BRANCH_TYPES: Set<ABLNodeType> = java.util.EnumSet.of(
-            ABLNodeType.IF,
-            ABLNodeType.ELSE,
-            ABLNodeType.WHEN,     // CASE WHEN
-            ABLNodeType.FOR,
-            ABLNodeType.REPEAT,
-            ABLNodeType.CATCH,
-            ABLNodeType.AND,
-            ABLNodeType.OR
-        )
+        private val BRANCH_TYPES: Set<ABLNodeType> =
+            java.util.EnumSet.of(
+                ABLNodeType.IF,
+                ABLNodeType.ELSE,
+                // CASE WHEN
+                ABLNodeType.WHEN,
+                ABLNodeType.FOR,
+                ABLNodeType.REPEAT,
+                ABLNodeType.CATCH,
+                ABLNodeType.AND,
+                ABLNodeType.OR,
+            )
 
         fun computeCyclomaticComplexity(routineNode: JPNode): Int {
-            var cc = 1  // base
+            var cc = 1 // base
             var child = routineNode.firstChild
             while (child != null) {
                 cc += countBranchesInSubtree(child)

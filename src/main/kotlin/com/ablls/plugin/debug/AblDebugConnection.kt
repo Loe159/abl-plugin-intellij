@@ -55,16 +55,16 @@ class AblDebugConnection(
 
     private var recvSocket: Socket? = null
     private var sendSocket: Socket? = null
-    private var sendOut:    OutputStream? = null
+    private var sendOut: OutputStream? = null
 
-    private val bpIdGen      = AtomicInteger(1)
-    private val breakpoints  = CopyOnWriteArrayList<BpEntry>()
+    private val bpIdGen = AtomicInteger(1)
+    private val breakpoints = CopyOnWriteArrayList<BpEntry>()
     private val sessionReady = AtomicBoolean(false)
 
-    private val pendingVars   = AtomicReference<CompletableFuture<List<OeVariable>>?>()
+    private val pendingVars = AtomicReference<CompletableFuture<List<OeVariable>>?>()
     private val pendingParams = AtomicReference<CompletableFuture<List<OeVariable>>?>()
-    private val pendingStack  = AtomicReference<CompletableFuture<List<OeStackFrame>>?>()
-    private val pendingArray  = AtomicReference<CompletableFuture<List<String>>?>()
+    private val pendingStack = AtomicReference<CompletableFuture<List<OeStackFrame>>?>()
+    private val pendingArray = AtomicReference<CompletableFuture<List<String>>?>()
 
     /** Notifié à chaque MSG_ENTER : OE vient de se suspendre. La position est récupérée via [showStack]. */
     var onStopped: (() -> Unit)? = null
@@ -85,15 +85,16 @@ class AblDebugConnection(
     @Throws(java.io.IOException::class)
     fun connect() {
         val recv = Socket(host, port)
-        val send = try {
-            Socket(host, port)
-        } catch (e: java.io.IOException) {
-            runCatching { recv.close() }
-            throw e
-        }
+        val send =
+            try {
+                Socket(host, port)
+            } catch (e: java.io.IOException) {
+                runCatching { recv.close() }
+                throw e
+            }
         recvSocket = recv
         sendSocket = send
-        sendOut    = send.outputStream
+        sendOut = send.outputStream
         startReaderThread(recv.inputStream)
     }
 
@@ -101,11 +102,18 @@ class AblDebugConnection(
      * Réessaie [connect] jusqu'à [timeoutMs]. Utile pour attendre qu'OE
      * finisse de démarrer et ouvre son socket d'écoute.
      */
-    fun connectWithRetry(timeoutMs: Long = 15_000, retryIntervalMs: Long = 100): Boolean {
+    fun connectWithRetry(
+        timeoutMs: Long = 15_000,
+        retryIntervalMs: Long = 100,
+    ): Boolean {
         val deadline = System.currentTimeMillis() + timeoutMs
         while (System.currentTimeMillis() < deadline) {
-            try { connect(); return true }
-            catch (_: java.io.IOException) { Thread.sleep(retryIntervalMs) }
+            try {
+                connect()
+                return true
+            } catch (_: java.io.IOException) {
+                Thread.sleep(retryIntervalMs)
+            }
         }
         return false
     }
@@ -137,27 +145,37 @@ class AblDebugConnection(
         }
     }
 
-    fun cont()       = sendCmd("cont")
-    fun stepInto()   = sendCmd("step")
-    fun stepOver()   = sendCmd("next")
+    fun cont() = sendCmd("cont")
+
+    fun stepInto() = sendCmd("step")
+
+    fun stepOver() = sendCmd("next")
+
     fun stepReturn() = sendCmd("step-out")
-    fun interrupt()  = sendCmd("interrupt")
+
+    fun interrupt() = sendCmd("interrupt")
 
     /** Évalue une expression côté OE (ex. `ASSIGN x = 42`). La réponse arrive via le flux normal. */
     fun sendRaw(expression: String) = sendCmd(expression)
 
     // ── Breakpoints ───────────────────────────────────────────────────────────
 
-    fun setBreakpoint(filePath: String, line: Int) {
+    fun setBreakpoint(
+        filePath: String,
+        line: Int,
+    ) {
         val path = filePath.replace('\\', '/')
         if (breakpoints.any { it.path == path && it.line == line }) return
         breakpoints.add(BpEntry(bpIdGen.getAndIncrement(), path, line))
         if (sessionReady.get() && isConnected) sendBreakpoints()
     }
 
-    fun clearBreakpoint(filePath: String, line: Int) {
+    fun clearBreakpoint(
+        filePath: String,
+        line: Int,
+    ) {
         val path = filePath.replace('\\', '/')
-        val bp   = breakpoints.find { it.path == path && it.line == line } ?: return
+        val bp = breakpoints.find { it.path == path && it.line == line } ?: return
         breakpoints.remove(bp)
         if (sessionReady.get() && isConnected) sendBreakpoints()
     }
@@ -181,20 +199,27 @@ class AblDebugConnection(
 
     // ── Requêtes synchrones ───────────────────────────────────────────────────
 
-    fun showStack(timeoutMs: Long = 5_000): List<OeStackFrame> =
-        request("show stack-ide", pendingStack, timeoutMs) ?: emptyList()
+    fun showStack(timeoutMs: Long = 5_000): List<OeStackFrame> {
+        return request("show stack-ide", pendingStack, timeoutMs) ?: emptyList()
+    }
 
-    fun listVariables(timeoutMs: Long = 5_000): List<OeVariable> =
-        request("list variables", pendingVars, timeoutMs) ?: emptyList()
+    fun listVariables(timeoutMs: Long = 5_000): List<OeVariable> {
+        return request("list variables", pendingVars, timeoutMs) ?: emptyList()
+    }
 
-    fun listParameters(timeoutMs: Long = 5_000): List<OeVariable> =
-        request("list parameters", pendingParams, timeoutMs) ?: emptyList()
+    fun listParameters(timeoutMs: Long = 5_000): List<OeVariable> {
+        return request("list parameters", pendingParams, timeoutMs) ?: emptyList()
+    }
 
     /**
      * Récupère les éléments d'une variable EXTENT/ARRAY. ABL est 1-indexé :
      * l'élément retourné en position 0 correspond à `name[1]` dans le code.
      */
-    fun getArray(name: String, type: String, timeoutMs: Long = 5_000): List<String> {
+    fun getArray(
+        name: String,
+        type: String,
+        timeoutMs: Long = 5_000,
+    ): List<String> {
         val raw = request("GET-ARRAY $name", pendingArray, timeoutMs) ?: return emptyList()
         return raw.map { decodeValue(type, it) }
     }
@@ -202,7 +227,7 @@ class AblDebugConnection(
     private fun <T> request(
         command: String,
         slot: AtomicReference<CompletableFuture<T>?>,
-        timeoutMs: Long
+        timeoutMs: Long,
     ): T? {
         val future = CompletableFuture<T>()
         slot.set(future)
@@ -228,12 +253,17 @@ class AblDebugConnection(
                             dispatch(String(buf.toByteArray(), Charsets.UTF_8))
                             buf.clear()
                         }
-                    } else buf.add(b.toByte())
+                    } else {
+                        buf.add(b.toByte())
+                    }
                 }
             } catch (e: Exception) {
                 log.debug("Debug reader thread terminated: ${e.message}")
             }
-        }, "abl-debug-reader", 0).also { it.isDaemon = true; it.start() }
+        }, "abl-debug-reader", 0).also {
+            it.isDaemon = true
+            it.start()
+        }
     }
 
     private fun dispatch(msg: String) {
@@ -245,10 +275,10 @@ class AblDebugConnection(
                 onStopped?.invoke()
             }
             "MSG_EXIT" -> onExit?.invoke()
-            "STACK-IDE"     -> pendingStack.getAndSet(null)?.complete(parseStack(msg))
+            "STACK-IDE" -> pendingStack.getAndSet(null)?.complete(parseStack(msg))
             "MSG_VARIABLES" -> pendingVars.getAndSet(null)?.complete(parseVarLines(msg, "MSG_VARIABLES"))
-            "MSG_PARAMETERS"-> pendingParams.getAndSet(null)?.complete(parseParameters(msg))
-            "MSG_ARRAY"     -> pendingArray.getAndSet(null)?.complete(parseArray(msg))
+            "MSG_PARAMETERS" -> pendingParams.getAndSet(null)?.complete(parseParameters(msg))
+            "MSG_ARRAY" -> pendingArray.getAndSet(null)?.complete(parseArray(msg))
             // MSG_LISTING, MSG_STATUS, MSG_INFO : ignorés (informationnels).
         }
     }
@@ -269,10 +299,11 @@ class AblDebugConnection(
      */
     private fun parseStack(msg: String): List<OeStackFrame> {
         val body = msg.removePrefix("STACK-IDE;").trimStart('\n', ';')
-        val rawFrames = body.split('\n')
-            .filter { it.isNotBlank() }
-            .map { it.split(';') }
-            .filter { it.isNotEmpty() }
+        val rawFrames =
+            body.split('\n')
+                .filter { it.isNotBlank() }
+                .map { it.split(';') }
+                .filter { it.isNotEmpty() }
         return rawFrames.mapNotNull { f ->
             val file = f.getOrNull(4)?.takeIf { it.isNotBlank() }
             val name = f.getOrNull(6)?.takeIf { it.isNotBlank() } ?: "(unknown)"
@@ -284,7 +315,10 @@ class AblDebugConnection(
     /**
      * `MSG_VARIABLES;\n<name>;<type>;<class?>;?;<extent>;<R|RW>;<value>;\n…`
      */
-    private fun parseVarLines(msg: String, prefix: String): List<OeVariable> {
+    private fun parseVarLines(
+        msg: String,
+        prefix: String,
+    ): List<OeVariable> {
         val body = msg.removePrefix("$prefix;").trimStart('\n')
         return body.split('\n')
             .map { it.trim() }
@@ -292,21 +326,22 @@ class AblDebugConnection(
             .mapNotNull { line ->
                 val parts = line.trimEnd(';').split(';')
                 if (parts.size < 7) return@mapNotNull null
-                val name      = parts[0]
-                val type      = parts[1]
+                val name = parts[0]
+                val type = parts[1]
                 val classType = parts[2].takeIf { it != "?" && it.isNotBlank() }
-                val extent    = parts[4].toIntOrNull() ?: 0
-                val raw       = parts[6]
-                val kind = when {
-                    classType != null -> OeVarKind.CLASS
-                    extent > 0        -> OeVarKind.ARRAY
-                    else              -> OeVarKind.VARIABLE
-                }
+                val extent = parts[4].toIntOrNull() ?: 0
+                val raw = parts[6]
+                val kind =
+                    when {
+                        classType != null -> OeVarKind.CLASS
+                        extent > 0 -> OeVarKind.ARRAY
+                        else -> OeVarKind.VARIABLE
+                    }
                 OeVariable(
-                    name  = name,
-                    type  = classType ?: type,
+                    name = name,
+                    type = classType ?: type,
                     value = decodeValue(type, raw),
-                    kind  = kind,
+                    kind = kind,
                 )
             }
     }
@@ -337,17 +372,18 @@ class AblDebugConnection(
                 val parts = line.trimEnd(';').split(';')
                 if (parts.size < 6) return@mapNotNull null
                 val mode = parts[0]
-                val arrow = when (mode) {
-                    "INPUT"        -> "→ "
-                    "OUTPUT"       -> "← "
-                    "INPUT-OUTPUT" -> "↔ "
-                    else           -> ""
-                }
+                val arrow =
+                    when (mode) {
+                        "INPUT" -> "→ "
+                        "OUTPUT" -> "← "
+                        "INPUT-OUTPUT" -> "↔ "
+                        else -> ""
+                    }
                 OeVariable(
-                    name  = "$arrow${parts[1]}",
-                    type  = parts[2],
+                    name = "$arrow${parts[1]}",
+                    type = parts[2],
                     value = decodeValue(parts[2], parts[5]),
-                    kind  = OeVarKind.PARAMETER,
+                    kind = OeVarKind.PARAMETER,
                 )
             }
     }
@@ -356,7 +392,10 @@ class AblDebugConnection(
      * Les CHARACTER/LONGCHAR sont encodés `\x12<length-digits>"value"`.
      * Décodage : on retire le DC2 (0x12) puis les chiffres de longueur, on garde le contenu entre guillemets.
      */
-    private fun decodeValue(type: String, raw: String): String {
+    private fun decodeValue(
+        type: String,
+        raw: String,
+    ): String {
         if (raw.isEmpty()) return raw
         if (type != "CHARACTER" && type != "LONGCHAR") return raw
         if (raw[0].code != 0x12) return raw
@@ -376,8 +415,13 @@ class AblDebugConnection(
         }
         runCatching { recvSocket?.close() }
         runCatching { sendSocket?.close() }
-        recvSocket = null; sendSocket = null; sendOut = null
-        pendingVars.set(null); pendingParams.set(null); pendingStack.set(null); pendingArray.set(null)
+        recvSocket = null
+        sendSocket = null
+        sendOut = null
+        pendingVars.set(null)
+        pendingParams.set(null)
+        pendingStack.set(null)
+        pendingArray.set(null)
     }
 }
 
@@ -386,14 +430,14 @@ class AblDebugConnection(
 enum class OeVarKind { VARIABLE, PARAMETER, CLASS, ARRAY }
 
 data class OeVariable(
-    val name:  String,
-    val type:  String,
+    val name: String,
+    val type: String,
     val value: String,
-    val kind:  OeVarKind = OeVarKind.VARIABLE,
+    val kind: OeVarKind = OeVarKind.VARIABLE,
 )
 
 data class OeStackFrame(
-    val file:     String?,
+    val file: String?,
     val function: String,
-    val line:     Int,
+    val line: Int,
 )

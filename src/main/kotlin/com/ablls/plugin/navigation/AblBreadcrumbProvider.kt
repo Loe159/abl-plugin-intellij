@@ -19,13 +19,11 @@ import com.intellij.ui.breadcrumbs.BreadcrumbsProvider
  *   PROCEDURE foo > DO
  */
 class AblBreadcrumbProvider : BreadcrumbsProvider {
-
     override fun getLanguages(): Array<Language> = arrayOf(AblLanguage)
 
     // ─── acceptElement ────────────────────────────────────────────────────────
 
-    override fun acceptElement(element: PsiElement): Boolean =
-        element.node.elementType in AblTokenTypes.BLOCK_TYPES
+    override fun acceptElement(element: PsiElement): Boolean = element.node.elementType in AblTokenTypes.BLOCK_TYPES
 
     // ─── getParent ────────────────────────────────────────────────────────────
 
@@ -61,26 +59,28 @@ class AblBreadcrumbProvider : BreadcrumbsProvider {
         while (nameCandidate != null && nameCandidate.text.isBlank()) {
             nameCandidate = nameCandidate.nextSibling
         }
-        val name = nameCandidate?.text?.trim()
-            ?.takeIf { it.isNotEmpty() && it[0].isLetter() }
+        val name =
+            nameCandidate?.text?.trim()
+                ?.takeIf { it.isNotEmpty() && it[0].isLetter() }
         return if (name != null) "$keyword $name" else keyword
     }
 
     companion object {
-        private val BLOCK_KEYWORDS: Map<IElementType, String> = mapOf(
-            AblTokenTypes.PROCEDURE_BLOCK   to "PROCEDURE",
-            AblTokenTypes.FUNCTION_BLOCK    to "FUNCTION",
-            AblTokenTypes.CLASS_BLOCK       to "CLASS",
-            AblTokenTypes.INTERFACE_BLOCK   to "INTERFACE",
-            AblTokenTypes.METHOD_BLOCK      to "METHOD",
-            AblTokenTypes.CONSTRUCTOR_BLOCK to "CONSTRUCTOR",
-            AblTokenTypes.DESTRUCTOR_BLOCK  to "DESTRUCTOR",
-            AblTokenTypes.DO_BLOCK          to "DO",
-            AblTokenTypes.REPEAT_BLOCK      to "REPEAT",
-            AblTokenTypes.FOR_BLOCK         to "FOR",
-            AblTokenTypes.CATCH_BLOCK       to "CATCH",
-            AblTokenTypes.FINALLY_BLOCK     to "FINALLY",
-            AblTokenTypes.CASE_BLOCK        to "CASE",
-        )
+        private val BLOCK_KEYWORDS: Map<IElementType, String> =
+            mapOf(
+                AblTokenTypes.PROCEDURE_BLOCK to "PROCEDURE",
+                AblTokenTypes.FUNCTION_BLOCK to "FUNCTION",
+                AblTokenTypes.CLASS_BLOCK to "CLASS",
+                AblTokenTypes.INTERFACE_BLOCK to "INTERFACE",
+                AblTokenTypes.METHOD_BLOCK to "METHOD",
+                AblTokenTypes.CONSTRUCTOR_BLOCK to "CONSTRUCTOR",
+                AblTokenTypes.DESTRUCTOR_BLOCK to "DESTRUCTOR",
+                AblTokenTypes.DO_BLOCK to "DO",
+                AblTokenTypes.REPEAT_BLOCK to "REPEAT",
+                AblTokenTypes.FOR_BLOCK to "FOR",
+                AblTokenTypes.CATCH_BLOCK to "CATCH",
+                AblTokenTypes.FINALLY_BLOCK to "FINALLY",
+                AblTokenTypes.CASE_BLOCK to "CASE",
+            )
     }
 }

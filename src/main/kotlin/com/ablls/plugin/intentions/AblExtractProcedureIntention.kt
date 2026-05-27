@@ -18,12 +18,17 @@ import com.intellij.psi.PsiFile
  * Disponible uniquement quand il y a une sélection de plus d'une ligne.
  */
 class AblExtractProcedureIntention : IntentionAction {
+    override fun getText() = "Extract selection into PROCEDURE"
 
-    override fun getText()            = "Extract selection into PROCEDURE"
-    override fun getFamilyName()      = "ABL Extract"
+    override fun getFamilyName() = "ABL Extract"
+
     override fun startInWriteAction() = true
 
-    override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean {
+    override fun isAvailable(
+        project: Project,
+        editor: Editor?,
+        file: PsiFile?,
+    ): Boolean {
         if (file?.language != AblLanguage) return false
         val sel = editor?.selectionModel ?: return false
         if (!sel.hasSelection()) return false
@@ -31,7 +36,11 @@ class AblExtractProcedureIntention : IntentionAction {
         return selectedText.lines().size >= 2
     }
 
-    override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
+    override fun invoke(
+        project: Project,
+        editor: Editor?,
+        file: PsiFile?,
+    ) {
         editor ?: return
         file ?: return
         if (file.language != AblLanguage) return
@@ -43,7 +52,7 @@ class AblExtractProcedureIntention : IntentionAction {
         val doc = editor.document
 
         val selStart = sel.selectionStart
-        val selEnd   = sel.selectionEnd
+        val selEnd = sel.selectionEnd
 
         val procName = "extractedProcedure"
 
@@ -53,9 +62,10 @@ class AblExtractProcedureIntention : IntentionAction {
         val indent = lineText.takeWhile { it == ' ' || it == '\t' }
 
         // Indenter le corps de la procédure
-        val body = selectedText.trimEnd()
-            .lines()
-            .joinToString("\n") { "    $it" }
+        val body =
+            selectedText.trimEnd()
+                .lines()
+                .joinToString("\n") { "    $it" }
 
         // Construire la procédure
         val procDefinition = "\n\nPROCEDURE $procName:\n$body\nEND PROCEDURE.\n"
@@ -71,8 +81,9 @@ class AblExtractProcedureIntention : IntentionAction {
         doc.insertString(endOfFile, procDefinition)
 
         // 3. Positionner le curseur sur le nom de la procédure (pour renommer)
-        val procNameOffset = endOfFile + "\n\nPROCEDURE ".length + callText.length - callText.length +
-            doc.textLength - procDefinition.length + "\n\nPROCEDURE ".length
+        val procNameOffset =
+            endOfFile + "\n\nPROCEDURE ".length + callText.length - callText.length +
+                doc.textLength - procDefinition.length + "\n\nPROCEDURE ".length
         editor.caretModel.moveToOffset(selStart + "RUN ".length)
         sel.removeSelection()
     }

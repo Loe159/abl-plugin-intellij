@@ -2,14 +2,12 @@ package com.ablls.plugin.core
 
 import org.junit.Test
 import kotlin.test.assertFalse
-import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
  * Tests for [AblBuiltinDocs] — verifies coverage and content correctness.
  */
 class AblBuiltinDocsTest {
-
     @Test
     fun `LENGTH is present with correct content`() {
         val doc = AblBuiltinDocs.get("LENGTH")
@@ -92,30 +90,31 @@ class AblBuiltinDocsTest {
     @Test
     fun `has more than 200 documented entries`() {
         // Count by checking the known entries — a proxy for coverage
-        val knownEntries = listOf(
-            "LENGTH", "SUBSTRING", "ENTRY", "NUM-ENTRIES", "REPLACE", "TRIM",
-            "STRING", "INTEGER", "INT64", "DECIMAL", "CAPS", "UPPER", "LC", "LOWER",
-            "FILL", "CHR", "ASC", "INDEX", "LOOKUP", "SUBSTITUTE", "COMPARE",
-            "MATCHES", "BEGINS", "ENCODE", "BASE64-ENCODE", "BASE64-DECODE",
-            "ABS", "MAX", "MIN", "ROUND", "TRUNCATE", "SQRT", "RANDOM", "SIGN",
-            "TODAY", "NOW", "TIME", "YEAR", "MONTH", "DAY", "WEEKDAY", "DATE",
-            "DATETIME", "ADD-INTERVAL", "INTERVAL", "TIMEZONE", "ISO-DATE",
-            "CAN-FIND", "CAN-DO", "AVAILABLE", "ROWID", "RECID", "NEXT-VALUE",
-            "CURRENT-VALUE", "FIRST-OF", "LAST-OF", "LOCKED",
-            "VALID-OBJECT", "VALID-HANDLE", "TYPE-OF", "CAST", "GET-CLASS",
-            "PROGRAM-NAME", "USERID", "OPSYS", "PROVERSION", "PROPATH", "SEARCH",
-            "SESSION", "THIS-PROCEDURE", "THIS-OBJECT", "SUPER", "ERROR-STATUS",
-            "DEFINE", "ASSIGN", "FOR", "FIND", "MESSAGE", "RUN", "CREATE",
-            "NEW", "USING", "CATCH", "THROW", "RETURN", "LEAVE", "NEXT",
-            "PROCEDURE", "FUNCTION", "CLASS", "METHOD", "CONSTRUCTOR", "DESTRUCTOR",
-            "INTERFACE", "ABSTRACT", "OVERRIDE", "FINAL", "STATIC",
-            "&IF", "&DEFINE", "&SCOPED-DEFINE", "DEFINED",
-            "DISPLAY", "PROMPT-FOR", "UPDATE", "ENABLE", "DISABLE",
-            "INPUT", "OUTPUT", "IMPORT", "EXPORT", "PUT", "GET", "COPY-LOB",
-            "READ-JSON", "WRITE-JSON", "BUFFER-COPY", "BUFFER-COMPARE",
-            "TEMP-TABLE", "DATASET", "TRANSACTION", "NO-LOCK", "EXCLUSIVE-LOCK",
-            "FILE-INFO", "CONNECT", "DISCONNECT", "EXTENT", "FORMAT"
-        )
+        val knownEntries =
+            listOf(
+                "LENGTH", "SUBSTRING", "ENTRY", "NUM-ENTRIES", "REPLACE", "TRIM",
+                "STRING", "INTEGER", "INT64", "DECIMAL", "CAPS", "UPPER", "LC", "LOWER",
+                "FILL", "CHR", "ASC", "INDEX", "LOOKUP", "SUBSTITUTE", "COMPARE",
+                "MATCHES", "BEGINS", "ENCODE", "BASE64-ENCODE", "BASE64-DECODE",
+                "ABS", "MAX", "MIN", "ROUND", "TRUNCATE", "SQRT", "RANDOM", "SIGN",
+                "TODAY", "NOW", "TIME", "YEAR", "MONTH", "DAY", "WEEKDAY", "DATE",
+                "DATETIME", "ADD-INTERVAL", "INTERVAL", "TIMEZONE", "ISO-DATE",
+                "CAN-FIND", "CAN-DO", "AVAILABLE", "ROWID", "RECID", "NEXT-VALUE",
+                "CURRENT-VALUE", "FIRST-OF", "LAST-OF", "LOCKED",
+                "VALID-OBJECT", "VALID-HANDLE", "TYPE-OF", "CAST", "GET-CLASS",
+                "PROGRAM-NAME", "USERID", "OPSYS", "PROVERSION", "PROPATH", "SEARCH",
+                "SESSION", "THIS-PROCEDURE", "THIS-OBJECT", "SUPER", "ERROR-STATUS",
+                "DEFINE", "ASSIGN", "FOR", "FIND", "MESSAGE", "RUN", "CREATE",
+                "NEW", "USING", "CATCH", "THROW", "RETURN", "LEAVE", "NEXT",
+                "PROCEDURE", "FUNCTION", "CLASS", "METHOD", "CONSTRUCTOR", "DESTRUCTOR",
+                "INTERFACE", "ABSTRACT", "OVERRIDE", "FINAL", "STATIC",
+                "&IF", "&DEFINE", "&SCOPED-DEFINE", "DEFINED",
+                "DISPLAY", "PROMPT-FOR", "UPDATE", "ENABLE", "DISABLE",
+                "INPUT", "OUTPUT", "IMPORT", "EXPORT", "PUT", "GET", "COPY-LOB",
+                "READ-JSON", "WRITE-JSON", "BUFFER-COPY", "BUFFER-COMPARE",
+                "TEMP-TABLE", "DATASET", "TRANSACTION", "NO-LOCK", "EXCLUSIVE-LOCK",
+                "FILE-INFO", "CONNECT", "DISCONNECT", "EXTENT", "FORMAT",
+            )
         val presentCount = knownEntries.count { AblBuiltinDocs.has(it) }
         assertTrue(presentCount >= 100, "At least 100 known entries should be present, found $presentCount")
     }

@@ -15,10 +15,13 @@ import com.intellij.psi.tree.IElementType
  * autres tokens utilisent le [LeafElement] standard.
  */
 class AblAstFactory : ASTFactory() {
-
-    override fun createLeaf(type: IElementType, text: CharSequence): LeafElement? =
-        if (type === AblTokenTypes.IDENTIFIER)
+    override fun createLeaf(
+        type: IElementType,
+        text: CharSequence,
+    ): LeafElement? =
+        if (type === AblTokenTypes.IDENTIFIER) {
             AblNamedLeafElement(type, text)
-        else
+        } else {
             super.createLeaf(type, text)
+        }
 }

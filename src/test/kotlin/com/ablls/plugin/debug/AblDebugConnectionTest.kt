@@ -1,6 +1,8 @@
 package com.ablls.plugin.debug
 
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.net.ServerSocket
 import java.net.Socket
@@ -22,7 +24,6 @@ import java.util.concurrent.atomic.AtomicBoolean
  * Le MockOeServer ci-dessous simule OE pour valider le comportement bout-en-bout.
  */
 class AblDebugConnectionTest {
-
     /**
      * Simule un processus OE en mode `-debugReady` :
      *   - bind sur un port local
@@ -35,13 +36,13 @@ class AblDebugConnectionTest {
         val port: Int = server.localPort
 
         private var eventSock: Socket? = null
-        private var cmdSock:   Socket? = null
+        private var cmdSock: Socket? = null
 
         val received = LinkedBlockingQueue<String>()
 
         fun acceptConnections() {
             eventSock = server.accept()
-            cmdSock   = server.accept()
+            cmdSock = server.accept()
             startCmdReader()
         }
 
@@ -56,9 +57,14 @@ class AblDebugConnectionTest {
                             received.add(String(buf.toByteArray(), Charsets.UTF_8))
                             buf.clear()
                         }
-                    } else buf.add(b.toByte())
+                    } else {
+                        buf.add(b.toByte())
+                    }
                 }
-            }, "mock-oe-cmd-reader", 0).also { it.isDaemon = true; it.start() }
+            }, "mock-oe-cmd-reader", 0).also {
+                it.isDaemon = true
+                it.start()
+            }
         }
 
         fun nextCmd(timeoutMs: Long = 3_000): String =
@@ -85,7 +91,11 @@ class AblDebugConnectionTest {
             val conn = AblDebugConnection(port = server.port)
             conn.connect()
             acceptFuture.get(3, TimeUnit.SECONDS)
-            try { block(server, conn) } finally { conn.close() }
+            try {
+                block(server, conn)
+            } finally {
+                conn.close()
+            }
         }
     }
 
@@ -95,9 +105,13 @@ class AblDebugConnectionTest {
     fun `connect opens exactly two sockets to OE`() {
         MockOeServer().use { server ->
             val count = java.util.concurrent.atomic.AtomicInteger(0)
-            val thread = Thread {
-                repeat(2) { server.server.accept().also { count.incrementAndGet() } }
-            }.also { it.isDaemon = true; it.start() }
+            val thread =
+                Thread {
+                    repeat(2) { server.server.accept().also { count.incrementAndGet() } }
+                }.also {
+                    it.isDaemon = true
+                    it.start()
+                }
 
             val conn = AblDebugConnection(port = server.port)
             conn.connect()
@@ -110,13 +124,16 @@ class AblDebugConnectionTest {
 
     @Test
     fun `connectWithRetry succeeds when OE starts within timeout`() {
-        val port = AblDebugConnection_findFreePort()
+        val port = findFreePort()
         var srv: MockOeServer? = null
 
         Thread {
-            Thread.sleep(250)  // simulate OE taking time to start
+            Thread.sleep(250) // simulate OE taking time to start
             srv = MockOeServer(port).also { it.acceptConnections() }
-        }.also { it.isDaemon = true; it.start() }
+        }.also {
+            it.isDaemon = true
+            it.start()
+        }
 
         val conn = AblDebugConnection(port = port)
         val ok = conn.connectWithRetry(timeoutMs = 5_000, retryIntervalMs = 50)
@@ -129,7 +146,7 @@ class AblDebugConnectionTest {
 
     @Test
     fun `connectWithRetry returns false when timeout expires`() {
-        val port = AblDebugConnection_findFreePort()  // unused, nothing listens
+        val port = findFreePort() // unused, nothing listens
         val conn = AblDebugConnection(port = port)
         val start = System.currentTimeMillis()
         val ok = conn.connectWithRetry(timeoutMs = 300, retryIntervalMs = 50)
@@ -153,7 +170,7 @@ class AblDebugConnectionTest {
     fun `startDebugging sends an empty break command when no breakpoints registered`() {
         withSession { server, conn ->
             conn.startDebugging()
-            server.nextCmd()  // SETPROP IDE 1
+            server.nextCmd() // SETPROP IDE 1
             assertEquals("break;", server.nextCmd())
         }
     }
@@ -165,7 +182,7 @@ class AblDebugConnectionTest {
             conn.setBreakpoint("C:/prog.p", 25)
             conn.startDebugging()
 
-            server.nextCmd()  // SETPROP IDE 1
+            server.nextCmd() // SETPROP IDE 1
             val bp = server.nextCmd()
             assertTrue(bp.contains("B;1;E;C:/prog.p;10; ;"))
             assertTrue(bp.contains("B;2;E;C:/prog.p;25; ;"))
@@ -178,7 +195,8 @@ class AblDebugConnectionTest {
     fun `setBreakpoint sends complete list in captured format`() {
         withSession { server, conn ->
             conn.startDebugging()
-            server.nextCmd(); server.nextCmd()  // drain handshake
+            server.nextCmd()
+            server.nextCmd() // drain handshake
 
             conn.setBreakpoint("C:/oe/test.p", 18)
             assertEquals("break B;1;E;C:/oe/test.p;18; ;", server.nextCmd())
@@ -189,7 +207,8 @@ class AblDebugConnectionTest {
     fun `setBreakpoint normalizes backslashes to forward slashes`() {
         withSession { server, conn ->
             conn.startDebugging()
-            server.nextCmd(); server.nextCmd()
+            server.nextCmd()
+            server.nextCmd()
 
             conn.setBreakpoint("D:\\ws\\Test\\test.p", 5)
             val bp = server.nextCmd()
@@ -203,7 +222,8 @@ class AblDebugConnectionTest {
     fun `multiple breakpoints arrive in a single command`() {
         withSession { server, conn ->
             conn.startDebugging()
-            server.nextCmd(); server.nextCmd()
+            server.nextCmd()
+            server.nextCmd()
 
             conn.setBreakpoint("C:/test.p", 10)
             server.nextCmd()
@@ -219,11 +239,13 @@ class AblDebugConnectionTest {
     fun `clearBreakpoint removes only the matching breakpoint`() {
         withSession { server, conn ->
             conn.startDebugging()
-            server.nextCmd(); server.nextCmd()
+            server.nextCmd()
+            server.nextCmd()
 
             conn.setBreakpoint("C:/test.p", 10)
             conn.setBreakpoint("C:/test.p", 27)
-            server.nextCmd(); server.nextCmd()
+            server.nextCmd()
+            server.nextCmd()
 
             conn.clearBreakpoint("C:/test.p", 10)
             val cmd = server.nextCmd()
@@ -237,7 +259,8 @@ class AblDebugConnectionTest {
     fun `setBreakpoint is idempotent on duplicates`() {
         withSession { server, conn ->
             conn.startDebugging()
-            server.nextCmd(); server.nextCmd()
+            server.nextCmd()
+            server.nextCmd()
 
             conn.setBreakpoint("C:/test.p", 42)
             server.nextCmd()
@@ -257,7 +280,8 @@ class AblDebugConnectionTest {
         withSession { server, conn ->
             conn.onStopped = { stopped.set(true) }
             conn.startDebugging()
-            server.nextCmd(); server.nextCmd()
+            server.nextCmd()
+            server.nextCmd()
 
             conn.setBreakpoint("C:/test.p", 42)
             server.nextCmd()
@@ -277,7 +301,8 @@ class AblDebugConnectionTest {
         withSession { server, conn ->
             conn.onExit = { exited.set(true) }
             conn.startDebugging()
-            server.nextCmd(); server.nextCmd()
+            server.nextCmd()
+            server.nextCmd()
 
             server.sendEvent("MSG_EXIT")
             Thread.sleep(150)
@@ -292,7 +317,8 @@ class AblDebugConnectionTest {
     fun `showStack parses a single frame`() {
         withSession { server, conn ->
             conn.startDebugging()
-            server.nextCmd(); server.nextCmd()
+            server.nextCmd()
+            server.nextCmd()
 
             val future = CompletableFuture<List<OeStackFrame>>()
             Thread { future.complete(conn.showStack()) }.also { it.isDaemon = true }.start()
@@ -317,7 +343,8 @@ class AblDebugConnectionTest {
     fun `showStack reverses frames so the deepest call is at index 0 (top of stack)`() {
         withSession { server, conn ->
             conn.startDebugging()
-            server.nextCmd(); server.nextCmd()
+            server.nextCmd()
+            server.nextCmd()
 
             val future = CompletableFuture<List<OeStackFrame>>()
             Thread { future.complete(conn.showStack()) }.also { it.isDaemon = true }.start()
@@ -327,19 +354,19 @@ class AblDebugConnectionTest {
             // pour qu'XDebugger affiche helper en haut de pile (ligne bleue = code en cours).
             server.sendEvent(
                 "STACK-IDE;" +
-                "\nY;1;mainBlock;N;C:/oe/main.p;main.p;mainBlock;C:/oe/main.p;15;" +
-                "\nY;2;helper;N;C:/oe/util.p;util.p;helper;C:/oe/util.p;73;\n"
+                    "\nY;1;mainBlock;N;C:/oe/main.p;main.p;mainBlock;C:/oe/main.p;15;" +
+                    "\nY;2;helper;N;C:/oe/util.p;util.p;helper;C:/oe/util.p;73;\n",
             )
 
             val frames = future.get(3, TimeUnit.SECONDS)
             assertEquals(2, frames.size)
             // Top of stack = frame courante = la plus profonde (helper, ligne 73)
-            assertEquals("helper",      frames[0].function)
-            assertEquals(73,            frames[0].line)
+            assertEquals("helper", frames[0].function)
+            assertEquals(73, frames[0].line)
             assertEquals("C:/oe/util.p", frames[0].file)
             // En-dessous : le caller (mainBlock, ligne 15)
-            assertEquals("mainBlock",   frames[1].function)
-            assertEquals(15,            frames[1].line)
+            assertEquals("mainBlock", frames[1].function)
+            assertEquals(15, frames[1].line)
         }
     }
 
@@ -349,7 +376,8 @@ class AblDebugConnectionTest {
     fun `listVariables parses INTEGER`() {
         withSession { server, conn ->
             conn.startDebugging()
-            server.nextCmd(); server.nextCmd()
+            server.nextCmd()
+            server.nextCmd()
 
             val future = CompletableFuture<List<OeVariable>>()
             Thread { future.complete(conn.listVariables()) }.also { it.isDaemon = true }.start()
@@ -370,7 +398,8 @@ class AblDebugConnectionTest {
     fun `listVariables decodes CHARACTER with DC2-length-quote encoding`() {
         withSession { server, conn ->
             conn.startDebugging()
-            server.nextCmd(); server.nextCmd()
+            server.nextCmd()
+            server.nextCmd()
 
             val future = CompletableFuture<List<OeVariable>>()
             Thread { future.complete(conn.listVariables()) }.also { it.isDaemon = true }.start()
@@ -390,7 +419,8 @@ class AblDebugConnectionTest {
     fun `listVariables identifies array kind when extent gt 0`() {
         withSession { server, conn ->
             conn.startDebugging()
-            server.nextCmd(); server.nextCmd()
+            server.nextCmd()
+            server.nextCmd()
 
             val future = CompletableFuture<List<OeVariable>>()
             Thread { future.complete(conn.listVariables()) }.also { it.isDaemon = true }.start()
@@ -407,7 +437,8 @@ class AblDebugConnectionTest {
     fun `getArray parses MSG_ARRAY and keeps every 3rd field`() {
         withSession { server, conn ->
             conn.startDebugging()
-            server.nextCmd(); server.nextCmd()
+            server.nextCmd()
+            server.nextCmd()
 
             val future = CompletableFuture<List<String>>()
             Thread { future.complete(conn.getArray("iValeurs", "INTEGER")) }
@@ -427,7 +458,8 @@ class AblDebugConnectionTest {
     fun `getArray decodes CHARACTER DC2 encoding per element`() {
         withSession { server, conn ->
             conn.startDebugging()
-            server.nextCmd(); server.nextCmd()
+            server.nextCmd()
+            server.nextCmd()
 
             val future = CompletableFuture<List<String>>()
             Thread { future.complete(conn.getArray("noms", "CHARACTER")) }
@@ -436,7 +468,7 @@ class AblDebugConnectionTest {
 
             val dc2 = ""
             server.sendEvent(
-                "MSG_ARRAY;a;b;${dc2}3\"foo\";c;d;${dc2}3\"bar\";e;f;${dc2}3\"baz\";"
+                "MSG_ARRAY;a;b;${dc2}3\"foo\";c;d;${dc2}3\"bar\";e;f;${dc2}3\"baz\";",
             )
 
             val values = future.get(3, TimeUnit.SECONDS)
@@ -448,7 +480,8 @@ class AblDebugConnectionTest {
     fun `listParameters decorates name with arrows by mode`() {
         withSession { server, conn ->
             conn.startDebugging()
-            server.nextCmd(); server.nextCmd()
+            server.nextCmd()
+            server.nextCmd()
 
             val future = CompletableFuture<List<OeVariable>>()
             Thread { future.complete(conn.listParameters()) }.also { it.isDaemon = true }.start()
@@ -456,16 +489,16 @@ class AblDebugConnectionTest {
 
             server.sendEvent(
                 "MSG_PARAMETERS;" +
-                "\nINPUT;in1;INTEGER;?;?;7;" +
-                "\nOUTPUT;out1;INTEGER;?;?;0;" +
-                "\nINPUT-OUTPUT;io1;INTEGER;?;?;3;\n"
+                    "\nINPUT;in1;INTEGER;?;?;7;" +
+                    "\nOUTPUT;out1;INTEGER;?;?;0;" +
+                    "\nINPUT-OUTPUT;io1;INTEGER;?;?;3;\n",
             )
 
             val params = future.get(3, TimeUnit.SECONDS)
             assertEquals(3, params.size)
-            assertEquals("→ in1",  params[0].name)
+            assertEquals("→ in1", params[0].name)
             assertEquals("← out1", params[1].name)
-            assertEquals("↔ io1",  params[2].name)
+            assertEquals("↔ io1", params[2].name)
             assertTrue(params.all { it.kind == OeVarKind.PARAMETER })
         }
     }
@@ -475,7 +508,9 @@ class AblDebugConnectionTest {
     @Test
     fun `cont sends 'cont'`() {
         withSession { server, conn ->
-            conn.startDebugging(); server.nextCmd(); server.nextCmd()
+            conn.startDebugging()
+            server.nextCmd()
+            server.nextCmd()
             conn.cont()
             assertEquals("cont", server.nextCmd())
         }
@@ -484,7 +519,9 @@ class AblDebugConnectionTest {
     @Test
     fun `stepOver sends 'next'`() {
         withSession { server, conn ->
-            conn.startDebugging(); server.nextCmd(); server.nextCmd()
+            conn.startDebugging()
+            server.nextCmd()
+            server.nextCmd()
             conn.stepOver()
             assertEquals("next", server.nextCmd())
         }
@@ -493,7 +530,9 @@ class AblDebugConnectionTest {
     @Test
     fun `stepInto sends 'step'`() {
         withSession { server, conn ->
-            conn.startDebugging(); server.nextCmd(); server.nextCmd()
+            conn.startDebugging()
+            server.nextCmd()
+            server.nextCmd()
             conn.stepInto()
             assertEquals("step", server.nextCmd())
         }
@@ -502,7 +541,9 @@ class AblDebugConnectionTest {
     @Test
     fun `stepReturn sends 'step-out'`() {
         withSession { server, conn ->
-            conn.startDebugging(); server.nextCmd(); server.nextCmd()
+            conn.startDebugging()
+            server.nextCmd()
+            server.nextCmd()
             conn.stepReturn()
             assertEquals("step-out", server.nextCmd())
         }
@@ -511,7 +552,9 @@ class AblDebugConnectionTest {
     @Test
     fun `interrupt sends 'interrupt'`() {
         withSession { server, conn ->
-            conn.startDebugging(); server.nextCmd(); server.nextCmd()
+            conn.startDebugging()
+            server.nextCmd()
+            server.nextCmd()
             conn.interrupt()
             assertEquals("interrupt", server.nextCmd())
         }
@@ -520,7 +563,9 @@ class AblDebugConnectionTest {
     @Test
     fun `close sends SETPROP IDE 0 before tearing down sockets`() {
         withSession { server, conn ->
-            conn.startDebugging(); server.nextCmd(); server.nextCmd()
+            conn.startDebugging()
+            server.nextCmd()
+            server.nextCmd()
             conn.close()
             // SETPROP IDE 0 envoyé — éventuelle prochaine commande
             val cmd = server.received.poll(500, TimeUnit.MILLISECONDS)
@@ -537,7 +582,10 @@ class AblDebugConnectionTest {
 
         withSession { server, conn ->
             conn.onStopped = {
-                Thread { frames = conn.showStack(); stopped.countDown() }
+                Thread {
+                    frames = conn.showStack()
+                    stopped.countDown()
+                }
                     .also { it.isDaemon = true }.start()
             }
 
@@ -553,7 +601,7 @@ class AblDebugConnectionTest {
 
             // OE hits the breakpoint — sends MSG_ENTER then expects stack request
             server.sendEvent("MSG_ENTER")
-            server.nextCmd()  // BPs re-sent (OE clears at scope entry)
+            server.nextCmd() // BPs re-sent (OE clears at scope entry)
             assertEquals("show stack-ide", server.nextCmd())
 
             // Respond with a single-frame stack
@@ -569,5 +617,4 @@ class AblDebugConnectionTest {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-private fun AblDebugConnection_findFreePort(): Int =
-    java.net.ServerSocket(0).use { it.localPort }
+private fun findFreePort(): Int = java.net.ServerSocket(0).use { it.localPort }

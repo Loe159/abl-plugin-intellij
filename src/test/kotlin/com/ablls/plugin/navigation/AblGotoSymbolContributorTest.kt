@@ -4,16 +4,18 @@ import com.ablls.plugin.core.AblProjectAnalysisService
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
 class AblGotoSymbolContributorTest : BasePlatformTestCase() {
-
     fun testContributorReturnsProcedureNames() {
         // Indexer un fichier avec des symboles
-        myFixture.configureByText("procs.p", """
+        myFixture.configureByText(
+            "procs.p",
+            """
             PROCEDURE createCustomer:
             END PROCEDURE.
             PROCEDURE deleteCustomer:
             END PROCEDURE.
             DEFINE VARIABLE localVar AS INTEGER NO-UNDO.
-        """.trimIndent())
+            """.trimIndent(),
+        )
 
         val service = project.getService(AblProjectAnalysisService::class.java)
         service.analyzeFile(myFixture.file.text, myFixture.file.virtualFile.url)
@@ -29,11 +31,14 @@ class AblGotoSymbolContributorTest : BasePlatformTestCase() {
     }
 
     fun testGetItemsByNameReturnNavigationItems() {
-        myFixture.configureByText("funcs.p", """
+        myFixture.configureByText(
+            "funcs.p",
+            """
             FUNCTION calcTax RETURNS DECIMAL (INPUT amount AS DECIMAL):
                 RETURN amount * 0.2.
             END FUNCTION.
-        """.trimIndent())
+            """.trimIndent(),
+        )
 
         val service = project.getService(AblProjectAnalysisService::class.java)
         service.analyzeFile(myFixture.file.text, myFixture.file.virtualFile.url)
@@ -47,12 +52,15 @@ class AblGotoSymbolContributorTest : BasePlatformTestCase() {
     }
 
     fun testClassContributorFiltersOnlyClasses() {
-        myFixture.configureByText("svc.cls", """
+        myFixture.configureByText(
+            "svc.cls",
+            """
             CLASS CustomerService:
                 METHOD PUBLIC VOID create():
                 END METHOD.
             END CLASS.
-        """.trimIndent())
+            """.trimIndent(),
+        )
 
         val service = project.getService(AblProjectAnalysisService::class.java)
         service.analyzeFile(myFixture.file.text, myFixture.file.virtualFile.url)

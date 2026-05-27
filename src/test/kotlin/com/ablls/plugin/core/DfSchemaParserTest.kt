@@ -4,7 +4,6 @@ import junit.framework.TestCase
 import java.io.File
 
 class DfSchemaParserTest : TestCase() {
-
     private val dfFile: File get() =
         File("src/test/testData/schema/sports2020.df")
 
@@ -44,7 +43,7 @@ class DfSchemaParserTest : TestCase() {
     fun testDataTypeIsResolvedForIntegerField() {
         val db = DfSchemaParser.parse(dfFile, "sports2020")
         val customer = db.tableSet.first { it.name.equals("Customer", ignoreCase = true) }
-        val custNum  = customer.fieldSet.first { it.name.equals("CustNum", ignoreCase = true) }
+        val custNum = customer.fieldSet.first { it.name.equals("CustNum", ignoreCase = true) }
         assertNotNull("DataType de CustNum ne doit pas être null", custNum.dataType)
     }
 
@@ -71,9 +70,10 @@ class DfSchemaParserTest : TestCase() {
         val db = DfSchemaParser.parse(dfFile, "sports2020")
         val schema = org.prorefactor.core.schema.Schema(db)
         val symbols = AblSymbolCollector.collectFromSchema(schema)
-        val custNum = symbols.firstOrNull {
-            it.kind == AblSymbol.Kind.FIELD && it.name.equals("Customer.CustNum", ignoreCase = true)
-        }
+        val custNum =
+            symbols.firstOrNull {
+                it.kind == AblSymbol.Kind.FIELD && it.name.equals("Customer.CustNum", ignoreCase = true)
+            }
         assertNotNull("Customer.CustNum doit être indexé", custNum)
     }
 }

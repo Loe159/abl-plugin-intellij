@@ -4,10 +4,8 @@ import com.ablls.plugin.core.AblParserFacade
 import com.intellij.lang.folding.FoldingDescriptor
 import com.intellij.openapi.editor.impl.DocumentImpl
 import org.junit.Test
-import org.junit.Before
 
 class AblFoldingBuilderTest {
-
     private val builder = AblFoldingBuilder()
     private val facade = AblParserFacade()
 
@@ -29,13 +27,14 @@ class AblFoldingBuilderTest {
 
     @Test
     fun testSimpleDOBlock() {
-        val content = """
+        val content =
+            """
             PROCEDURE main:
               DO:
                 MESSAGE "Hello".
               END.
             END PROCEDURE.
-        """.trimIndent()
+            """.trimIndent()
 
         val result = facade.parse(content, "test.p")
         // Parser should succeed with DO/END blocks
@@ -44,11 +43,12 @@ class AblFoldingBuilderTest {
 
     @Test
     fun testSimpleProcedureBlock() {
-        val content = """
+        val content =
+            """
             PROCEDURE myProc:
               MESSAGE "test".
             END PROCEDURE.
-        """.trimIndent()
+            """.trimIndent()
 
         val result = facade.parse(content, "test.p")
         // Parser should handle procedure blocks
@@ -57,11 +57,12 @@ class AblFoldingBuilderTest {
 
     @Test
     fun testSimpleClassBlock() {
-        val content = """
+        val content =
+            """
             CLASS MyClass:
               DEFINE PROPERTY Name AS CHARACTER NO-UNDO.
             END CLASS.
-        """.trimIndent()
+            """.trimIndent()
 
         val result = facade.parse(content, "test.p")
         assert(result.tree != null)
@@ -69,13 +70,14 @@ class AblFoldingBuilderTest {
 
     @Test
     fun testSimpleFunctionBlock() {
-        val content = """
+        val content =
+            """
             FUNCTION addNumbers:
               DEFINE INPUT PARAMETER x AS INTEGER.
               DEFINE INPUT PARAMETER y AS INTEGER.
               RETURN x + y.
             END FUNCTION.
-        """.trimIndent()
+            """.trimIndent()
 
         val result = facade.parse(content, "test.p")
         assert(result.tree != null)
@@ -83,11 +85,12 @@ class AblFoldingBuilderTest {
 
     @Test
     fun testForEachBlock() {
-        val content = """
+        val content =
+            """
             FOR EACH Customer WHERE CustNum > 100:
               DISPLAY Customer.Name.
             END.
-        """.trimIndent()
+            """.trimIndent()
 
         val result = facade.parse(content, "test.p")
         assert(result.tree != null)
@@ -95,11 +98,12 @@ class AblFoldingBuilderTest {
 
     @Test
     fun testForFirstBlock() {
-        val content = """
+        val content =
+            """
             FOR FIRST Customer BY CustNum:
               DISPLAY Customer.Name.
             END.
-        """.trimIndent()
+            """.trimIndent()
 
         val result = facade.parse(content, "test.p")
         assert(result.tree != null)
@@ -107,11 +111,12 @@ class AblFoldingBuilderTest {
 
     @Test
     fun testForLastBlock() {
-        val content = """
+        val content =
+            """
             FOR LAST Customer BY CustNum:
               DISPLAY Customer.Name.
             END.
-        """.trimIndent()
+            """.trimIndent()
 
         val result = facade.parse(content, "test.p")
         assert(result.tree != null)
@@ -119,13 +124,14 @@ class AblFoldingBuilderTest {
 
     @Test
     fun testRepeatBlock() {
-        val content = """
+        val content =
+            """
             REPEAT:
               GET NEXT Customer.
               IF NOT AVAILABLE Customer THEN LEAVE.
               DISPLAY Customer.Name.
             END.
-        """.trimIndent()
+            """.trimIndent()
 
         val result = facade.parse(content, "test.p")
         assert(result.tree != null)
@@ -133,13 +139,14 @@ class AblFoldingBuilderTest {
 
     @Test
     fun testMethodBlock() {
-        val content = """
+        val content =
+            """
             CLASS MyClass:
               METHOD PUBLIC VOID myMethod():
                 MESSAGE "test".
               END METHOD.
             END CLASS.
-        """.trimIndent()
+            """.trimIndent()
 
         val result = facade.parse(content, "test.p")
         assert(result.tree != null)
@@ -147,13 +154,14 @@ class AblFoldingBuilderTest {
 
     @Test
     fun testConstructorBlock() {
-        val content = """
+        val content =
+            """
             CLASS MyClass:
               CONSTRUCTOR():
                 SUPER().
               END CONSTRUCTOR.
             END CLASS.
-        """.trimIndent()
+            """.trimIndent()
 
         val result = facade.parse(content, "test.p")
         assert(result.tree != null)
@@ -161,13 +169,14 @@ class AblFoldingBuilderTest {
 
     @Test
     fun testDestructorBlock() {
-        val content = """
+        val content =
+            """
             CLASS MyClass:
               DESTRUCTOR():
                 MESSAGE "cleanup".
               END DESTRUCTOR.
             END CLASS.
-        """.trimIndent()
+            """.trimIndent()
 
         val result = facade.parse(content, "test.p")
         assert(result.tree != null)
@@ -175,12 +184,13 @@ class AblFoldingBuilderTest {
 
     @Test
     fun testInterfaceBlock() {
-        val content = """
+        val content =
+            """
             INTERFACE IMyInterface:
               METHOD PUBLIC VOID doSomething():
               END METHOD.
             END INTERFACE.
-        """.trimIndent()
+            """.trimIndent()
 
         val result = facade.parse(content, "test.p")
         assert(result.tree != null)
@@ -188,13 +198,14 @@ class AblFoldingBuilderTest {
 
     @Test
     fun testCatchBlock() {
-        val content = """
+        val content =
+            """
             TRY:
               DO SOMETHING.
             CATCH ex AS Progress.Lang.Error:
               MESSAGE ex:GetMessage().
             END CATCH.
-        """.trimIndent()
+            """.trimIndent()
 
         val result = facade.parse(content, "test.p")
         assert(result.tree != null)
@@ -202,13 +213,14 @@ class AblFoldingBuilderTest {
 
     @Test
     fun testFinallyBlock() {
-        val content = """
+        val content =
+            """
             TRY:
               DO SOMETHING.
             FINALLY:
               MESSAGE "cleanup".
             END FINALLY.
-        """.trimIndent()
+            """.trimIndent()
 
         val result = facade.parse(content, "test.p")
         assert(result.tree != null)
@@ -216,7 +228,8 @@ class AblFoldingBuilderTest {
 
     @Test
     fun testNestedDOInsideProcedure() {
-        val content = """
+        val content =
+            """
             PROCEDURE main:
               DO:
                 DO:
@@ -224,7 +237,7 @@ class AblFoldingBuilderTest {
                 END.
               END.
             END PROCEDURE.
-        """.trimIndent()
+            """.trimIndent()
 
         val result = facade.parse(content, "test.p")
         assert(result.tree != null)
@@ -232,7 +245,8 @@ class AblFoldingBuilderTest {
 
     @Test
     fun testNestedForEachInsideClass() {
-        val content = """
+        val content =
+            """
             CLASS MyClass:
               METHOD PUBLIC VOID test():
                 FOR EACH Customer:
@@ -242,7 +256,7 @@ class AblFoldingBuilderTest {
                 END.
               END METHOD.
             END CLASS.
-        """.trimIndent()
+            """.trimIndent()
 
         val result = facade.parse(content, "test.p")
         assert(result.tree != null)
@@ -250,7 +264,8 @@ class AblFoldingBuilderTest {
 
     @Test
     fun testMultipleBlocksAtSameLevel() {
-        val content = """
+        val content =
+            """
             PROCEDURE proc1:
               MESSAGE "proc1".
             END PROCEDURE.
@@ -260,7 +275,7 @@ class AblFoldingBuilderTest {
             PROCEDURE proc3:
               MESSAGE "proc3".
             END PROCEDURE.
-        """.trimIndent()
+            """.trimIndent()
 
         val result = facade.parse(content, "test.p")
         assert(result.tree != null)
@@ -268,11 +283,12 @@ class AblFoldingBuilderTest {
 
     @Test
     fun testDOWithWhileCondition() {
-        val content = """
+        val content =
+            """
             DO WHILE TRUE:
               MESSAGE "loop".
             END.
-        """.trimIndent()
+            """.trimIndent()
 
         val result = facade.parse(content, "test.p")
         assert(result.tree != null)
@@ -280,11 +296,12 @@ class AblFoldingBuilderTest {
 
     @Test
     fun testDOWithIterationExpression() {
-        val content = """
+        val content =
+            """
             DO i = 1 TO 10:
               DISPLAY i.
             END.
-        """.trimIndent()
+            """.trimIndent()
 
         val result = facade.parse(content, "test.p")
         assert(result.tree != null)
@@ -292,11 +309,12 @@ class AblFoldingBuilderTest {
 
     @Test
     fun testProcKeywordAlternative() {
-        val content = """
+        val content =
+            """
             PROC myProc:
               MESSAGE "test".
             END PROC.
-        """.trimIndent()
+            """.trimIndent()
 
         val result = facade.parse(content, "test.p")
         assert(result.tree != null)
@@ -304,13 +322,14 @@ class AblFoldingBuilderTest {
 
     @Test
     fun testEndWithoutQualifier() {
-        val content = """
+        val content =
+            """
             PROCEDURE myProc:
               DO:
                 MESSAGE "test".
               END.
             END.
-        """.trimIndent()
+            """.trimIndent()
 
         val result = facade.parse(content, "test.p")
         assert(result.tree != null)
@@ -318,11 +337,12 @@ class AblFoldingBuilderTest {
 
     @Test
     fun testEndWithQualifier() {
-        val content = """
+        val content =
+            """
             PROCEDURE myProc:
               MESSAGE "test".
             END PROCEDURE.
-        """.trimIndent()
+            """.trimIndent()
 
         val result = facade.parse(content, "test.p")
         assert(result.tree != null)
@@ -330,7 +350,8 @@ class AblFoldingBuilderTest {
 
     @Test
     fun testComplexNestedStructure() {
-        val content = """
+        val content =
+            """
             CLASS MyClass:
               METHOD PUBLIC VOID processData():
                 DO:
@@ -350,7 +371,7 @@ class AblFoldingBuilderTest {
                 MESSAGE "cleanup".
               END PROCEDURE.
             END CLASS.
-        """.trimIndent()
+            """.trimIndent()
 
         val result = facade.parse(content, "test.p")
         assert(result.tree != null)
@@ -358,14 +379,15 @@ class AblFoldingBuilderTest {
 
     @Test
     fun testBlockCommentInCode() {
-        val content = """
+        val content =
+            """
             /* This is a
                multi-line
                block comment */
             PROCEDURE test:
               MESSAGE "test".
             END PROCEDURE.
-        """.trimIndent()
+            """.trimIndent()
 
         val result = facade.parse(content, "test.p")
         assert(result.tree != null)
@@ -373,12 +395,13 @@ class AblFoldingBuilderTest {
 
     @Test
     fun testSingleLineComment() {
-        val content = """
+        val content =
+            """
             // This is a single line comment
             PROCEDURE test:
               MESSAGE "test".
             END PROCEDURE.
-        """.trimIndent()
+            """.trimIndent()
 
         val result = facade.parse(content, "test.p")
         assert(result.tree != null)
@@ -386,10 +409,11 @@ class AblFoldingBuilderTest {
 
     @Test
     fun testEmptyDOBlock() {
-        val content = """
+        val content =
+            """
             DO:
             END.
-        """.trimIndent()
+            """.trimIndent()
 
         val result = facade.parse(content, "test.p")
         assert(result.tree != null)
@@ -397,11 +421,12 @@ class AblFoldingBuilderTest {
 
     @Test
     fun testProcedureWithParameters() {
-        val content = """
+        val content =
+            """
             PROCEDURE myProc(INPUT p1 AS INTEGER, OUTPUT p2 AS CHARACTER):
               p2 = STRING(p1).
             END PROCEDURE.
-        """.trimIndent()
+            """.trimIndent()
 
         val result = facade.parse(content, "test.p")
         assert(result.tree != null)
@@ -409,11 +434,12 @@ class AblFoldingBuilderTest {
 
     @Test
     fun testFunctionWithReturnType() {
-        val content = """
+        val content =
+            """
             FUNCTION getNumber RETURNS INTEGER:
               RETURN 42.
             END FUNCTION.
-        """.trimIndent()
+            """.trimIndent()
 
         val result = facade.parse(content, "test.p")
         assert(result.tree != null)
@@ -421,12 +447,13 @@ class AblFoldingBuilderTest {
 
     @Test
     fun testBracketsInsideBlock() {
-        val content = """
+        val content =
+            """
             PROCEDURE test:
               DEFINE VARIABLE arr AS INTEGER EXTENT 10.
               arr[1] = 100.
             END PROCEDURE.
-        """.trimIndent()
+            """.trimIndent()
 
         val result = facade.parse(content, "test.p")
         assert(result.tree != null)
@@ -434,12 +461,13 @@ class AblFoldingBuilderTest {
 
     @Test
     fun testParenthesesInsideBlock() {
-        val content = """
+        val content =
+            """
             PROCEDURE test:
               IF (x > 5) THEN
                 MESSAGE "test".
             END PROCEDURE.
-        """.trimIndent()
+            """.trimIndent()
 
         val result = facade.parse(content, "test.p")
         assert(result.tree != null)
@@ -447,11 +475,12 @@ class AblFoldingBuilderTest {
 
     @Test
     fun testColonInString() {
-        val content = """
+        val content =
+            """
             PROCEDURE test:
               MESSAGE "This : is : in : a : string".
             END PROCEDURE.
-        """.trimIndent()
+            """.trimIndent()
 
         val result = facade.parse(content, "test.p")
         assert(result.tree != null)
@@ -459,7 +488,8 @@ class AblFoldingBuilderTest {
 
     @Test
     fun testMultipleCommentsInFile() {
-        val content = """
+        val content =
+            """
             /* Comment 1
                line 2 */
 
@@ -469,7 +499,7 @@ class AblFoldingBuilderTest {
 
             /* Comment 2
                line 2 */
-        """.trimIndent()
+            """.trimIndent()
 
         val result = facade.parse(content, "test.p")
         assert(result.tree != null)
@@ -477,14 +507,15 @@ class AblFoldingBuilderTest {
 
     @Test
     fun testInterfaceWithMethods() {
-        val content = """
+        val content =
+            """
             INTERFACE IMyInterface:
               METHOD PUBLIC VOID doSomething():
               END METHOD.
               METHOD PUBLIC CHARACTER getValue():
               END METHOD.
             END INTERFACE.
-        """.trimIndent()
+            """.trimIndent()
 
         val result = facade.parse(content, "test.p")
         assert(result.tree != null)
@@ -492,7 +523,8 @@ class AblFoldingBuilderTest {
 
     @Test
     fun testTryWithMultipleCatchFinally() {
-        val content = """
+        val content =
+            """
             TRY:
               DO SOMETHING.
             CATCH ex1 AS CustomError:
@@ -502,10 +534,9 @@ class AblFoldingBuilderTest {
             FINALLY:
               MESSAGE "cleanup".
             END FINALLY.
-        """.trimIndent()
+            """.trimIndent()
 
         val result = facade.parse(content, "test.p")
         assert(result.tree != null)
     }
-
 }

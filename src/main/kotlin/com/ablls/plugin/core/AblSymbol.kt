@@ -7,7 +7,7 @@ data class AblRange(
     val startLine: Int,
     val startCol: Int,
     val endLine: Int,
-    val endCol: Int
+    val endCol: Int,
 )
 
 /**
@@ -22,7 +22,7 @@ data class AblSymbol(
     val uri: String?,
     val definitionRange: AblRange?,
     val dataType: String?,
-    val documentation: String?
+    val documentation: String?,
 ) {
     enum class Kind {
         VARIABLE,
@@ -38,7 +38,7 @@ data class AblSymbol(
         BUFFER,
         TEMP_TABLE,
         EVENT,
-        UNKNOWN
+        UNKNOWN,
     }
 
     override fun toString(): String = "AblSymbol{$kind '$name' ($dataType)}"

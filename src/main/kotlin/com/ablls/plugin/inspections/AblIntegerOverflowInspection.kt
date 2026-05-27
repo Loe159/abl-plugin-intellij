@@ -2,7 +2,11 @@ package com.ablls.plugin.inspections
 
 import com.ablls.plugin.core.AblProjectAnalysisService
 import com.ablls.plugin.language.AblLanguage
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.LocalInspectionTool
+import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.Project
@@ -28,22 +32,29 @@ import org.prorefactor.treeparser.TreeParserSymbolScope
  * Niveau : WEAK_WARNING (suggestion).
  */
 class AblIntegerOverflowInspection : LocalInspectionTool() {
+    override fun getDisplayName() = "INTEGER variable may overflow — consider INT64"
 
-    override fun getDisplayName()      = "INTEGER variable may overflow — consider INT64"
-    override fun getShortName()        = "AblIntegerOverflow"
+    override fun getShortName() = "AblIntegerOverflow"
+
     override fun getGroupDisplayName() = "ABL Best Practices"
 
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
+    override fun buildVisitor(
+        holder: ProblemsHolder,
+        isOnTheFly: Boolean,
+    ): PsiElementVisitor =
         object : PsiElementVisitor() {
             override fun visitFile(file: PsiFile) {
                 if (file.language != AblLanguage) return
-                val uri     = file.virtualFile?.url ?: return
+                val uri = file.virtualFile?.url ?: return
                 val service = file.project.service<AblProjectAnalysisService>()
-                val doc     = PsiDocumentManager.getInstance(file.project).getDocument(file) ?: return
+                val doc = PsiDocumentManager.getInstance(file.project).getDocument(file) ?: return
 
-                val semantic = try {
-                    service.analyzeFileSemantic(file.text, uri)
-                } catch (_: Exception) { null }
+                val semantic =
+                    try {
+                        service.analyzeFileSemantic(file.text, uri)
+                    } catch (_: Exception) {
+                        null
+                    }
                 val scope = semantic?.rootScope ?: return
 
                 checkScope(scope, holder, file, doc)
@@ -54,7 +65,7 @@ class AblIntegerOverflowInspection : LocalInspectionTool() {
         scope: TreeParserSymbolScope,
         holder: ProblemsHolder,
         file: PsiFile,
-        doc: Document
+        doc: Document,
     ) {
         for (variable in runCatching { scope.variables }.getOrNull() ?: emptyList()) {
             val name = variable.name.takeIf { it.isNotBlank() } ?: continue
@@ -75,7 +86,7 @@ class AblIntegerOverflowInspection : LocalInspectionTool() {
                 "Variable '$name' is INTEGER — consider INT64 if it may hold values > 2,147,483,647",
                 ProblemHighlightType.WEAK_WARNING,
                 range,
-                ChangeToInt64Fix(defLine, defCol, name.length)
+                ChangeToInt64Fix(defLine, defCol, name.length),
             )
         }
 
@@ -85,11 +96,12 @@ class AblIntegerOverflowInspection : LocalInspectionTool() {
     }
 
     companion object {
-        private val OVERFLOW_HINTS = setOf(
-            "count", "total", "sum", "size", "bytes", "amount", "balance",
-            "quantity", "length", "offset", "position", "result", "value",
-            "timestamp", "epoch", "millis", "seconds"
-        )
+        private val OVERFLOW_HINTS =
+            setOf(
+                "count", "total", "sum", "size", "bytes", "amount", "balance",
+                "quantity", "length", "offset", "position", "result", "value",
+                "timestamp", "epoch", "millis", "seconds",
+            )
 
         fun mightOverflow(name: String): Boolean {
             val lower = name.lowercase()
@@ -100,15 +112,18 @@ class AblIntegerOverflowInspection : LocalInspectionTool() {
     private class ChangeToInt64Fix(
         private val line: Int,
         private val col: Int,
-        @Suppress("unused") private val nameLen: Int
+        @Suppress("unused") private val nameLen: Int,
     ) : LocalQuickFix {
         override fun getFamilyName() = "Change to INT64"
 
-        override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+        override fun applyFix(
+            project: Project,
+            descriptor: ProblemDescriptor,
+        ) {
             val file = descriptor.psiElement as? PsiFile ?: return
-            val doc  = PsiDocumentManager.getInstance(project).getDocument(file) ?: return
+            val doc = PsiDocumentManager.getInstance(project).getDocument(file) ?: return
             val text = doc.text
-            val start   = doc.getLineStartOffset((line - 1).coerceAtLeast(0))
+            val start = doc.getLineStartOffset((line - 1).coerceAtLeast(0))
             val lineEnd = if (line < doc.lineCount) doc.getLineStartOffset(line) else doc.textLength
             val lineText = text.substring(start, lineEnd)
             val intIdx = lineText.uppercase().indexOf("INTEGER")

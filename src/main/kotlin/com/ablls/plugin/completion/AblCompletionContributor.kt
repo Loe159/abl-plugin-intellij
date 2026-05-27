@@ -6,7 +6,12 @@ import com.ablls.plugin.core.AblProjectAnalysisService
 import com.ablls.plugin.core.AblSymbol
 import com.ablls.plugin.language.AblLanguage
 import com.ablls.plugin.project.OpenEdgeProjectService
-import com.intellij.codeInsight.completion.*
+import com.intellij.codeInsight.completion.CompletionContributor
+import com.intellij.codeInsight.completion.CompletionParameters
+import com.intellij.codeInsight.completion.CompletionProvider
+import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.codeInsight.completion.CompletionType
+import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.components.service
@@ -29,22 +34,21 @@ class AblCompletionContributor : CompletionContributor() {
         extend(
             CompletionType.BASIC,
             PlatformPatterns.psiElement().withLanguage(AblLanguage),
-            AblCompletionProvider()
+            AblCompletionProvider(),
         )
     }
 }
 
 private class AblCompletionProvider : CompletionProvider<CompletionParameters>() {
-
     override fun addCompletions(
         parameters: CompletionParameters,
         context: ProcessingContext,
-        result: CompletionResultSet
+        result: CompletionResultSet,
     ) {
-        val file    = parameters.originalFile
+        val file = parameters.originalFile
         val project = file.project
-        val uri     = file.virtualFile?.url ?: return
-        val prefix  = result.prefixMatcher.prefix
+        val uri = file.virtualFile?.url ?: return
+        val prefix = result.prefixMatcher.prefix
         val content = file.text
 
         val service = project.service<AblProjectAnalysisService>()
@@ -67,20 +71,20 @@ private class AblCompletionProvider : CompletionProvider<CompletionParameters>()
         val includePartial = detectIncludeContext(textBefore, prefix)
         if (includePartial != null) {
             addIncludeCompletions(includePartial, project, result)
-            return  // includes uniquement dans ce contexte
+            return // includes uniquement dans ce contexte
         }
 
         // ── 1c. Complétion des préprocesseurs &<caret> ────────────────────────
         if (isPreprocessorContext(textBefore, prefix)) {
             addPreprocessorCompletions(prefix, result)
-            return  // préprocesseurs uniquement dans ce contexte
+            return // préprocesseurs uniquement dans ce contexte
         }
 
         // ── 1c. Complétion contextuelle Table.Field (dot notation) ────────────
         val dotCandidate = extractTableBeforeDot(textBefore, prefix)
         if (dotCandidate != null) {
             addFieldCompletions(dotCandidate, prefix, service, result)
-            return  // champs uniquement dans ce contexte
+            return // champs uniquement dans ce contexte
         }
 
         // ── 1d. Complétion membres OO : myObj:<caret> ─────────────────────────
@@ -88,7 +92,7 @@ private class AblCompletionProvider : CompletionProvider<CompletionParameters>()
         if (colonCandidate != null) {
             val semanticScope = semanticResult?.rootScope
             addOOMemberCompletions(colonCandidate, prefix, service, uri, semanticScope, result)
-            return  // membres OO uniquement dans ce contexte
+            return // membres OO uniquement dans ce contexte
         }
 
         // ── 1e. Complétion des paramètres de procédure : RUN proc(<caret>) ────
@@ -106,7 +110,7 @@ private class AblCompletionProvider : CompletionProvider<CompletionParameters>()
                     .withTypeText(symbol.dataType ?: "", true)
                     .withIcon(iconFor(symbol.kind))
                     .withTailText(kindLabel(symbol.kind), true)
-                    .withInsertHandler(insertHandlerFor(symbol))
+                    .withInsertHandler(insertHandlerFor(symbol)),
             )
         }
 
@@ -114,16 +118,15 @@ private class AblCompletionProvider : CompletionProvider<CompletionParameters>()
         for (keyword in AblKeywordList.KEYWORDS) {
             if (keyword.startsWith(upperPrefix, ignoreCase = true)) {
                 val isBuiltin = AblBuiltinDocs.has(keyword)
-                val detail    = if (isBuiltin) "built-in" else "keyword"
+                val detail = if (isBuiltin) "built-in" else "keyword"
                 result.addElement(
                     LookupElementBuilder.create(keyword)
                         .withTypeText(detail, true)
                         .withIcon(if (isBuiltin) AllIcons.Nodes.Function else AllIcons.Nodes.Tag)
-                        .bold()
+                        .bold(),
                 )
             }
         }
-
     }
 
     // ─── Complétion des préprocesseurs & ─────────────────────────────────────
@@ -132,12 +135,18 @@ private class AblCompletionProvider : CompletionProvider<CompletionParameters>()
      * Retourne true si le curseur est immédiatement après `&` (contexte préprocesseur ABL).
      * Le `&` doit être le caractère juste avant le début du [prefix] dans [textBefore].
      */
-    private fun isPreprocessorContext(textBefore: String, prefix: String): Boolean {
+    private fun isPreprocessorContext(
+        textBefore: String,
+        prefix: String,
+    ): Boolean {
         val beforePrefix = textBefore.dropLast(prefix.length)
         return beforePrefix.endsWith('&')
     }
 
-    private fun addPreprocessorCompletions(prefix: String, result: CompletionResultSet) {
+    private fun addPreprocessorCompletions(
+        prefix: String,
+        result: CompletionResultSet,
+    ) {
         val upper = prefix.uppercase()
         PREPROCESSOR_DIRECTIVES.forEach { directive ->
             if (directive.startsWith(upper, ignoreCase = true)) {
@@ -145,28 +154,30 @@ private class AblCompletionProvider : CompletionProvider<CompletionParameters>()
                     LookupElementBuilder.create(directive)
                         .withTypeText("preprocessor", true)
                         .withIcon(AllIcons.Nodes.Tag)
-                        .bold()
+                        .bold(),
                 )
             }
         }
     }
 
     companion object {
-        private val BLOCK_HEADER_KEYWORDS = setOf(
-            "PROCEDURE", "FUNCTION", "CLASS", "INTERFACE", "METHOD",
-            "CONSTRUCTOR", "DESTRUCTOR", "ENUM", "TRIGGER", "ON",
-            "CATCH", "FINALLY", "DO", "CASE", "WHEN"
-        )
+        private val BLOCK_HEADER_KEYWORDS =
+            setOf(
+                "PROCEDURE", "FUNCTION", "CLASS", "INTERFACE", "METHOD",
+                "CONSTRUCTOR", "DESTRUCTOR", "ENUM", "TRIGGER", "ON",
+                "CATCH", "FINALLY", "DO", "CASE", "WHEN",
+            )
 
-        private val PREPROCESSOR_DIRECTIVES = listOf(
-            "IF", "THEN", "ELSE", "ENDIF",
-            "DEFINE", "UNDEFINE",
-            "SCOPED-DEFINE", "GLOBAL-DEFINE",
-            "MESSAGE",
-            "ANALYZED-SUSPEND", "ANALYZED-RESUME",
-            "SKIP", "SPACE",
-            "XCODE", "XTRANSLATE"
-        )
+        private val PREPROCESSOR_DIRECTIVES =
+            listOf(
+                "IF", "THEN", "ELSE", "ENDIF",
+                "DEFINE", "UNDEFINE",
+                "SCOPED-DEFINE", "GLOBAL-DEFINE",
+                "MESSAGE",
+                "ANALYZED-SUSPEND", "ANALYZED-RESUME",
+                "SKIP", "SPACE",
+                "XCODE", "XTRANSLATE",
+            )
     }
 
     // ─── Complétion des includes {file.i} ────────────────────────────────────
@@ -176,12 +187,15 @@ private class AblCompletionProvider : CompletionProvider<CompletionParameters>()
      * typé depuis `{` jusqu'au curseur (incluant le [prefix] courant).
      * Retourne null si on n'est pas dans un contexte d'include.
      */
-    private fun detectIncludeContext(textBefore: String, prefix: String): String? {
+    private fun detectIncludeContext(
+        textBefore: String,
+        prefix: String,
+    ): String? {
         val beforePrefix = textBefore.dropLast(prefix.length)
-        val lastOpen  = beforePrefix.lastIndexOf('{')
+        val lastOpen = beforePrefix.lastIndexOf('{')
         if (lastOpen < 0) return null
         val lastClose = beforePrefix.lastIndexOf('}')
-        if (lastClose > lastOpen) return null  // le { est déjà fermé
+        if (lastClose > lastOpen) return null // le { est déjà fermé
         // Le chemin partiel = texte entre { et le curseur (sans espaces en tête)
         return (beforePrefix.substring(lastOpen + 1) + prefix).trimStart()
     }
@@ -193,21 +207,25 @@ private class AblCompletionProvider : CompletionProvider<CompletionParameters>()
     private fun addIncludeCompletions(
         partialPath: String,
         project: com.intellij.openapi.project.Project,
-        result: CompletionResultSet
+        result: CompletionResultSet,
     ) {
-        val config   = project.service<OpenEdgeProjectService>().config
+        val config = project.service<OpenEdgeProjectService>().config
         val basePath = project.basePath ?: return
-        val dlcPath  = config.dlcPath ?: System.getenv("DLC") ?: ""
+        val dlcPath = config.dlcPath ?: System.getenv("DLC") ?: ""
         val customResult = result.withPrefixMatcher(partialPath)
 
         config.propath.forEach { pathStr ->
-            val resolved = pathStr
-                .replace("\${DLC}", dlcPath)
-                .replace("\$DLC", dlcPath)
-            val dir = try {
-                val p = Paths.get(resolved)
-                if (p.isAbsolute) p else Paths.get(basePath).resolve(p)
-            } catch (_: Exception) { return@forEach }
+            val resolved =
+                pathStr
+                    .replace("\${DLC}", dlcPath)
+                    .replace("\$DLC", dlcPath)
+            val dir =
+                try {
+                    val p = Paths.get(resolved)
+                    if (p.isAbsolute) p else Paths.get(basePath).resolve(p)
+                } catch (_: Exception) {
+                    return@forEach
+                }
             if (!Files.isDirectory(dir)) return@forEach
 
             try {
@@ -227,11 +245,12 @@ private class AblCompletionProvider : CompletionProvider<CompletionParameters>()
                                         ctx.document.insertString(ctx.tailOffset, "}")
                                         ctx.editor.caretModel.moveToOffset(ctx.tailOffset + 1)
                                     }
-                                }
+                                },
                         )
                     }
                 }
-            } catch (_: Exception) {}
+            } catch (_: Exception) {
+            }
         }
     }
 
@@ -248,7 +267,10 @@ private class AblCompletionProvider : CompletionProvider<CompletionParameters>()
      *   textBefore = "...Customer.Cust" prefix = "Cust" → "Customer"
      *   textBefore = "...NO-UNDO.\n" prefix = "MESS"  → null  (terminateur, pas de dot adjacent)
      */
-    private fun extractTableBeforeDot(textBefore: String, prefix: String): String? {
+    private fun extractTableBeforeDot(
+        textBefore: String,
+        prefix: String,
+    ): String? {
         // Position dans textBefore où commence le prefix (= juste après le dot si dot-context)
         val afterDotPos = textBefore.length - prefix.length
         val dotPos = afterDotPos - 1
@@ -266,9 +288,9 @@ private class AblCompletionProvider : CompletionProvider<CompletionParameters>()
         tableName: String,
         prefix: String,
         service: com.ablls.plugin.core.AblProjectAnalysisService,
-        result: CompletionResultSet
+        result: CompletionResultSet,
     ) {
-        val prefixUpper    = prefix.uppercase()
+        val prefixUpper = prefix.uppercase()
         val tableNameUpper = tableName.uppercase()
         val qualifiedPrefix = "$tableNameUpper.$prefixUpper"
 
@@ -281,7 +303,7 @@ private class AblCompletionProvider : CompletionProvider<CompletionParameters>()
                 LookupElementBuilder.create(fieldName)
                     .withTypeText(symbol.dataType ?: "", true)
                     .withIcon(AllIcons.Nodes.Field)
-                    .withTailText(" field of $tableName", true)
+                    .withTailText(" field of $tableName", true),
             )
         }
     }
@@ -292,7 +314,10 @@ private class AblCompletionProvider : CompletionProvider<CompletionParameters>()
      * Détecte si le curseur est à l'intérieur d'un appel RUN procName(...).
      * Retourne le nom de la procédure si c'est le cas.
      */
-    private fun detectRunCallContext(textBefore: String, prefix: String): String? {
+    private fun detectRunCallContext(
+        textBefore: String,
+        prefix: String,
+    ): String? {
         val beforePrefix = textBefore.dropLast(prefix.length)
         // Chercher le dernier "(" non fermé
         var parenDepth = 0
@@ -307,8 +332,11 @@ private class AblCompletionProvider : CompletionProvider<CompletionParameters>()
                         val beforeParen = beforePrefix.substring(0, i).trimEnd()
                         val nameEnd = beforeParen.length
                         var nameStart = nameEnd - 1
-                        while (nameStart >= 0 && (beforeParen[nameStart].isLetterOrDigit() ||
-                               beforeParen[nameStart] == '-' || beforeParen[nameStart] == '_')) {
+                        while (nameStart >= 0 && (
+                                beforeParen[nameStart].isLetterOrDigit() ||
+                                    beforeParen[nameStart] == '-' || beforeParen[nameStart] == '_'
+                            )
+                        ) {
                             nameStart--
                         }
                         val name = beforeParen.substring(nameStart + 1)
@@ -335,7 +363,7 @@ private class AblCompletionProvider : CompletionProvider<CompletionParameters>()
         service: com.ablls.plugin.core.AblProjectAnalysisService,
         uri: String,
         scope: org.prorefactor.treeparser.TreeParserSymbolScope?,
-        result: CompletionResultSet
+        result: CompletionResultSet,
     ) {
         // Chercher la routine dans le scope sémantique
         val routine = findRoutineInScope(scope, procName) ?: return
@@ -346,25 +374,27 @@ private class AblCompletionProvider : CompletionProvider<CompletionParameters>()
         // Cette information n'est pas facilement disponible ici, donc on propose tous les paramètres
 
         for (param in params) {
-            val name = runCatching { param.javaClass.getMethod("getName").invoke(param) as? String }
-                .getOrNull() ?: continue
-            val dir = runCatching {
-                param.javaClass.methods.firstOrNull { it.name == "getDirectionILB" || it.name == "getDirection" }
-                    ?.invoke(param)?.toString()
-            }.getOrNull() ?: "INPUT"
+            val name =
+                runCatching { param.javaClass.getMethod("getName").invoke(param) as? String }
+                    .getOrNull() ?: continue
+            val dir =
+                runCatching {
+                    param.javaClass.methods.firstOrNull { it.name == "getDirectionILB" || it.name == "getDirection" }
+                        ?.invoke(param)?.toString()
+                }.getOrNull() ?: "INPUT"
 
             result.addElement(
                 LookupElementBuilder.create("$dir $name")
                     .withTypeText("param", true)
                     .withIcon(AllIcons.Nodes.Parameter)
-                    .withTailText(" of $procName", true)
+                    .withTailText(" of $procName", true),
             )
         }
     }
 
     private fun findRoutineInScope(
         scope: org.prorefactor.treeparser.TreeParserSymbolScope?,
-        name: String
+        name: String,
     ): org.prorefactor.treeparser.symbols.Routine? {
         if (scope == null) return null
         for (r in runCatching { scope.routines }.getOrNull() ?: emptyList()) {
@@ -384,19 +414,25 @@ private class AblCompletionProvider : CompletionProvider<CompletionParameters>()
      * retourne l'identifiant (nom de la variable objet). Retourne null si le
      * `:` appartient à une déclaration de bloc (PROCEDURE foo:, CLASS Bar:…).
      */
-    private fun extractObjectBeforeColon(textBefore: String, prefix: String): String? {
+    private fun extractObjectBeforeColon(
+        textBefore: String,
+        prefix: String,
+    ): String? {
         val beforePrefix = textBefore.dropLast(prefix.length)
         if (!beforePrefix.endsWith(':')) return null
 
-        var i = beforePrefix.length - 2  // juste avant le ':'
-        while (i >= 0 && (beforePrefix[i].isLetterOrDigit() ||
-                           beforePrefix[i] == '-' || beforePrefix[i] == '_' || beforePrefix[i] == '.')) i--
+        var i = beforePrefix.length - 2 // juste avant le ':'
+        while (i >= 0 && (
+                beforePrefix[i].isLetterOrDigit() ||
+                    beforePrefix[i] == '-' || beforePrefix[i] == '_' || beforePrefix[i] == '.'
+            )
+            ) i--
         val name = beforePrefix.substring(i + 1, beforePrefix.length - 1)
         if (name.isBlank()) return null
 
         // Si le token précédant le nom est un mot-clé de déclaration → pas OO
         val beforeName = beforePrefix.substring(0, i + 1).trimEnd()
-        val lastToken  = beforeName.split(Regex("\\s+")).lastOrNull()?.uppercase() ?: ""
+        val lastToken = beforeName.split(Regex("\\s+")).lastOrNull()?.uppercase() ?: ""
         if (lastToken in BLOCK_HEADER_KEYWORDS) return null
 
         return name
@@ -408,7 +444,7 @@ private class AblCompletionProvider : CompletionProvider<CompletionParameters>()
      */
     private fun resolveVariableType(
         name: String,
-        scope: org.prorefactor.treeparser.TreeParserSymbolScope
+        scope: org.prorefactor.treeparser.TreeParserSymbolScope,
     ): String? {
         for (v in runCatching { scope.variables }.getOrNull() ?: emptyList()) {
             if (v.name.equals(name, ignoreCase = true)) {
@@ -434,19 +470,24 @@ private class AblCompletionProvider : CompletionProvider<CompletionParameters>()
         service: com.ablls.plugin.core.AblProjectAnalysisService,
         uri: String,
         scope: org.prorefactor.treeparser.TreeParserSymbolScope?,
-        result: CompletionResultSet
+        result: CompletionResultSet,
     ) {
         // Résoudre le type depuis le scope sémantique
-        val typeName = if (scope != null) resolveVariableType(objectName, scope) else null
-            // Fallback : chercher dans l'index par nom de variable
-            ?: service.symbolIndex.findByName(objectName, uri)
-                .firstOrNull { it.kind == AblSymbol.Kind.VARIABLE || it.kind == AblSymbol.Kind.PARAMETER }
-                ?.dataType?.takeIf { it.isNotBlank() && it != "UNKNOWN" }
-            ?: return
+        val typeName =
+            if (scope != null) {
+                resolveVariableType(objectName, scope)
+            } else {
+                null
+                    // Fallback : chercher dans l'index par nom de variable
+                    ?: service.symbolIndex.findByName(objectName, uri)
+                        .firstOrNull { it.kind == AblSymbol.Kind.VARIABLE || it.kind == AblSymbol.Kind.PARAMETER }
+                        ?.dataType?.takeIf { it.isNotBlank() && it != "UNKNOWN" }
+                    ?: return
+            }
 
-        val memberPrefix  = "$typeName:"
-        val upperPrefix   = prefix.uppercase()
-        val customResult  = result.withPrefixMatcher(prefix)
+        val memberPrefix = "$typeName:"
+        val upperPrefix = prefix.uppercase()
+        val customResult = result.withPrefixMatcher(prefix)
 
         service.symbolIndex.findByPrefix(memberPrefix, uri).forEach { symbol ->
             val memberName = symbol.name.substringAfterLast(':').takeIf { it.isNotBlank() } ?: return@forEach
@@ -456,7 +497,7 @@ private class AblCompletionProvider : CompletionProvider<CompletionParameters>()
                     .withTypeText(symbol.dataType ?: "", true)
                     .withIcon(iconFor(symbol.kind))
                     .withTailText(kindLabel(symbol.kind), true)
-                    .withInsertHandler(insertHandlerFor(symbol))
+                    .withInsertHandler(insertHandlerFor(symbol)),
             )
         }
     }
@@ -466,7 +507,7 @@ private class AblCompletionProvider : CompletionProvider<CompletionParameters>()
     private fun addScopeCompletions(
         scope: org.prorefactor.treeparser.TreeParserSymbolScope,
         prefix: String,
-        result: CompletionResultSet
+        result: CompletionResultSet,
     ) {
         val upperPrefix = prefix.uppercase()
 
@@ -478,23 +519,25 @@ private class AblCompletionProvider : CompletionProvider<CompletionParameters>()
                 LookupElementBuilder.create(variable.name)
                     .withTypeText(dataType, true)
                     .withIcon(if (variable.javaClass.simpleName == "Parameter") AllIcons.Nodes.Parameter else AllIcons.Nodes.Variable)
-                    .withTailText(if (variable.javaClass.simpleName == "Parameter") " param" else " var", true)
+                    .withTailText(if (variable.javaClass.simpleName == "Parameter") " param" else " var", true),
             )
         }
 
         // Routines avec signature complète
         for (routine in runCatching { scope.routines }.getOrNull() ?: emptyList()) {
             if (!routine.name.startsWith(upperPrefix, ignoreCase = true)) continue
-            val sig = runCatching { routine.ideSignature }.getOrNull()
-                ?: runCatching { routine.signature }.getOrNull()
-                ?: routine.name
+            val sig =
+                runCatching { routine.ideSignature }.getOrNull()
+                    ?: runCatching { routine.signature }.getOrNull()
+                    ?: routine.name
 
-            val params = runCatching {
-                routine.parameters.joinToString(", ") { p ->
-                    val pName = runCatching { p.javaClass.getMethod("getName").invoke(p) }.getOrNull() ?: "p"
-                    "$pName"
-                }
-            }.getOrNull() ?: ""
+            val params =
+                runCatching {
+                    routine.parameters.joinToString(", ") { p ->
+                        val pName = runCatching { p.javaClass.getMethod("getName").invoke(p) }.getOrNull() ?: "p"
+                        "$pName"
+                    }
+                }.getOrNull() ?: ""
 
             result.addElement(
                 LookupElementBuilder.create(routine.name)
@@ -507,7 +550,7 @@ private class AblCompletionProvider : CompletionProvider<CompletionParameters>()
                             ctx.document.insertString(ctx.tailOffset, "()")
                             ctx.editor.caretModel.moveToOffset(ctx.tailOffset - 1)
                         }
-                    }
+                    },
             )
         }
 
@@ -523,45 +566,49 @@ private class AblCompletionProvider : CompletionProvider<CompletionParameters>()
         return when (symbol.kind) {
             AblSymbol.Kind.PROCEDURE,
             AblSymbol.Kind.FUNCTION,
-            AblSymbol.Kind.METHOD -> InsertHandler { ctx, _ ->
-                ctx.document.insertString(ctx.tailOffset, "()")
-                ctx.editor.caretModel.moveToOffset(ctx.tailOffset - 1)
-            }
+            AblSymbol.Kind.METHOD,
+            ->
+                InsertHandler { ctx, _ ->
+                    ctx.document.insertString(ctx.tailOffset, "()")
+                    ctx.editor.caretModel.moveToOffset(ctx.tailOffset - 1)
+                }
             else -> null
         }
     }
 
     // ─── Icônes ───────────────────────────────────────────────────────────────
 
-    private fun iconFor(kind: AblSymbol.Kind): Icon = when (kind) {
-        AblSymbol.Kind.PROCEDURE  -> AllIcons.Nodes.Method
-        AblSymbol.Kind.FUNCTION   -> AllIcons.Nodes.Function
-        AblSymbol.Kind.CLASS      -> AllIcons.Nodes.Class
-        AblSymbol.Kind.METHOD     -> AllIcons.Nodes.Method
-        AblSymbol.Kind.VARIABLE   -> AllIcons.Nodes.Variable
-        AblSymbol.Kind.PARAMETER  -> AllIcons.Nodes.Parameter
-        AblSymbol.Kind.FIELD      -> AllIcons.Nodes.Field
-        AblSymbol.Kind.TEMP_TABLE -> AllIcons.Nodes.DataTables
-        AblSymbol.Kind.BUFFER     -> AllIcons.Nodes.DataTables
-        AblSymbol.Kind.DATASET    -> AllIcons.Nodes.DataSchema
-        AblSymbol.Kind.QUERY      -> AllIcons.Nodes.DataSchema
-        AblSymbol.Kind.EVENT      -> AllIcons.Nodes.Method
-        else                      -> AllIcons.Nodes.Unknown
-    }
+    private fun iconFor(kind: AblSymbol.Kind): Icon =
+        when (kind) {
+            AblSymbol.Kind.PROCEDURE -> AllIcons.Nodes.Method
+            AblSymbol.Kind.FUNCTION -> AllIcons.Nodes.Function
+            AblSymbol.Kind.CLASS -> AllIcons.Nodes.Class
+            AblSymbol.Kind.METHOD -> AllIcons.Nodes.Method
+            AblSymbol.Kind.VARIABLE -> AllIcons.Nodes.Variable
+            AblSymbol.Kind.PARAMETER -> AllIcons.Nodes.Parameter
+            AblSymbol.Kind.FIELD -> AllIcons.Nodes.Field
+            AblSymbol.Kind.TEMP_TABLE -> AllIcons.Nodes.DataTables
+            AblSymbol.Kind.BUFFER -> AllIcons.Nodes.DataTables
+            AblSymbol.Kind.DATASET -> AllIcons.Nodes.DataSchema
+            AblSymbol.Kind.QUERY -> AllIcons.Nodes.DataSchema
+            AblSymbol.Kind.EVENT -> AllIcons.Nodes.Method
+            else -> AllIcons.Nodes.Unknown
+        }
 
-    private fun kindLabel(kind: AblSymbol.Kind): String = when (kind) {
-        AblSymbol.Kind.VARIABLE   -> " var"
-        AblSymbol.Kind.PARAMETER  -> " param"
-        AblSymbol.Kind.PROCEDURE  -> " proc"
-        AblSymbol.Kind.FUNCTION   -> " func"
-        AblSymbol.Kind.CLASS      -> " class"
-        AblSymbol.Kind.METHOD     -> " method"
-        AblSymbol.Kind.TEMP_TABLE -> " tt"
-        AblSymbol.Kind.FIELD      -> " field"
-        AblSymbol.Kind.BUFFER     -> " buf"
-        AblSymbol.Kind.DATASET    -> " ds"
-        AblSymbol.Kind.QUERY      -> " query"
-        AblSymbol.Kind.EVENT      -> " event"
-        else                      -> ""
-    }
+    private fun kindLabel(kind: AblSymbol.Kind): String =
+        when (kind) {
+            AblSymbol.Kind.VARIABLE -> " var"
+            AblSymbol.Kind.PARAMETER -> " param"
+            AblSymbol.Kind.PROCEDURE -> " proc"
+            AblSymbol.Kind.FUNCTION -> " func"
+            AblSymbol.Kind.CLASS -> " class"
+            AblSymbol.Kind.METHOD -> " method"
+            AblSymbol.Kind.TEMP_TABLE -> " tt"
+            AblSymbol.Kind.FIELD -> " field"
+            AblSymbol.Kind.BUFFER -> " buf"
+            AblSymbol.Kind.DATASET -> " ds"
+            AblSymbol.Kind.QUERY -> " query"
+            AblSymbol.Kind.EVENT -> " event"
+            else -> ""
+        }
 }

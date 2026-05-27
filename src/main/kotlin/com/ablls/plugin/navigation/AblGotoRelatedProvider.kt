@@ -22,31 +22,31 @@ import com.intellij.psi.PsiManager
  * Recherche dans le dossier du fichier courant et dans le projet entier.
  */
 class AblGotoRelatedProvider : GotoRelatedProvider() {
-
     override fun getItems(dataContext: DataContext): List<GotoRelatedItem> {
         val psiFile = dataContext.getData(CommonDataKeys.PSI_FILE) ?: return emptyList()
         if (psiFile.language != AblLanguage) return emptyList()
 
         val vf = psiFile.virtualFile ?: return emptyList()
         val name = vf.nameWithoutExtension
-        val ext  = vf.extension?.lowercase() ?: return emptyList()
+        val ext = vf.extension?.lowercase() ?: return emptyList()
 
         val project = psiFile.project
-        val result  = mutableListOf<GotoRelatedItem>()
+        val result = mutableListOf<GotoRelatedItem>()
 
         // Extensions candidates selon le type de fichier courant
-        val candidates = when (ext) {
-            "cls" -> listOf("$name.i", "$name.p")
-            "i"   -> listOf("$name.cls", "$name.p")
-            "p"   -> listOf("$name.cls", "$name.i")
-            else  -> return emptyList()
-        }
+        val candidates =
+            when (ext) {
+                "cls" -> listOf("$name.i", "$name.p")
+                "i" -> listOf("$name.cls", "$name.p")
+                "p" -> listOf("$name.cls", "$name.i")
+                else -> return emptyList()
+            }
 
         // Chercher dans le dossier du fichier courant
         val parent = vf.parent
         for (candidate in candidates) {
             val related = parent?.findChild(candidate) ?: continue
-            val relPsi  = PsiManager.getInstance(project).findFile(related) ?: continue
+            val relPsi = PsiManager.getInstance(project).findFile(related) ?: continue
             result.add(GotoRelatedItem(relPsi, "Related ABL file"))
         }
 
@@ -62,12 +62,21 @@ class AblGotoRelatedProvider : GotoRelatedProvider() {
         return result
     }
 
-    private fun findInProject(basePath: String, fileName: String, project: Project): PsiFile? {
+    private fun findInProject(
+        basePath: String,
+        fileName: String,
+        project: Project,
+    ): PsiFile? {
         val baseDir = LocalFileSystem.getInstance().findFileByPath(basePath) ?: return null
         return findRecursive(baseDir, fileName, project, depth = 0)
     }
 
-    private fun findRecursive(dir: VirtualFile, fileName: String, project: Project, depth: Int): PsiFile? {
+    private fun findRecursive(
+        dir: VirtualFile,
+        fileName: String,
+        project: Project,
+        depth: Int,
+    ): PsiFile? {
         if (depth > 5) return null
         for (child in dir.children ?: emptyArray()) {
             if (child.isDirectory) {

@@ -11,6 +11,5 @@ import com.intellij.spellchecker.BundledDictionaryProvider
  * Enregistré via <spellchecker.bundledDictionaryProvider> dans plugin.xml.
  */
 class AblBundledDictionaryProvider : BundledDictionaryProvider {
-    override fun getBundledDictionaries(): Array<String> =
-        arrayOf("/spellchecker/abl.dic")
+    override fun getBundledDictionaries(): Array<String> = arrayOf("/spellchecker/abl.dic")
 }

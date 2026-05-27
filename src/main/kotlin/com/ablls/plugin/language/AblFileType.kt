@@ -8,7 +8,6 @@ import javax.swing.Icon
  * .p (procédure), .cls (classe OO), .i (include), .w (window), .t (table)
  */
 class AblFileType private constructor() : LanguageFileType(AblLanguage) {
-
     companion object {
         @JvmField
         val INSTANCE = AblFileType()
@@ -16,8 +15,11 @@ class AblFileType private constructor() : LanguageFileType(AblLanguage) {
         val EXTENSIONS = setOf("p", "cls", "i", "w", "t")
     }
 
-    override fun getName():        String = "ABL File"
+    override fun getName(): String = "ABL File"
+
     override fun getDescription(): String = "Progress OpenEdge ABL source file"
+
     override fun getDefaultExtension(): String = "p"
+
     override fun getIcon(): Icon = AblIcons.FILE
 }

@@ -39,42 +39,48 @@ import org.prorefactor.treeparser.symbols.TableBuffer
  * effectue un renommage textuel lexer-based de toutes les occurrences IDENTIFIER dans le fichier.
  */
 class AblRenameHandler : RenameHandler {
-
     /** Contourne le dialog de saisie dans les tests. Remettre à null après chaque test. */
     internal var testNewName: String? = null
 
     override fun isAvailableOnDataContext(dataContext: DataContext): Boolean {
-        val editor  = dataContext.getData(CommonDataKeys.EDITOR) ?: return false
+        val editor = dataContext.getData(CommonDataKeys.EDITOR) ?: return false
         val psiFile = dataContext.getData(CommonDataKeys.PSI_FILE) ?: return false
         if (psiFile.language != AblLanguage) return false
         val element = psiFile.findElementAt(editor.caretModel.offset) ?: return false
         return element.node?.elementType == AblTokenTypes.IDENTIFIER
     }
 
-    override fun invoke(project: Project, editor: Editor, file: PsiFile, dataContext: DataContext) {
-        val offset  = editor.caretModel.offset
+    @Suppress("ReturnCount")
+    override fun invoke(
+        project: Project,
+        editor: Editor,
+        file: PsiFile,
+        dataContext: DataContext,
+    ) {
+        val offset = editor.caretModel.offset
         val element = file.findElementAt(offset) ?: return
-        val word    = element.text?.trim() ?: return
+        val word = element.text?.trim() ?: return
         if (word.isBlank() || word.length < 2) return
 
-        val uri     = file.virtualFile?.url ?: return
+        val uri = file.virtualFile?.url ?: return
         val service = project.service<AblProjectAnalysisService>()
-        val doc     = PsiDocumentManager.getInstance(project).getDocument(file) ?: return
-        val cursorLine = doc.getLineNumber(offset) + 1  // proparse est 1-based
+        val doc = PsiDocumentManager.getInstance(project).getDocument(file) ?: return
+        val cursorLine = doc.getLineNumber(offset) + 1 // proparse est 1-based
 
         val rootScope = service.getSemanticResult(uri)?.rootScope
         val targetDef = rootScope?.let { findNearestDef(it, word, cursorLine) }
 
-        val newName = testNewName
-            ?: Messages.showInputDialog(
-                project,
-                "Renommer '$word' en : (toutes les variantes de casse seront remplacées par le texte exact)",
-                "Renommer le symbole ABL",
-                Messages.getQuestionIcon(),
-                word,
-                null
-            )?.trim()
-            ?: return
+        val newName =
+            testNewName
+                ?: Messages.showInputDialog(
+                    project,
+                    "Renommer '$word' en : (toutes les variantes de casse seront remplacées par le texte exact)",
+                    "Renommer le symbole ABL",
+                    Messages.getQuestionIcon(),
+                    word,
+                    null,
+                )?.trim()
+                ?: return
         if (newName.isBlank() || newName == word) return
 
         if (targetDef != null) {
@@ -83,8 +89,9 @@ class AblRenameHandler : RenameHandler {
         } else {
             // Pas de résolution sémantique (temp-table field, sémantique non disponible, etc.)
             // → renommage lexer-based de toutes les occurrences IDENTIFIER dans le fichier
-            val tokenRanges = findIdentifierTokenRanges(doc.text, word)
-                .sortedByDescending { it.first }
+            val tokenRanges =
+                findIdentifierTokenRanges(doc.text, word)
+                    .sortedByDescending { it.first }
             if (tokenRanges.isEmpty()) return
             WriteCommandAction.runWriteCommandAction(project, "Rename '$word' → '$newName'", null, {
                 tokenRanges.forEach { range -> doc.replaceString(range.first, range.last + 1, newName) }
@@ -93,7 +100,11 @@ class AblRenameHandler : RenameHandler {
         }
     }
 
-    override fun invoke(project: Project, elements: Array<out PsiElement>, dataContext: DataContext) {
+    override fun invoke(
+        project: Project,
+        elements: Array<out PsiElement>,
+        dataContext: DataContext,
+    ) {
         // Renommage multi-éléments non supporté depuis un contexte hors-éditeur
     }
 
@@ -110,30 +121,35 @@ class AblRenameHandler : RenameHandler {
         oldName: String,
         newName: String,
         rootScope: TreeParserSymbolScope,
-        targetDef: JPNode
+        targetDef: JPNode,
     ) {
-        val doc        = PsiDocumentManager.getInstance(project).getDocument(file) ?: return
+        val doc = PsiDocumentManager.getInstance(project).getDocument(file) ?: return
         val targetLine = targetDef.token?.line ?: return
-        val targetCol  = targetDef.token?.charPositionInLine ?: return
+        val targetCol = targetDef.token?.charPositionInLine ?: return
 
         val tokenRanges = findIdentifierTokenRanges(doc.text, oldName)
-        val toRename = tokenRanges
-            .filter { range ->
-                val matchLine = doc.getLineNumber(range.first) + 1  // proparse 1-based
-                val def = findNearestDef(rootScope, oldName, matchLine)
-                def?.token?.line == targetLine && def.token?.charPositionInLine == targetCol
-            }
-            .sortedByDescending { it.first }  // ordre décroissant pour stabilité des offsets
+        val toRename =
+            tokenRanges
+                .filter { range ->
+                    val matchLine = doc.getLineNumber(range.first) + 1 // proparse 1-based
+                    val def = findNearestDef(rootScope, oldName, matchLine)
+                    def?.token?.line == targetLine && def.token?.charPositionInLine == targetCol
+                }
+                .sortedByDescending { it.first } // ordre décroissant pour stabilité des offsets
 
         if (toRename.isEmpty()) return
 
         WriteCommandAction.runWriteCommandAction(
-            project, "Rename '$oldName' → '$newName'", null, {
+            project,
+            "Rename '$oldName' → '$newName'",
+            null,
+            {
                 toRename.forEach { range ->
                     doc.replaceString(range.first, range.last + 1, newName)
                 }
                 PsiDocumentManager.getInstance(project).commitDocument(doc)
-            }, file
+            },
+            file,
         )
     }
 
@@ -144,15 +160,19 @@ class AblRenameHandler : RenameHandler {
      * dans [text] dont le texte correspond à [name] (insensible à la casse).
      * Les strings, commentaires et preprocesseur sont ignorés par le lexer.
      */
-    private fun findIdentifierTokenRanges(text: String, name: String): List<IntRange> {
+    private fun findIdentifierTokenRanges(
+        text: String,
+        name: String,
+    ): List<IntRange> {
         val lexer = AblLexerAdapter()
         lexer.start(text, 0, text.length, 0)
         val ranges = mutableListOf<IntRange>()
         while (lexer.tokenType != null) {
             if (lexer.tokenType == AblTokenTypes.IDENTIFIER) {
                 val tokenText = text.substring(lexer.tokenStart, lexer.tokenEnd)
-                if (tokenText.equals(name, ignoreCase = true))
+                if (tokenText.equals(name, ignoreCase = true)) {
                     ranges.add(lexer.tokenStart until lexer.tokenEnd)
+                }
             }
             lexer.advance()
         }
@@ -168,35 +188,49 @@ class AblRenameHandler : RenameHandler {
      * Même algorithme que AblGotoDeclarationHandler.findNearestDefinition.
      * Limitation : les scopes frères (procédures non ancêtres du curseur) sont inclus.
      */
-    internal fun findNearestDef(scope: TreeParserSymbolScope, word: String, line: Int): JPNode? {
+    internal fun findNearestDef(
+        scope: TreeParserSymbolScope,
+        word: String,
+        line: Int,
+    ): JPNode? {
         var best: JPNode? = null
         var bestLine = 0
 
         fun check(node: JPNode?) {
             val l = node?.token?.line ?: return
-            if (l in 1..line && l > bestLine) { best = node; bestLine = l }
+            if (l in 1..line && l > bestLine) {
+                best = node
+                bestLine = l
+            }
         }
 
         for (v in runCatching { scope.variables }.getOrNull() ?: emptyList()) {
-            if (v.name.equals(word, ignoreCase = true))
+            if (v.name.equals(word, ignoreCase = true)) {
                 check(runCatching { v.getDefineNode() }.getOrNull())
+            }
         }
         for (r in runCatching { scope.routines }.getOrNull() ?: emptyList()) {
-            if (r.name.equals(word, ignoreCase = true))
+            if (r.name.equals(word, ignoreCase = true)) {
                 check(runCatching { r.getDefineNode() }.getOrNull())
+            }
         }
         @Suppress("UNCHECKED_CAST")
-        val buffers = runCatching {
-            scope.javaClass.getMethod("getBufferList").invoke(scope) as? Collection<TableBuffer>
-        }.getOrNull() ?: emptyList()
+        val buffers =
+            runCatching {
+                scope.javaClass.getMethod("getBufferList").invoke(scope) as? Collection<TableBuffer>
+            }.getOrNull() ?: emptyList()
         for (b in buffers) {
-            if (b.name.equals(word, ignoreCase = true))
+            if (b.name.equals(word, ignoreCase = true)) {
                 check(runCatching { b.getDefineNode() }.getOrNull())
+            }
         }
         for (child in runCatching { scope.childScopes }.getOrNull() ?: emptyList()) {
             val childBest = findNearestDef(child, word, line)
             val childLine = childBest?.token?.line ?: 0
-            if (childLine > bestLine) { best = childBest; bestLine = childLine }
+            if (childLine > bestLine) {
+                best = childBest
+                bestLine = childLine
+            }
         }
         return best
     }

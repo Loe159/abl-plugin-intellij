@@ -24,11 +24,10 @@ import java.util.concurrent.ConcurrentHashMap
  */
 @Service(Service.Level.PROJECT)
 class AblProjectAnalysisService(private val project: Project) {
-
-    private val LOG = Logger.getInstance(AblProjectAnalysisService::class.java)
+    private val log = Logger.getInstance(AblProjectAnalysisService::class.java)
 
     val parserFacade = AblParserFacade()
-    val symbolIndex  = AblSymbolIndex()
+    val symbolIndex = AblSymbolIndex()
 
     /** Cache syntaxique : uri → (contentHash, AblParseResult) */
     private val parseCache = ConcurrentHashMap<String, Pair<Int, AblParseResult>>()
@@ -48,16 +47,19 @@ class AblProjectAnalysisService(private val project: Project) {
      * Parse le fichier ABL, met à jour [symbolIndex], retourne erreurs + arbre.
      * Utilise un cache par hash — adapté à l'appel sur chaque frappe.
      */
-    fun analyzeFile(content: String, uri: String): AblParseResult {
+    fun analyzeFile(
+        content: String,
+        uri: String,
+    ): AblParseResult {
         val hash = content.hashCode()
         parseCache[uri]?.let { (h, r) -> if (h == hash) return r }
 
-        val result  = parserFacade.parse(content, uri)
+        val result = parserFacade.parse(content, uri)
         val symbols = AblSymbolCollector.collect(result)
         symbolIndex.updateFile(uri, symbols)
         parseCache[uri] = hash to result
 
-        LOG.debug("Analysé $uri : ${symbols.size} symboles, ${result.syntaxErrors.size} erreurs")
+        log.debug("Analysé $uri : ${symbols.size} symboles, ${result.syntaxErrors.size} erreurs")
         return result
     }
 
@@ -68,13 +70,17 @@ class AblProjectAnalysisService(private val project: Project) {
      * Met à jour [symbolIndex] avec les informations de type résolu.
      * Retourne le résultat sémantique (JPNode + TreeParserSymbolScope).
      */
-    fun analyzeFileSemantic(content: String, uri: String): AblSemanticResult {
+    fun analyzeFileSemantic(
+        content: String,
+        uri: String,
+    ): AblSemanticResult {
         val hash = content.hashCode()
         semanticCache[uri]?.let { (h, r) -> if (h == hash) return r }
 
         // Réutilise le parse result en cache — analyse sans re-parser le fichier
-        val parseResult = parseCache[uri]?.let { (h, r) -> if (h == hash) r else null }
-            ?: analyzeFile(content, uri)
+        val parseResult =
+            parseCache[uri]?.let { (h, r) -> if (h == hash) r else null }
+                ?: analyzeFile(content, uri)
         val result = parserFacade.analyze(parseResult)
 
         if (result.rootScope != null) {
@@ -83,7 +89,7 @@ class AblProjectAnalysisService(private val project: Project) {
         }
 
         semanticCache[uri] = hash to result
-        LOG.debug("Analyse sémantique $uri : scope=${result.rootScope != null}")
+        log.debug("Analyse sémantique $uri : scope=${result.rootScope != null}")
         return result
     }
 
@@ -91,14 +97,17 @@ class AblProjectAnalysisService(private val project: Project) {
      * Lance l'analyse sémantique en arrière-plan pour le fichier donné.
      * Non-bloquant — le résultat sera disponible dans [semanticCache] quand prêt.
      */
-    fun analyzeSemanticAsync(content: String, uri: String) {
+    fun analyzeSemanticAsync(
+        content: String,
+        uri: String,
+    ) {
         val hash = content.hashCode()
-        if (semanticCache[uri]?.first == hash) return  // déjà à jour
+        if (semanticCache[uri]?.first == hash) return // déjà à jour
         ApplicationManager.getApplication().executeOnPooledThread {
             try {
                 analyzeFileSemantic(content, uri)
             } catch (e: Exception) {
-                LOG.warn("Analyse sémantique async échouée pour $uri : ${e.message}")
+                log.warn("Analyse sémantique async échouée pour $uri : ${e.message}")
             }
         }
     }
@@ -107,8 +116,7 @@ class AblProjectAnalysisService(private val project: Project) {
      * Retourne le résultat sémantique en cache s'il est disponible,
      * ou null si l'analyse n'a pas encore été effectuée.
      */
-    fun getSemanticResult(uri: String): AblSemanticResult? =
-        semanticCache[uri]?.second
+    fun getSemanticResult(uri: String): AblSemanticResult? = semanticCache[uri]?.second
 
     // ─── Invalidation ─────────────────────────────────────────────────────────
 
@@ -122,19 +130,23 @@ class AblProjectAnalysisService(private val project: Project) {
 
     fun updateEnvironment() {
         try {
-            val config   = project.service<OpenEdgeProjectService>().config
+            val config = project.service<OpenEdgeProjectService>().config
             val basePath = project.basePath ?: return
-            val dlcPath  = config.dlcPath ?: System.getenv("DLC") ?: ""
+            val dlcPath = config.dlcPath ?: System.getenv("DLC") ?: ""
 
-            val propath = config.propath.mapNotNull { pathStr ->
-                val resolved = pathStr
-                    .replace("\${DLC}", dlcPath)
-                    .replace("\$DLC", dlcPath)
-                try {
-                    val p = Paths.get(resolved)
-                    if (p.isAbsolute) p else Paths.get(basePath).resolve(p)
-                } catch (_: Exception) { null }
-            }.filter { Files.isDirectory(it) }
+            val propath =
+                config.propath.mapNotNull { pathStr ->
+                    val resolved =
+                        pathStr
+                            .replace("\${DLC}", dlcPath)
+                            .replace("\$DLC", dlcPath)
+                    try {
+                        val p = Paths.get(resolved)
+                        if (p.isAbsolute) p else Paths.get(basePath).resolve(p)
+                    } catch (_: Exception) {
+                        null
+                    }
+                }.filter { Files.isDirectory(it) }
 
             // Chargement des fichiers .df déclarés dans openedge-project.json
             val schema = buildSchema(config.databases, basePath)
@@ -148,39 +160,41 @@ class AblProjectAnalysisService(private val project: Project) {
             val dbSymbols = AblSymbolCollector.collectFromSchema(schema)
             if (dbSymbols.isNotEmpty()) {
                 symbolIndex.updateFile("db://schema", dbSymbols)
-                LOG.info("Schéma DB : ${dbSymbols.size} symboles (tables + champs)")
+                log.info("Schéma DB : ${dbSymbols.size} symboles (tables + champs)")
             }
 
             val env = AblParserFacade.createProjectEnvironment(propath, config.version, schema)
             parserFacade.updateEnvironment(env)
             parseCache.clear()
             semanticCache.clear()
-            LOG.info("Environnement mis à jour : ${propath.size} entrées PROPATH, ${config.databases.size} DB(s)")
+            log.info("Environnement mis à jour : ${propath.size} entrées PROPATH, ${config.databases.size} DB(s)")
         } catch (e: Exception) {
-            LOG.warn("Impossible de mettre à jour l'environnement : ${e.message}")
+            log.warn("Impossible de mettre à jour l'environnement : ${e.message}")
         }
     }
 
     private fun buildSchema(
         databases: List<com.ablls.plugin.project.DatabaseConnection>,
-        basePath: String
+        basePath: String,
     ): Schema {
-        val dbList = databases.mapNotNull { dbConn ->
-            val schemaPath = dbConn.schemaFile ?: return@mapNotNull null
-            val file = File(schemaPath).let {
-                if (it.isAbsolute) it else File(basePath, schemaPath)
+        val dbList =
+            databases.mapNotNull { dbConn ->
+                val schemaPath = dbConn.schemaFile ?: return@mapNotNull null
+                val file =
+                    File(schemaPath).let {
+                        if (it.isAbsolute) it else File(basePath, schemaPath)
+                    }
+                if (!file.exists()) {
+                    log.warn("Fichier .df introuvable pour '${dbConn.logicalName}' : ${file.absolutePath}")
+                    return@mapNotNull null
+                }
+                try {
+                    DfSchemaParser.parse(file, dbConn.logicalName)
+                } catch (e: Exception) {
+                    log.warn("Erreur chargement schéma '${dbConn.logicalName}' : ${e.message}")
+                    null
+                }
             }
-            if (!file.exists()) {
-                LOG.warn("Fichier .df introuvable pour '${dbConn.logicalName}' : ${file.absolutePath}")
-                return@mapNotNull null
-            }
-            try {
-                DfSchemaParser.parse(file, dbConn.logicalName)
-            } catch (e: Exception) {
-                LOG.warn("Erreur chargement schéma '${dbConn.logicalName}' : ${e.message}")
-                null
-            }
-        }
         return if (dbList.isEmpty()) Schema() else Schema(*dbList.toTypedArray())
     }
 
@@ -189,42 +203,47 @@ class AblProjectAnalysisService(private val project: Project) {
     fun buildIndexInBackground() {
         ApplicationManager.getApplication().executeOnPooledThread {
             try {
-                val config   = project.service<OpenEdgeProjectService>().config
+                val config = project.service<OpenEdgeProjectService>().config
                 val basePath = project.basePath ?: return@executeOnPooledThread
-                val dlcPath  = config.dlcPath ?: System.getenv("DLC") ?: ""
-                var count    = 0
+                val dlcPath = config.dlcPath ?: System.getenv("DLC") ?: ""
+                var count = 0
 
                 config.propath.forEach { pathStr ->
-                    val resolved = pathStr
-                        .replace("\${DLC}", dlcPath)
-                        .replace("\$DLC", dlcPath)
-                    val dir = try {
-                        val p = Paths.get(resolved)
-                        if (p.isAbsolute) p else Paths.get(basePath).resolve(p)
-                    } catch (_: Exception) { return@forEach }
+                    val resolved =
+                        pathStr
+                            .replace("\${DLC}", dlcPath)
+                            .replace("\$DLC", dlcPath)
+                    val dir =
+                        try {
+                            val p = Paths.get(resolved)
+                            if (p.isAbsolute) p else Paths.get(basePath).resolve(p)
+                        } catch (_: Exception) {
+                            return@forEach
+                        }
 
                     if (!Files.isDirectory(dir)) return@forEach
 
                     Files.walk(dir).use { stream ->
                         stream.filter { f ->
                             Files.isRegularFile(f) &&
-                            f.fileName.toString().let { n ->
-                                n.endsWith(".p") || n.endsWith(".cls") ||
-                                n.endsWith(".i") || n.endsWith(".w")
-                            }
+                                f.fileName.toString().let { n ->
+                                    n.endsWith(".p") || n.endsWith(".cls") ||
+                                        n.endsWith(".i") || n.endsWith(".w")
+                                }
                         }.forEach { file ->
                             try {
-                                val uri     = file.toUri().toString()
+                                val uri = file.toUri().toString()
                                 val content = Files.readString(file)
                                 analyzeFile(content, uri)
                                 count++
-                            } catch (_: Exception) {}
+                            } catch (_: Exception) {
+                            }
                         }
                     }
                 }
-                LOG.info("Indexation initiale : $count fichiers, ${symbolIndex.symbolCount} symboles")
+                log.info("Indexation initiale : $count fichiers, ${symbolIndex.symbolCount} symboles")
             } catch (e: Exception) {
-                LOG.warn("Erreur indexation initiale : ${e.message}")
+                log.warn("Erreur indexation initiale : ${e.message}")
             }
         }
     }

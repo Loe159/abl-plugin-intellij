@@ -3,7 +3,6 @@ package com.ablls.plugin.inspections
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
 class AblNoUndoInspectionTest : BasePlatformTestCase() {
-
     override fun setUp() {
         super.setUp()
         myFixture.enableInspections(AblNoUndoInspection::class.java)
@@ -12,7 +11,7 @@ class AblNoUndoInspectionTest : BasePlatformTestCase() {
     fun testDefineVariableWithoutNoUndoTriggersWarning() {
         myFixture.configureByText(
             "test.p",
-            """<warning descr="Missing NO-UNDO modifier on VARIABLE (affects performance)">DEFINE</warning> VARIABLE iCount AS INTEGER."""
+            """<warning descr="Missing NO-UNDO modifier on VARIABLE (affects performance)">DEFINE</warning> VARIABLE iCount AS INTEGER.""",
         )
         myFixture.checkHighlighting(true, false, false)
     }
@@ -24,8 +23,9 @@ class AblNoUndoInspectionTest : BasePlatformTestCase() {
 
     fun testQuickFixAddsNoUndoToVariable() {
         myFixture.configureByText("test.p", "<caret>DEFINE VARIABLE iCount AS INTEGER.")
-        val fix = myFixture.getAllQuickFixes()
-            .firstOrNull { it.familyName == "Add NO-UNDO to variable" }
+        val fix =
+            myFixture.getAllQuickFixes()
+                .firstOrNull { it.familyName == "Add NO-UNDO to variable" }
         assertNotNull("Quick fix 'Add NO-UNDO to variable' should be available", fix)
         myFixture.launchAction(fix!!)
         myFixture.checkResult("DEFINE VARIABLE iCount AS INTEGER NO-UNDO.")

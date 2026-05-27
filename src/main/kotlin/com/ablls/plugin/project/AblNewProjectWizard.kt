@@ -1,3 +1,5 @@
+@file:Suppress("ktlint:standard:filename")
+
 package com.ablls.plugin.project
 
 import com.intellij.ide.wizard.AbstractNewProjectWizardStep
@@ -21,10 +23,9 @@ import java.io.File
  * Intégré dans le menu File → New → Project → OpenEdge ABL.
  */
 class AblNewProjectWizardStep(parent: NewProjectWizardStep) : AbstractNewProjectWizardStep(parent) {
-
     var projectName: String = "my-abl-project"
-    var oeVersion: String   = "12.7"
-    var dlcPath: String     = ""
+    var oeVersion: String = "12.7"
+    var dlcPath: String = ""
 
     override fun setupUI(builder: Panel) {
         builder.apply {
@@ -51,32 +52,38 @@ class AblNewProjectWizardStep(parent: NewProjectWizardStep) : AbstractNewProject
 
         // Créer un fichier .p de démarrage
         File(basePath, "src/main.p").writeText(
-            "/* main.p — Point d'entrée du projet ${context.projectName} */\n\nMESSAGE \"Hello from ${context.projectName}!\" VIEW-AS ALERT-BOX.\n"
+            "/* main.p — Point d'entrée du projet ${context.projectName} */\n\n" +
+                "MESSAGE \"Hello from ${context.projectName}!\" VIEW-AS ALERT-BOX.\n",
         )
 
         // Créer openedge-project.json
-        val configContent = buildString {
-            appendLine("{")
-            appendLine("  \"name\": \"${context.projectName}\",")
-            appendLine("  \"version\": \"$oeVersion\",")
-            if (dlcPath.isNotBlank()) {
-                appendLine("  \"dlcPath\": \"$dlcPath\",")
+        val configContent =
+            buildString {
+                appendLine("{")
+                appendLine("  \"name\": \"${context.projectName}\",")
+                appendLine("  \"version\": \"$oeVersion\",")
+                if (dlcPath.isNotBlank()) {
+                    appendLine("  \"dlcPath\": \"$dlcPath\",")
+                }
+                appendLine("  \"propath\": [\"src\", \"src/includes\"],")
+                appendLine("  \"buildPath\": \".build\",")
+                appendLine("  \"charset\": \"UTF-8\",")
+                appendLine("  \"databases\": []")
+                appendLine("}")
             }
-            appendLine("  \"propath\": [\"src\", \"src/includes\"],")
-            appendLine("  \"buildPath\": \".build\",")
-            appendLine("  \"charset\": \"UTF-8\",")
-            appendLine("  \"databases\": []")
-            appendLine("}")
-        }
         File(basePath, "openedge-project.json").writeText(configContent)
 
         // Créer un .gitignore
         File(basePath, ".gitignore").writeText(
-            ".build/\n*.r\n*.pl\n*.db\n*.lg\n"
+            ".build/\n*.r\n*.pl\n*.db\n*.lg\n",
         )
 
         // Rafraîchir le VFS
-        VfsUtil.markDirtyAndRefresh(false, true, true,
-            com.intellij.openapi.vfs.LocalFileSystem.getInstance().findFileByPath(basePath))
+        VfsUtil.markDirtyAndRefresh(
+            false,
+            true,
+            true,
+            com.intellij.openapi.vfs.LocalFileSystem.getInstance().findFileByPath(basePath),
+        )
     }
 }

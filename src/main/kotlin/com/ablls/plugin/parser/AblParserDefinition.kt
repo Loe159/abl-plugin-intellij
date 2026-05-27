@@ -24,7 +24,6 @@ import com.intellij.psi.tree.TokenSet
  *   - La coloration syntaxique est gérée séparément par AblSyntaxHighlighter
  */
 class AblParserDefinition : ParserDefinition {
-
     companion object {
         @JvmField
         val FILE = IFileElementType(AblLanguage)
@@ -32,23 +31,25 @@ class AblParserDefinition : ParserDefinition {
         // Token sets utilisés par IntelliJ pour des comportements automatiques
         // (sélection de mot, smart indent, bracket matching...)
         @JvmField
-        val COMMENTS = TokenSet.create(
-            AblTokenTypes.BLOCK_COMMENT,
-            AblTokenTypes.LINE_COMMENT
-        )
+        val COMMENTS =
+            TokenSet.create(
+                AblTokenTypes.BLOCK_COMMENT,
+                AblTokenTypes.LINE_COMMENT,
+            )
 
         @JvmField
         val STRINGS = TokenSet.create(AblTokenTypes.STRING)
 
         @JvmField
-        val KEYWORDS = TokenSet.create(
-            AblTokenTypes.KEYWORD,
-            AblTokenTypes.KEYWORD_FLOW,
-            AblTokenTypes.KEYWORD_DEF,
-            AblTokenTypes.KEYWORD_DB,
-            AblTokenTypes.KEYWORD_MOD,
-            AblTokenTypes.KEYWORD_TYPE
-        )
+        val KEYWORDS =
+            TokenSet.create(
+                AblTokenTypes.KEYWORD,
+                AblTokenTypes.KEYWORD_FLOW,
+                AblTokenTypes.KEYWORD_DEF,
+                AblTokenTypes.KEYWORD_DB,
+                AblTokenTypes.KEYWORD_MOD,
+                AblTokenTypes.KEYWORD_TYPE,
+            )
 
         @JvmField
         val WHITESPACES = TokenSet.create(AblTokenTypes.WHITE_SPACE)
@@ -60,13 +61,13 @@ class AblParserDefinition : ParserDefinition {
 
     override fun getFileNodeType(): IFileElementType = FILE
 
-    override fun getCommentTokens():    TokenSet = COMMENTS
+    override fun getCommentTokens(): TokenSet = COMMENTS
+
     override fun getStringLiteralElements(): TokenSet = STRINGS
+
     override fun getWhitespaceTokens(): TokenSet = WHITESPACES
 
-    override fun createElement(node: ASTNode): PsiElement =
-        AblElementFactory.createElement(node)
+    override fun createElement(node: ASTNode): PsiElement = AblElementFactory.createElement(node)
 
-    override fun createFile(viewProvider: FileViewProvider): PsiFile =
-        AblFile(viewProvider)
+    override fun createFile(viewProvider: FileViewProvider): PsiFile = AblFile(viewProvider)
 }

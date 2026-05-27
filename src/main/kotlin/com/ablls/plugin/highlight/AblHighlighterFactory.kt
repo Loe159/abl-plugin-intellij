@@ -10,6 +10,6 @@ import com.intellij.openapi.vfs.VirtualFile
 class AblHighlighterFactory : SyntaxHighlighterFactory() {
     override fun getSyntaxHighlighter(
         project: Project?,
-        virtualFile: VirtualFile?
+        virtualFile: VirtualFile?,
     ): SyntaxHighlighter = AblSyntaxHighlighter()
 }

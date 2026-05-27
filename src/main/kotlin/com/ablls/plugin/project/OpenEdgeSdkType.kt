@@ -17,21 +17,25 @@ import java.io.File
  * Le plugin valide la présence du binaire client OE et extrait la version.
  */
 class OpenEdgeSdkType : SdkType("OpenEdge ABL") {
-
     companion object {
         const val ID = "OpenEdge ABL"
 
         @JvmStatic
-        fun getInstance(): OpenEdgeSdkType =
-            SdkType.findInstance(OpenEdgeSdkType::class.java)
+        fun getInstance(): OpenEdgeSdkType = SdkType.findInstance(OpenEdgeSdkType::class.java)
 
-        private val OE_BINARIES = listOf(
-            "bin/_progres.exe",   // Windows, client caractère (debug)
-            "bin/prowin.exe",     // Windows, client GUI
-            "bin/prowin32.exe",   // Windows, client GUI 32-bit
-            "bin/_progres",       // Unix/Linux/macOS
-            "bin/mpro",           // Unix, client batch
-        )
+        private val OE_BINARIES =
+            listOf(
+                // Windows, client caractère (debug)
+                "bin/_progres.exe",
+                // Windows, client GUI
+                "bin/prowin.exe",
+                // Windows, client GUI 32-bit
+                "bin/prowin32.exe",
+                // Unix/Linux/macOS
+                "bin/_progres",
+                // Unix, client batch
+                "bin/mpro",
+            )
     }
 
     // ── Validation ────────────────────────────────────────────────────────────
@@ -43,8 +47,9 @@ class OpenEdgeSdkType : SdkType("OpenEdge ABL") {
 
     // ── Version ───────────────────────────────────────────────────────────────
 
-    override fun getVersionString(sdkHome: String): String? =
-        parseVersionFile(sdkHome) ?: detectVersionFromBinary(sdkHome)
+    override fun getVersionString(sdkHome: String): String? {
+        return parseVersionFile(sdkHome) ?: detectVersionFromBinary(sdkHome)
+    }
 
     /**
      * Lit `$DLC/version` — fichier texte présent dans toutes les installations OE.
@@ -63,43 +68,51 @@ class OpenEdgeSdkType : SdkType("OpenEdge ABL") {
      * Lent — utilisé seulement en dernier recours.
      */
     private fun detectVersionFromBinary(sdkHome: String): String? {
-        val binary = OE_BINARIES
-            .map { File(sdkHome, it) }
-            .firstOrNull { it.exists() }
-            ?: return null
+        val binary =
+            OE_BINARIES
+                .map { File(sdkHome, it) }
+                .firstOrNull { it.exists() }
+                ?: return null
         return try {
-            val output = ProcessBuilder(binary.absolutePath, "-version")
-                .redirectErrorStream(true)
-                .start()
-                .inputStream
-                .bufferedReader()
-                .readText()
+            val output =
+                ProcessBuilder(binary.absolutePath, "-version")
+                    .redirectErrorStream(true)
+                    .start()
+                    .inputStream
+                    .bufferedReader()
+                    .readText()
             Regex("""[\d]+\.[\d]+""").find(output)?.value?.let { "OpenEdge $it" }
-        } catch (_: Exception) { null }
+        } catch (_: Exception) {
+            null
+        }
     }
 
     // ── Suggestions ───────────────────────────────────────────────────────────
 
     override fun suggestHomePath(): String? {
         val isWindows = System.getProperty("os.name").lowercase().contains("win")
-        val candidates = if (isWindows) {
-            listOf(
-                "C:\\Progress\\OpenEdge",
-                "C:\\OpenEdge",
-                System.getenv("DLC") ?: "",
-            )
-        } else {
-            listOf(
-                "/usr/dlc",
-                "/opt/openedge",
-                System.getenv("DLC") ?: "",
-            )
-        }
+        val candidates =
+            if (isWindows) {
+                listOf(
+                    "C:\\Progress\\OpenEdge",
+                    "C:\\OpenEdge",
+                    System.getenv("DLC") ?: "",
+                )
+            } else {
+                listOf(
+                    "/usr/dlc",
+                    "/opt/openedge",
+                    System.getenv("DLC") ?: "",
+                )
+            }
         return candidates.firstOrNull { it.isNotBlank() && File(it).exists() }
             ?: if (isWindows) "C:\\Progress\\OpenEdge" else "/usr/dlc"
     }
 
-    override fun suggestSdkName(currentName: String?, sdkHome: String): String {
+    override fun suggestSdkName(
+        currentName: String?,
+        sdkHome: String,
+    ): String {
         val version = getVersionString(sdkHome) ?: "OpenEdge"
         return version
     }
@@ -114,17 +127,19 @@ class OpenEdgeSdkType : SdkType("OpenEdge ABL") {
 
     override fun createAdditionalDataConfigurable(
         sdkModel: SdkModel,
-        sdkModificator: SdkModificator
+        sdkModificator: SdkModificator,
     ): AdditionalDataConfigurable? = null
 
-    override fun saveAdditionalData(additionalData: SdkAdditionalData, additional: Element) {}
+    override fun saveAdditionalData(
+        additionalData: SdkAdditionalData,
+        additional: Element,
+    ) {}
 
     // ── Racines (pas de sources/classes OE à indexer) ─────────────────────────
 
     override fun setupSdkPaths(sdk: Sdk) {}
 
-    override fun getDefaultDocumentationUrl(sdk: Sdk): String =
-        "https://docs.progress.com/"
+    override fun getDefaultDocumentationUrl(sdk: Sdk): String = "https://docs.progress.com/"
 }
 
 // ── Utilitaire : résoudre le DLC depuis le SDK projet ────────────────────────
@@ -134,8 +149,9 @@ class OpenEdgeSdkType : SdkType("OpenEdge ABL") {
  * Utilisé par [AblRunState.resolveDlc] comme source de DLC de plus haute priorité.
  */
 fun resolveOpenEdgeSdkHome(project: com.intellij.openapi.project.Project): String? {
-    val sdk = com.intellij.openapi.roots.ProjectRootManager.getInstance(project).projectSdk
-        ?: return null
+    val sdk =
+        com.intellij.openapi.roots.ProjectRootManager.getInstance(project).projectSdk
+            ?: return null
     if (sdk.sdkType !is OpenEdgeSdkType) return null
     return sdk.homePath?.takeIf { it.isNotBlank() }
 }

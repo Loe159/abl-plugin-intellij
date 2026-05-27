@@ -3,7 +3,6 @@ package com.ablls.plugin.core
 import org.prorefactor.core.JPNode
 import org.prorefactor.treeparser.TreeParserSymbolScope
 
-
 /**
  * Résultat de l'analyse sémantique complète via [ParseUnit.treeParser01].
  *
@@ -21,7 +20,7 @@ class AblSemanticResult(
     val topNode: JPNode?,
     val rootScope: TreeParserSymbolScope?,
     val syntaxErrors: List<SyntaxError>,
-    val uri: String
+    val uri: String,
 ) {
     val hasTree: Boolean get() = topNode != null
 

@@ -1,8 +1,8 @@
 package com.ablls.plugin.xref
 
+import org.w3c.dom.Element
 import java.io.File
 import javax.xml.parsers.DocumentBuilderFactory
-import org.w3c.dom.Element
 
 /**
  * Parse les fichiers .xref.xml générés par le compilateur OpenEdge.
@@ -15,7 +15,6 @@ import org.w3c.dom.Element
  *   </XREF>
  */
 object XrefParser {
-
     fun parse(file: File): XrefFile {
         val doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(file)
         val root = doc.documentElement
@@ -29,12 +28,13 @@ object XrefParser {
             val type = runCatching { XrefType.valueOf(typeStr) }.getOrDefault(XrefType.UNKNOWN)
             if (type == XrefType.UNKNOWN) continue
 
-            records += XrefRecord(
-                type       = type,
-                objectName = el.getAttribute("ObjectIdentifier"),
-                line       = el.getAttribute("LineNumber").toIntOrNull() ?: 0,
-                detail     = el.getAttribute("Detail")
-            )
+            records +=
+                XrefRecord(
+                    type = type,
+                    objectName = el.getAttribute("ObjectIdentifier"),
+                    line = el.getAttribute("LineNumber").toIntOrNull() ?: 0,
+                    detail = el.getAttribute("Detail"),
+                )
         }
 
         // Essayer aussi le format Source/Reference imbriqué
@@ -48,12 +48,13 @@ object XrefParser {
                     val typeStr = el.getAttribute("ReferenceType").uppercase()
                     val type = runCatching { XrefType.valueOf(typeStr) }.getOrDefault(XrefType.UNKNOWN)
                     if (type == XrefType.UNKNOWN) continue
-                    records += XrefRecord(
-                        type       = type,
-                        objectName = el.getAttribute("ObjectIdentifier"),
-                        line       = el.getAttribute("LineNumber").toIntOrNull() ?: 0,
-                        detail     = el.getAttribute("Detail")
-                    )
+                    records +=
+                        XrefRecord(
+                            type = type,
+                            objectName = el.getAttribute("ObjectIdentifier"),
+                            line = el.getAttribute("LineNumber").toIntOrNull() ?: 0,
+                            detail = el.getAttribute("Detail"),
+                        )
                 }
             }
         }

@@ -1,6 +1,8 @@
 package com.ablls.plugin.run
 
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
@@ -10,8 +12,7 @@ import org.junit.Test
  * Ils vérifient notamment les règles sur le flag -b et -debugReady.
  */
 class AblRunStateTest {
-
-    private val exe  = "D:/dlc/bin/_progres.exe"
+    private val exe = "D:/dlc/bin/_progres.exe"
     private val prog = "D:/ws/test.p"
 
     // ── Règles sur -b ──────────────────────────────────────────────────────────
@@ -62,16 +63,20 @@ class AblRunStateTest {
     fun `-b is inserted at index 1 (before -p) in normal mode`() {
         val args = AblRunState.buildArgList(exe, prog, batchMode = true, forDebug = false, debugPort = 0)
         // Ordre attendu : [exe, -b, -p, file]
-        assertEquals(exe, args[0]); assertEquals("-b", args[1])
-        assertEquals("-p", args[2]); assertEquals(prog, args[3])
+        assertEquals(exe, args[0])
+        assertEquals("-b", args[1])
+        assertEquals("-p", args[2])
+        assertEquals(prog, args[3])
     }
 
     @Test
     fun `-b is inserted at index 1 (before -p) in debug mode`() {
         val args = AblRunState.buildArgList(exe, prog, batchMode = true, forDebug = true, debugPort = 3075)
         // Ordre attendu : [exe, -b, -p, file, -debugReady, 3075]
-        assertEquals(exe, args[0]); assertEquals("-b", args[1])
-        assertEquals("-p", args[2]); assertEquals(prog, args[3])
+        assertEquals(exe, args[0])
+        assertEquals("-b", args[1])
+        assertEquals("-p", args[2])
+        assertEquals(prog, args[3])
     }
 
     // ── Règles sur -debugReady ─────────────────────────────────────────────────
@@ -135,14 +140,16 @@ class AblRunStateTest {
 
     @Test
     fun `full debug invocation has correct args`() {
-        val args = AblRunState.buildArgList(
-            executable = exe,
-            programFile = prog,
-            batchMode = true,   // -b présent même en debug (requis pour headless)
-            forDebug = true,
-            debugPort = 3075,
-            programParam = ""
-        )
+        val args =
+            AblRunState.buildArgList(
+                executable = exe,
+                programFile = prog,
+                // -b présent même en debug (requis pour headless)
+                batchMode = true,
+                forDebug = true,
+                debugPort = 3075,
+                programParam = "",
+            )
         // exe -b -p prog -debugReady 3075
         assertEquals(exe, args[0])
         assertTrue("-b présent en debug headless", args.contains("-b"))
@@ -154,14 +161,15 @@ class AblRunStateTest {
 
     @Test
     fun `full run invocation has correct args`() {
-        val args = AblRunState.buildArgList(
-            executable = exe,
-            programFile = prog,
-            batchMode = true,
-            forDebug = false,
-            debugPort = 0,
-            programParam = "param1"
-        )
+        val args =
+            AblRunState.buildArgList(
+                executable = exe,
+                programFile = prog,
+                batchMode = true,
+                forDebug = false,
+                debugPort = 0,
+                programParam = "param1",
+            )
         // exe -b -p prog -param param1
         assertTrue("-b présent", args.contains("-b"))
         assertFalse("-debugReady absent", args.contains("-debugReady"))

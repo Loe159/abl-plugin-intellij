@@ -2,7 +2,9 @@ package com.ablls.plugin.inspections
 
 import com.ablls.plugin.core.AblProjectAnalysisService
 import com.ablls.plugin.language.AblLanguage
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.LocalInspectionTool
+import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Document
 import com.intellij.psi.PsiDocumentManager
@@ -31,33 +33,41 @@ import org.prorefactor.treeparser.TreeParserSymbolScope
  * Niveau : WEAK_WARNING (désactivé par défaut — les conventions varient par équipe).
  */
 class AblNamingConventionInspection : LocalInspectionTool() {
+    override fun getDisplayName() = "Variable name does not follow ABL naming conventions"
 
-    override fun getDisplayName()      = "Variable name does not follow ABL naming conventions"
-    override fun getShortName()        = "AblNamingConvention"
+    override fun getShortName() = "AblNamingConvention"
+
     override fun getGroupDisplayName() = "ABL Best Practices"
 
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
+    override fun buildVisitor(
+        holder: ProblemsHolder,
+        isOnTheFly: Boolean,
+    ): PsiElementVisitor =
         object : PsiElementVisitor() {
             override fun visitFile(file: PsiFile) {
                 if (file.language != AblLanguage) return
-                val uri     = file.virtualFile?.url ?: return
+                val uri = file.virtualFile?.url ?: return
                 val service = file.project.service<AblProjectAnalysisService>()
-                val doc     = PsiDocumentManager.getInstance(file.project).getDocument(file) ?: return
+                val doc = PsiDocumentManager.getInstance(file.project).getDocument(file) ?: return
 
-                val semantic = try {
-                    service.analyzeFileSemantic(file.text, uri)
-                } catch (_: Exception) { null }
+                val semantic =
+                    try {
+                        service.analyzeFileSemantic(file.text, uri)
+                    } catch (_: Exception) {
+                        null
+                    }
                 val scope = semantic?.rootScope ?: return
 
                 checkScope(scope, holder, file, doc)
             }
         }
 
+    @Suppress("CyclomaticComplexMethod")
     private fun checkScope(
         scope: TreeParserSymbolScope,
         holder: ProblemsHolder,
         file: PsiFile,
-        doc: Document
+        doc: Document,
     ) {
         for (variable in runCatching { scope.variables }.getOrNull() ?: emptyList()) {
             val name = variable.name.takeIf { it.isNotBlank() } ?: continue
@@ -84,7 +94,7 @@ class AblNamingConventionInspection : LocalInspectionTool() {
                 "Variable '$name' of type $dataType should start with '$suggestedPrefix' " +
                     "(convention: ${expectedPrefix.joinToString("/") { "'$it'" }})",
                 ProblemHighlightType.WEAK_WARNING,
-                range
+                range,
             )
         }
 
@@ -94,21 +104,22 @@ class AblNamingConventionInspection : LocalInspectionTool() {
     }
 
     companion object {
-        private val EXPECTED_PREFIXES: Map<String, List<String>> = mapOf(
-            "INTEGER"      to listOf("i", "n"),
-            "INT64"        to listOf("i", "n"),
-            "CHARACTER"    to listOf("c", "s"),
-            "LONGCHAR"     to listOf("lc", "c"),
-            "LOGICAL"      to listOf("l", "b"),
-            "DECIMAL"      to listOf("d", "f"),
-            "DATE"         to listOf("d", "dt"),
-            "DATETIME"     to listOf("dt"),
-            "DATETIME-TZ"  to listOf("dt", "dtz"),
-            "HANDLE"       to listOf("h"),
-            "RAW"          to listOf("r"),
-            "RECID"        to listOf("r"),
-            "ROWID"        to listOf("ri"),
-        )
+        private val EXPECTED_PREFIXES: Map<String, List<String>> =
+            mapOf(
+                "INTEGER" to listOf("i", "n"),
+                "INT64" to listOf("i", "n"),
+                "CHARACTER" to listOf("c", "s"),
+                "LONGCHAR" to listOf("lc", "c"),
+                "LOGICAL" to listOf("l", "b"),
+                "DECIMAL" to listOf("d", "f"),
+                "DATE" to listOf("d", "dt"),
+                "DATETIME" to listOf("dt"),
+                "DATETIME-TZ" to listOf("dt", "dtz"),
+                "HANDLE" to listOf("h"),
+                "RAW" to listOf("r"),
+                "RECID" to listOf("r"),
+                "ROWID" to listOf("ri"),
+            )
 
         private val GLOBAL_PREFIXES = listOf("g_", "gi", "gc", "gl", "gd", "gh")
     }

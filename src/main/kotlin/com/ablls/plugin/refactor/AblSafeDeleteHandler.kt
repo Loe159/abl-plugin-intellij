@@ -5,13 +5,10 @@ import com.ablls.plugin.core.AblSymbol
 import com.ablls.plugin.language.AblLanguage
 import com.intellij.lang.refactoring.RefactoringSupportProvider
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
-import com.intellij.refactoring.safeDelete.SafeDeleteHandler
 
 /**
  * Support de Safe Delete pour ABL.
@@ -23,12 +20,9 @@ import com.intellij.refactoring.safeDelete.SafeDeleteHandler
  * Safe Delete dans le menu contextuel ABL.
  */
 class AblRefactoringSupportProvider : RefactoringSupportProvider() {
+    override fun isAvailable(context: PsiElement): Boolean = context.language == AblLanguage
 
-    override fun isAvailable(context: PsiElement): Boolean =
-        context.language == AblLanguage
-
-    override fun isSafeDeleteAvailable(element: PsiElement): Boolean =
-        element.language == AblLanguage
+    override fun isSafeDeleteAvailable(element: PsiElement): Boolean = element.language == AblLanguage
 }
 
 /**
@@ -41,13 +35,12 @@ class AblRefactoringSupportProvider : RefactoringSupportProvider() {
 class AblSafeDeleteAction : com.intellij.openapi.actionSystem.AnAction(
     "ABL Safe Delete",
     "Delete symbol after checking for usages in project",
-    com.intellij.icons.AllIcons.Actions.GC
+    com.intellij.icons.AllIcons.Actions.GC,
 ) {
-
     override fun actionPerformed(e: com.intellij.openapi.actionSystem.AnActionEvent) {
         val project = e.project ?: return
-        val editor  = e.getData(CommonDataKeys.EDITOR) ?: return
-        val file    = e.getData(CommonDataKeys.PSI_FILE) ?: return
+        val editor = e.getData(CommonDataKeys.EDITOR) ?: return
+        val file = e.getData(CommonDataKeys.PSI_FILE) ?: return
         if (file.language != AblLanguage) return
 
         val offset = editor.caretModel.offset
@@ -59,11 +52,12 @@ class AblSafeDeleteAction : com.intellij.openapi.actionSystem.AnAction(
 
         // Chercher les usages dans l'index
         val definitions = service.symbolIndex.findByName(symbolName, uri)
-        val usages = service.symbolIndex.allSymbols()
-            .filter { sym ->
-                sym.kind == AblSymbol.Kind.UNKNOWN &&
-                sym.name.equals(symbolName, ignoreCase = true)
-            }
+        val usages =
+            service.symbolIndex.allSymbols()
+                .filter { sym ->
+                    sym.kind == AblSymbol.Kind.UNKNOWN &&
+                        sym.name.equals(symbolName, ignoreCase = true)
+                }
 
         // Compter les occurrences dans le token stream
         val parseResult = service.analyzeFile(file.text, uri)
@@ -78,26 +72,28 @@ class AblSafeDeleteAction : com.intellij.openapi.actionSystem.AnAction(
             }
         }
 
-        val message = buildString {
-            append("Symbol '${symbolName}'")
-            if (definitions.isNotEmpty()) {
-                append(" is defined in ${definitions.size} location(s).\n")
+        val message =
+            buildString {
+                append("Symbol '$symbolName'")
+                if (definitions.isNotEmpty()) {
+                    append(" is defined in ${definitions.size} location(s).\n")
+                }
+                append("Found $refCount reference(s) in the current file.")
+                if (refCount > 1) {
+                    append("\n\nAre you sure you want to delete it?")
+                }
             }
-            append("Found $refCount reference(s) in the current file.")
-            if (refCount > 1) {
-                append("\n\nAre you sure you want to delete it?")
-            }
-        }
 
-        val choice = Messages.showYesNoCancelDialog(
-            project,
-            message,
-            "ABL Safe Delete",
-            "Delete",
-            "Show Usages",
-            "Cancel",
-            com.intellij.icons.AllIcons.General.WarningDialog
-        )
+        val choice =
+            Messages.showYesNoCancelDialog(
+                project,
+                message,
+                "ABL Safe Delete",
+                "Delete",
+                "Show Usages",
+                "Cancel",
+                com.intellij.icons.AllIcons.General.WarningDialog,
+            )
 
         when (choice) {
             Messages.YES -> {
@@ -112,8 +108,9 @@ class AblSafeDeleteAction : com.intellij.openapi.actionSystem.AnAction(
             }
             Messages.NO -> {
                 // Show usages — déclenche le Find Usages standard via l'action
-                val action = com.intellij.openapi.actionSystem.ActionManager.getInstance()
-                    .getAction("FindUsages")
+                val action =
+                    com.intellij.openapi.actionSystem.ActionManager.getInstance()
+                        .getAction("FindUsages")
                 action?.actionPerformed(e)
             }
         }

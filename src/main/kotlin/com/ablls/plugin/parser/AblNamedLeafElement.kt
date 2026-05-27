@@ -23,14 +23,14 @@ import com.intellij.psi.tree.IElementType
  * intercepte Shift+F6 en premier). Pour utiliser le RenameDialog natif, désactiver
  * [AblRenameHandler] dans plugin.xml.
  */
-class AblNamedLeafElement(type: IElementType, text: CharSequence)
-    : LeafPsiElement(type, text), PsiNamedElement {
-
+class AblNamedLeafElement(type: IElementType, text: CharSequence) :
+    LeafPsiElement(type, text), PsiNamedElement {
     override fun getName(): String = this.text
 
     override fun setName(name: String): PsiElement {
-        val doc = PsiDocumentManager.getInstance(project).getDocument(containingFile)
-            ?: return this
+        val doc =
+            PsiDocumentManager.getInstance(project).getDocument(containingFile)
+                ?: return this
         WriteCommandAction.runWriteCommandAction(project) {
             doc.replaceString(textRange.startOffset, textRange.endOffset, name)
             PsiDocumentManager.getInstance(project).commitDocument(doc)

@@ -2,7 +2,11 @@ package com.ablls.plugin.inspections
 
 import com.ablls.plugin.core.AblProjectAnalysisService
 import com.ablls.plugin.language.AblLanguage
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.LocalInspectionTool
+import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
@@ -24,25 +28,30 @@ import org.prorefactor.core.ABLNodeType
  * — CODE_BLOCK est donc un fils direct du nœud CATCH.
  */
 class AblEmptyCatchInspection : LocalInspectionTool() {
+    override fun getDisplayName() = "Empty or return-only CATCH block"
 
-    override fun getDisplayName()      = "Empty or return-only CATCH block"
-    override fun getShortName()        = "AblEmptyCatch"
+    override fun getShortName() = "AblEmptyCatch"
+
     override fun getGroupDisplayName() = "ABL Best Practices"
 
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
+    override fun buildVisitor(
+        holder: ProblemsHolder,
+        isOnTheFly: Boolean,
+    ): PsiElementVisitor =
         object : PsiElementVisitor() {
             override fun visitFile(file: PsiFile) {
                 if (file.language != AblLanguage) return
-                val uri     = file.virtualFile?.url ?: return
+                val uri = file.virtualFile?.url ?: return
                 val service = file.project.service<AblProjectAnalysisService>()
-                val result  = service.analyzeFile(file.text, uri)
+                val result = service.analyzeFile(file.text, uri)
                 val topNode = result.topNode ?: return
-                val doc     = PsiDocumentManager.getInstance(file.project).getDocument(file) ?: return
+                val doc = PsiDocumentManager.getInstance(file.project).getDocument(file) ?: return
 
                 for (catchNode in topNode.queryStateHead(ABLNodeType.CATCH)) {
                     if (catchNode.hasProparseDirective("NOANALYSIS")) continue
-                    val codeBlock = catchNode.directChildren.find { it.nodeType == ABLNodeType.CODE_BLOCK }
-                        ?: continue
+                    val codeBlock =
+                        catchNode.directChildren.find { it.nodeType == ABLNodeType.CODE_BLOCK }
+                            ?: continue
 
                     val stmts = codeBlock.queryStateHead()
                     val isOnlyReturn = stmts.size == 1 && stmts[0].nodeType == ABLNodeType.RETURN
@@ -54,7 +63,7 @@ class AblEmptyCatchInspection : LocalInspectionTool() {
                             ProblemHighlightType.WARNING,
                             range,
                             AddCatchLoggingFix(catchNode.line),
-                            AddCatchRethrowFix(catchNode.line)
+                            AddCatchRethrowFix(catchNode.line),
                         )
                     }
                 }
@@ -68,9 +77,12 @@ class AblEmptyCatchInspection : LocalInspectionTool() {
 private class AddCatchLoggingFix(private val catchLine: Int) : LocalQuickFix {
     override fun getFamilyName() = "Add error logging (MESSAGE e:GetMessage(1))"
 
-    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-        val file  = descriptor.psiElement as? PsiFile ?: return
-        val doc   = PsiDocumentManager.getInstance(project).getDocument(file) ?: return
+    override fun applyFix(
+        project: Project,
+        descriptor: ProblemDescriptor,
+    ) {
+        val file = descriptor.psiElement as? PsiFile ?: return
+        val doc = PsiDocumentManager.getInstance(project).getDocument(file) ?: return
         insertAfterCatchColon(doc, catchLine, "    MESSAGE e:GetMessage(1) VIEW-AS ALERT-BOX.")
     }
 }
@@ -79,9 +91,12 @@ private class AddCatchLoggingFix(private val catchLine: Int) : LocalQuickFix {
 private class AddCatchRethrowFix(private val catchLine: Int) : LocalQuickFix {
     override fun getFamilyName() = "Re-throw error (UNDO, THROW e.)"
 
-    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+    override fun applyFix(
+        project: Project,
+        descriptor: ProblemDescriptor,
+    ) {
         val file = descriptor.psiElement as? PsiFile ?: return
-        val doc  = PsiDocumentManager.getInstance(project).getDocument(file) ?: return
+        val doc = PsiDocumentManager.getInstance(project).getDocument(file) ?: return
         insertAfterCatchColon(doc, catchLine, "    UNDO, THROW e.")
     }
 }
@@ -90,7 +105,7 @@ private class AddCatchRethrowFix(private val catchLine: Int) : LocalQuickFix {
 private fun insertAfterCatchColon(
     doc: com.intellij.openapi.editor.Document,
     catchLine: Int,
-    text: String
+    text: String,
 ) {
     val line = (catchLine - 1).coerceIn(0, doc.lineCount - 1)
     val lineEnd = if (line + 1 < doc.lineCount) doc.getLineStartOffset(line + 1) else doc.textLength

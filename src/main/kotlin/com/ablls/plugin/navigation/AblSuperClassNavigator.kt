@@ -3,7 +3,6 @@ package com.ablls.plugin.navigation
 import com.ablls.plugin.core.AblProjectAnalysisService
 import com.ablls.plugin.core.AblSymbol
 import com.ablls.plugin.language.AblLanguage
-import com.intellij.codeInsight.navigation.actions.GotoSuperAction
 import com.intellij.lang.LanguageCodeInsightActionHandler
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
@@ -25,21 +24,31 @@ import com.intellij.psi.PsiFile
  *   3. Extraire le nom de la super-classe et naviguer vers son symbole.
  */
 class AblSuperClassNavigator : LanguageCodeInsightActionHandler {
+    override fun isValidFor(
+        editor: Editor,
+        file: PsiFile,
+    ): Boolean = file.language == AblLanguage && findSuperClassName(file) != null
 
-    override fun isValidFor(editor: Editor, file: PsiFile): Boolean =
-        file.language == AblLanguage && findSuperClassName(file) != null
-
-    override fun invoke(project: Project, editor: Editor, file: PsiFile) {
+    override fun invoke(
+        project: Project,
+        editor: Editor,
+        file: PsiFile,
+    ) {
         val superName = findSuperClassName(file) ?: return
-        val service   = project.service<AblProjectAnalysisService>()
+        val service = project.service<AblProjectAnalysisService>()
 
         // Priorité 1 : résolution depuis l'index (INHERITS stocké dans dataType)
-        val symbol = service.symbolIndex.findByName(superName, file.virtualFile?.url ?: "")
-            .firstOrNull { it.kind == AblSymbol.Kind.CLASS }
-            ?: service.symbolIndex.allSymbols()
-                .firstOrNull { it.kind == AblSymbol.Kind.CLASS &&
-                    (it.name.equals(superName, ignoreCase = true) ||
-                     it.name.endsWith(".$superName", ignoreCase = true)) }
+        val symbol =
+            service.symbolIndex.findByName(superName, file.virtualFile?.url ?: "")
+                .firstOrNull { it.kind == AblSymbol.Kind.CLASS }
+                ?: service.symbolIndex.allSymbols()
+                    .firstOrNull {
+                        it.kind == AblSymbol.Kind.CLASS &&
+                            (
+                                it.name.equals(superName, ignoreCase = true) ||
+                                    it.name.endsWith(".$superName", ignoreCase = true)
+                            )
+                    }
 
         if (symbol != null) navigateTo(project, symbol)
     }
@@ -54,9 +63,10 @@ class AblSuperClassNavigator : LanguageCodeInsightActionHandler {
         fun findSuperClassName(file: PsiFile): String? {
             // Priorité 1 : lire depuis l'index (AblSymbolCollector encode INHERITS dans dataType)
             val service = file.project.service<AblProjectAnalysisService>()
-            val uri     = file.virtualFile?.url ?: return null
-            val classSym = service.symbolIndex.getSymbolsForFile(uri)
-                .firstOrNull { it.kind == AblSymbol.Kind.CLASS }
+            val uri = file.virtualFile?.url ?: return null
+            val classSym =
+                service.symbolIndex.getSymbolsForFile(uri)
+                    .firstOrNull { it.kind == AblSymbol.Kind.CLASS }
             if (classSym != null) {
                 val fromIndex = extractInherits(classSym.dataType)
                 if (fromIndex != null) return fromIndex
@@ -64,16 +74,20 @@ class AblSuperClassNavigator : LanguageCodeInsightActionHandler {
 
             // Fallback : scan textuel pour les fichiers non encore indexés
             val text = file.text
-            val inheritsIdx = text.indexOf("INHERITS", ignoreCase = true)
-                .takeIf { it >= 0 } ?: text.indexOf("IMPLEMENTS", ignoreCase = true)
-                .takeIf { it >= 0 } ?: return null
+            val inheritsIdx =
+                text.indexOf("INHERITS", ignoreCase = true)
+                    .takeIf { it >= 0 } ?: text.indexOf("IMPLEMENTS", ignoreCase = true)
+                    .takeIf { it >= 0 } ?: return null
             val afterKeyword = text.substring(inheritsIdx).substringAfter(" ").trimStart()
             return afterKeyword.takeWhile { it.isLetterOrDigit() || it == '.' || it == '-' || it == '_' }
                 .takeIf { it.isNotBlank() }
         }
 
         // Kept for backward compat with AblSuperClassNavigator.Companion.findSuperClassName(editor, file)
-        fun findSuperClassName(editor: Editor, file: PsiFile): String? = findSuperClassName(file)
+        fun findSuperClassName(
+            editor: Editor,
+            file: PsiFile,
+        ): String? = findSuperClassName(file)
 
         private fun extractInherits(dataType: String?): String? {
             dataType ?: return null
@@ -85,11 +99,14 @@ class AblSuperClassNavigator : LanguageCodeInsightActionHandler {
                 .takeIf { it.isNotBlank() }
         }
 
-        fun navigateTo(project: Project, symbol: AblSymbol) {
+        fun navigateTo(
+            project: Project,
+            symbol: AblSymbol,
+        ) {
             val uri = symbol.uri?.takeIf { !it.startsWith("db://") } ?: return
-            val vf  = VirtualFileManager.getInstance().findFileByUrl(uri) ?: return
+            val vf = VirtualFileManager.getInstance().findFileByUrl(uri) ?: return
             val line = (symbol.definitionRange?.startLine ?: 0).coerceAtLeast(0)
-            val col  = (symbol.definitionRange?.startCol  ?: 0).coerceAtLeast(0)
+            val col = (symbol.definitionRange?.startCol ?: 0).coerceAtLeast(0)
             OpenFileDescriptor(project, vf, line, col).navigate(true)
         }
     }

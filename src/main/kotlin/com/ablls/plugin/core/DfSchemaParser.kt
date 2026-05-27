@@ -20,7 +20,6 @@ import java.io.File
  * Les lignes ADD TABLE et ADD FIELD suffisent pour alimenter le [org.prorefactor.core.schema.Schema].
  */
 object DfSchemaParser {
-
     private val LOG = Logger.getInstance(DfSchemaParser::class.java)
 
     private val TABLE_RE = Regex("""^ADD\s+TABLE\s+"([^"]+)"""", RegexOption.IGNORE_CASE)
@@ -31,7 +30,10 @@ object DfSchemaParser {
      *
      * Si le fichier ne peut pas être lu, retourne une base vide — le caller n'échoue pas.
      */
-    fun parse(file: File, logicalName: String): IDatabase {
+    fun parse(
+        file: File,
+        logicalName: String,
+    ): IDatabase {
         val db = Database(logicalName)
         val tables = mutableMapOf<String, Table>()
 
@@ -48,9 +50,9 @@ object DfSchemaParser {
                 }
 
                 FIELD_RE.find(line)?.let { m ->
-                    val fieldName  = m.groupValues[1]
-                    val tableName  = m.groupValues[2]
-                    val typeStr    = m.groupValues[3]
+                    val fieldName = m.groupValues[1]
+                    val tableName = m.groupValues[2]
+                    val typeStr = m.groupValues[3]
                     val table = tables[tableName.uppercase()] ?: return@forEachLine
                     val field = Field(fieldName, table)
                     resolveDataType(typeStr)?.let { dt -> field.setDataType(dt) }

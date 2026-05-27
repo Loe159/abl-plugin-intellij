@@ -26,8 +26,8 @@ class AblExtractProcedureAction : AnAction("Extract ABL PROCEDURE") {
 
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
-        val editor  = e.getData(CommonDataKeys.EDITOR) ?: return
-        val file    = e.getData(CommonDataKeys.PSI_FILE) ?: return
+        val editor = e.getData(CommonDataKeys.EDITOR) ?: return
+        val file = e.getData(CommonDataKeys.PSI_FILE) ?: return
         if (file.language != AblLanguage) return
         if (!intention.startInWriteAction()) {
             intention.invoke(project, editor, file)
@@ -40,7 +40,7 @@ class AblExtractProcedureAction : AnAction("Extract ABL PROCEDURE") {
 
     override fun update(e: AnActionEvent) {
         val editor = e.getData(CommonDataKeys.EDITOR)
-        val file   = e.getData(CommonDataKeys.PSI_FILE)
+        val file = e.getData(CommonDataKeys.PSI_FILE)
         val project = e.project
         e.presentation.isEnabled =
             project != null && editor != null && file?.language == AblLanguage &&
@@ -53,8 +53,8 @@ class AblIntroduceVariableAction : AnAction("Introduce ABL Variable") {
 
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
-        val editor  = e.getData(CommonDataKeys.EDITOR) ?: return
-        val file    = e.getData(CommonDataKeys.PSI_FILE) ?: return
+        val editor = e.getData(CommonDataKeys.EDITOR) ?: return
+        val file = e.getData(CommonDataKeys.PSI_FILE) ?: return
         if (file.language != AblLanguage) return
         com.intellij.openapi.command.WriteCommandAction.runWriteCommandAction(project) {
             intention.invoke(project, editor, file)
@@ -62,8 +62,8 @@ class AblIntroduceVariableAction : AnAction("Introduce ABL Variable") {
     }
 
     override fun update(e: AnActionEvent) {
-        val editor  = e.getData(CommonDataKeys.EDITOR)
-        val file    = e.getData(CommonDataKeys.PSI_FILE)
+        val editor = e.getData(CommonDataKeys.EDITOR)
+        val file = e.getData(CommonDataKeys.PSI_FILE)
         val project = e.project
         e.presentation.isEnabled =
             project != null && editor != null && file?.language == AblLanguage &&
@@ -76,8 +76,8 @@ class AblInlineVariableAction : AnAction("Inline ABL Variable") {
 
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
-        val editor  = e.getData(CommonDataKeys.EDITOR) ?: return
-        val file    = e.getData(CommonDataKeys.PSI_FILE) ?: return
+        val editor = e.getData(CommonDataKeys.EDITOR) ?: return
+        val file = e.getData(CommonDataKeys.PSI_FILE) ?: return
         if (file.language != AblLanguage) return
         com.intellij.openapi.command.WriteCommandAction.runWriteCommandAction(project) {
             intention.invoke(project, editor, file)
@@ -85,8 +85,8 @@ class AblInlineVariableAction : AnAction("Inline ABL Variable") {
     }
 
     override fun update(e: AnActionEvent) {
-        val editor  = e.getData(CommonDataKeys.EDITOR)
-        val file    = e.getData(CommonDataKeys.PSI_FILE)
+        val editor = e.getData(CommonDataKeys.EDITOR)
+        val file = e.getData(CommonDataKeys.PSI_FILE)
         val project = e.project
         e.presentation.isEnabled =
             project != null && editor != null && file?.language == AblLanguage &&
@@ -99,8 +99,8 @@ class AblChangeSignatureAction : AnAction("Change ABL Signature") {
 
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
-        val editor  = e.getData(CommonDataKeys.EDITOR) ?: return
-        val file    = e.getData(CommonDataKeys.PSI_FILE) ?: return
+        val editor = e.getData(CommonDataKeys.EDITOR) ?: return
+        val file = e.getData(CommonDataKeys.PSI_FILE) ?: return
         if (file.language != AblLanguage) return
         com.intellij.openapi.command.WriteCommandAction.runWriteCommandAction(project) {
             intention.invoke(project, editor, file)
@@ -108,8 +108,8 @@ class AblChangeSignatureAction : AnAction("Change ABL Signature") {
     }
 
     override fun update(e: AnActionEvent) {
-        val editor  = e.getData(CommonDataKeys.EDITOR)
-        val file    = e.getData(CommonDataKeys.PSI_FILE)
+        val editor = e.getData(CommonDataKeys.EDITOR)
+        val file = e.getData(CommonDataKeys.PSI_FILE)
         val project = e.project
         e.presentation.isEnabled =
             project != null && editor != null && file?.language == AblLanguage &&

@@ -25,15 +25,18 @@ import com.intellij.psi.PsiFile
  *  - Messages préprocesseur RSSW ({&MESSAGE}) → squiggles jaunes sur la première ligne
  */
 class AblAnnotator : ExternalAnnotator<AblAnnotator.Input, AblAnnotator.AnnotatorResult>() {
-
     data class Input(val content: String, val uri: String, val project: com.intellij.openapi.project.Project)
 
     data class AnnotatorResult(
         val syntaxErrors: List<SyntaxError>,
-        val preprocessorMessages: List<String>
+        val preprocessorMessages: List<String>,
     )
 
-    override fun collectInformation(file: PsiFile, editor: Editor, hasErrors: Boolean): Input? {
+    override fun collectInformation(
+        file: PsiFile,
+        editor: Editor,
+        hasErrors: Boolean,
+    ): Input? {
         if (file.language != AblLanguage) return null
         val uri = file.virtualFile?.url ?: return null
         return Input(file.text, uri, file.project)
@@ -46,11 +49,16 @@ class AblAnnotator : ExternalAnnotator<AblAnnotator.Input, AblAnnotator.Annotato
         return AnnotatorResult(result.syntaxErrors, emptyList())
     }
 
-    override fun apply(file: PsiFile, annotatorResult: AnnotatorResult?, holder: AnnotationHolder) {
+    override fun apply(
+        file: PsiFile,
+        annotatorResult: AnnotatorResult?,
+        holder: AnnotationHolder,
+    ) {
         if (annotatorResult == null) return
 
-        val document = PsiDocumentManager.getInstance(file.project)
-            .getDocument(file) ?: return
+        val document =
+            PsiDocumentManager.getInstance(file.project)
+                .getDocument(file) ?: return
         val docLength = document.textLength
 
         val errors = annotatorResult.syntaxErrors
@@ -62,11 +70,11 @@ class AblAnnotator : ExternalAnnotator<AblAnnotator.Input, AblAnnotator.Annotato
 
         for (error in errorsToShow) {
             val line = error.line.coerceIn(0, document.lineCount - 1)
-            val lineStart  = document.getLineStartOffset(line)
-            val lineEnd    = document.getLineEndOffset(line)
-            val colStart   = (lineStart + error.column).coerceAtMost(lineEnd)
-            val colEnd     = if (colStart < lineEnd) (colStart + 1) else colStart
-            val range      = TextRange(colStart, colEnd.coerceAtMost(docLength))
+            val lineStart = document.getLineStartOffset(line)
+            val lineEnd = document.getLineEndOffset(line)
+            val colStart = (lineStart + error.column).coerceAtMost(lineEnd)
+            val colEnd = if (colStart < lineEnd) (colStart + 1) else colStart
+            val range = TextRange(colStart, colEnd.coerceAtMost(docLength))
 
             holder.newAnnotation(HighlightSeverity.ERROR, error.message)
                 .range(range)
@@ -79,7 +87,7 @@ class AblAnnotator : ExternalAnnotator<AblAnnotator.Input, AblAnnotator.Annotato
             val range = TextRange(0, firstLineEnd.coerceAtMost(docLength).coerceAtLeast(0))
             holder.newAnnotation(
                 HighlightSeverity.WARNING,
-                "${errors.size} erreurs syntaxiques (${errors.size - 20} masquées) — vérifiez le PROPATH dans openedge-project.json"
+                "${errors.size} erreurs syntaxiques (${errors.size - 20} masquées) — vérifiez le PROPATH dans openedge-project.json",
             ).range(range).create()
         }
 

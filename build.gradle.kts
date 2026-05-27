@@ -1,19 +1,21 @@
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
+import org.jetbrains.intellij.platform.gradle.IntelliJPlatformType
 
 plugins {
     id("java")
-    id("org.jetbrains.kotlin.jvm")               version "2.0.0"
+    id("org.jetbrains.kotlin.jvm") version "2.0.0"
     id("org.jetbrains.intellij.platform")
     id("org.jetbrains.kotlin.plugin.serialization") version "2.0.0"
+    id("io.gitlab.arturbosch.detekt") version "1.23.8"
+    id("org.jlleitschuh.gradle.ktlint") version "12.1.2"
 }
 
-group  = providers.gradleProperty("pluginGroup").orElse("com.ablls").get()
+group = providers.gradleProperty("pluginGroup").orElse("com.ablls").get()
 version = providers.gradleProperty("pluginVersion").orElse("1.0.0").get()
 
 kotlin {
     jvmToolchain(17)
 }
-
 
 // ─── Dépendances ─────────────────────────────────────────────────────────────
 dependencies {
@@ -22,7 +24,7 @@ dependencies {
     intellijPlatform {
         // IDE cible
         intellijIdeaCommunity(
-            providers.gradleProperty("platformVersion")
+            providers.gradleProperty("platformVersion"),
         )
 
         // Framework de tests pour les plugins IntelliJ
@@ -80,8 +82,8 @@ intellijPlatform {
         version.set(providers.gradleProperty("pluginVersion"))
 
         ideaVersion {
-            sinceBuild = "232"   // 2023.2
-            untilBuild = provider { null }  // pas de borne supérieure
+            sinceBuild = "241" // 2024.1 minimum (service<T>() API)
+            untilBuild = provider { null } // pas de borne supérieure
         }
     }
 
@@ -98,7 +100,7 @@ intellijPlatform {
 
     pluginVerification {
         ides {
-            recommended()
+            ide(IntelliJPlatformType.IntellijIdeaCommunity, "2024.1")
         }
     }
 }
@@ -106,7 +108,21 @@ intellijPlatform {
 // ─── Kotlin compile options ──────────────────────────────────────────────────
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
     kotlinOptions {
-        jvmTarget       = "17"
+        jvmTarget = "17"
         freeCompilerArgs = listOf("-Xjvm-default=all", "-opt-in=kotlin.RequiresOptIn")
+    }
+}
+
+detekt {
+    buildUponDefaultConfig = true
+    config.setFrom(file("config/detekt/detekt.yml"))
+    baseline = file("config/detekt/baseline.xml")
+}
+
+ktlint {
+    android.set(false)
+    ignoreFailures.set(false)
+    reporters {
+        reporter(org.jlleitschuh.gradle.ktlint.reporter.ReporterType.PLAIN)
     }
 }

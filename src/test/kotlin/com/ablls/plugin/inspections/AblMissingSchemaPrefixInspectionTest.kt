@@ -5,7 +5,6 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import java.io.File
 
 class AblMissingSchemaPrefixInspectionTest : BasePlatformTestCase() {
-
     override fun setUp() {
         super.setUp()
         myFixture.enableInspections(AblMissingSchemaPrefixInspection::class.java)
@@ -22,7 +21,7 @@ class AblMissingSchemaPrefixInspectionTest : BasePlatformTestCase() {
         val basePath = project.basePath ?: return
         File(basePath).mkdirs()
         File(basePath, "openedge-project.json").writeText(
-            """{"databases":[{"logicalName":"sports","database":"/data/sports"},{"logicalName":"empdb","database":"/data/empdb"}]}"""
+            """{"databases":[{"logicalName":"sports","database":"/data/sports"},{"logicalName":"empdb","database":"/data/empdb"}]}""",
         )
         project.getService(OpenEdgeProjectService::class.java).reload()
     }
@@ -33,7 +32,7 @@ class AblMissingSchemaPrefixInspectionTest : BasePlatformTestCase() {
             "test.p",
             // descr omitted — Set join order in the message is non-deterministic
             """FOR EACH <warning>Customer</warning> NO-LOCK:
-END."""
+END.""",
         )
         myFixture.checkHighlighting(true, false, false)
     }

@@ -9,7 +9,10 @@ import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.table.JBTable
 import java.awt.BorderLayout
 import java.io.File
-import javax.swing.*
+import javax.swing.JButton
+import javax.swing.JOptionPane
+import javax.swing.JPanel
+import javax.swing.ListSelectionModel
 import javax.swing.table.DefaultTableModel
 
 /**
@@ -17,10 +20,13 @@ import javax.swing.table.DefaultTableModel
  * Affiche les références XREF d'un fichier .xref.xml en tableau.
  */
 class XrefPanel(private val project: Project) : JPanel(BorderLayout()) {
-
-    private val tableModel = object : DefaultTableModel(arrayOf("Type", "Object", "Line", "Detail"), 0) {
-        override fun isCellEditable(row: Int, col: Int) = false
-    }
+    private val tableModel =
+        object : DefaultTableModel(arrayOf("Type", "Object", "Line", "Detail"), 0) {
+            override fun isCellEditable(
+                row: Int,
+                col: Int,
+            ) = false
+        }
     private val table = JBTable(tableModel)
     private var records: List<XrefRecord> = emptyList()
 
@@ -28,8 +34,10 @@ class XrefPanel(private val project: Project) : JPanel(BorderLayout()) {
         val toolbar = JPanel()
         val fileField = TextFieldWithBrowseButton()
         fileField.addBrowseFolderListener(
-            "Open XREF File", null, project,
-            FileChooserDescriptorFactory.createSingleFileDescriptor("xml")
+            "Open XREF File",
+            null,
+            project,
+            FileChooserDescriptorFactory.createSingleFileDescriptor("xml"),
         )
         val loadBtn = JButton("Load")
         loadBtn.addActionListener {
@@ -40,11 +48,13 @@ class XrefPanel(private val project: Project) : JPanel(BorderLayout()) {
         toolbar.add(loadBtn)
 
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
-        table.addMouseListener(object : java.awt.event.MouseAdapter() {
-            override fun mouseClicked(e: java.awt.event.MouseEvent) {
-                if (e.clickCount == 2) navigateToSelected()
-            }
-        })
+        table.addMouseListener(
+            object : java.awt.event.MouseAdapter() {
+                override fun mouseClicked(e: java.awt.event.MouseEvent) {
+                    if (e.clickCount == 2) navigateToSelected()
+                }
+            },
+        )
 
         add(toolbar, BorderLayout.NORTH)
         add(JBScrollPane(table), BorderLayout.CENTER)
@@ -71,11 +81,12 @@ class XrefPanel(private val project: Project) : JPanel(BorderLayout()) {
 
         // Chercher le fichier source dans le projet
         val basePath = project.basePath ?: return
-        val objName  = record.objectName.replace('.', '/').replace('\\', '/')
+        val objName = record.objectName.replace('.', '/').replace('\\', '/')
         val extensions = listOf(".p", ".cls", ".w", ".i", ".t", "")
         for (ext in extensions) {
-            val vFile = LocalFileSystem.getInstance().findFileByPath("$basePath/$objName$ext")
-                ?: continue
+            val vFile =
+                LocalFileSystem.getInstance().findFileByPath("$basePath/$objName$ext")
+                    ?: continue
             OpenFileDescriptor(project, vFile, record.line - 1, 0).navigate(true)
             return
         }
