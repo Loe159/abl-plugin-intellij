@@ -2,6 +2,7 @@ package com.ablls.plugin.debug
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.net.ServerSocket
@@ -617,4 +618,4 @@ class AblDebugConnectionTest {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-private fun findFreePort(): Int = java.net.ServerSocket(0).use { it.localPort }
+private fun findFreePort(): Int = ServerSocket(0).use { it.localPort }
