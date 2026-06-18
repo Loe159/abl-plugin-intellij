@@ -34,7 +34,11 @@ def git(repo: Path, *args: str) -> str:
     ).stdout.strip()
 
 
-def fixture(root: Path, protected: bool = False) -> dict[str, object]:
+def fixture(
+    root: Path,
+    protected: bool = False,
+    changed: bool = True,
+) -> dict[str, object]:
     workspace = root / "workspace"
     workspace.mkdir()
     git(workspace, "init")
@@ -48,7 +52,7 @@ def fixture(root: Path, protected: bool = False) -> dict[str, object]:
         target = workspace / ".agent" / "blocked.txt"
         target.parent.mkdir()
         target.write_text("blocked\n", encoding="utf-8")
-    else:
+    elif changed:
         (workspace / "app.txt").write_text("base\nchange\n", encoding="utf-8")
     workspace = workspace.resolve()
     identity = {
@@ -106,6 +110,10 @@ def fixture(root: Path, protected: bool = False) -> dict[str, object]:
     }
 
 
+def empty_fixture(root: Path) -> dict[str, object]:
+    return fixture(root, changed=False)
+
+
 def validate(item: dict[str, object]) -> dict[str, object]:
     return validator.validate(
         REPO_ROOT,
@@ -137,6 +145,15 @@ class ValidateImplementationPatchReceiptTest(unittest.TestCase):
         self.assertFalse(result["quality_gate"]["completed"])
         for field in validator.FALSE_FIELDS:
             self.assertFalse(result[field])
+
+    def test_empty_patch_receipt_is_valid_but_not_candidate_ready(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            result = validate(empty_fixture(Path(temp_dir)))
+
+        self.assertTrue(result["valid"])
+        self.assertFalse(result["patch_candidate_ready"])
+        self.assertTrue(result["patch_policy_allowed"])
+        self.assertEqual("low", result["risk"])
 
     def test_policy_blocked_patch_receipt_is_valid_but_not_candidate_ready(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -216,21 +233,14 @@ class ValidateImplementationPatchReceiptTest(unittest.TestCase):
     def test_state_change_during_validation_fails_closed(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             item = fixture(Path(temp_dir))
-            original = validator.initialize_portable_run.binding_records
-            calls = 0
-
-            def drifting_bindings(names: list[str]) -> list[dict[str, object]]:
-                nonlocal calls
-                calls += 1
-                records = original(names)
-                if calls >= 3:
-                    records[0] = {**records[0], "size_bytes": records[0]["size_bytes"] + 1}
-                return records
-
+            snapshot = validator.generate_complete_patch.repository_snapshot(
+                item["workspace"]
+            )
+            changed_snapshot = {**snapshot, "status": snapshot["status"] + b"drift"}
             with mock.patch.object(
-                validator.initialize_portable_run,
-                "binding_records",
-                side_effect=drifting_bindings,
+                validator.generate_complete_patch,
+                "repository_snapshot",
+                side_effect=[snapshot, changed_snapshot],
             ):
                 result = validate(item)
 

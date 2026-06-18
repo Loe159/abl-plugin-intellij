@@ -1473,12 +1473,63 @@ Failures remove both outputs.
 
 `prove_implementation_patch_validation.py` uses disposable Git repositories to
 show that an allowed patch becomes candidate-ready, a protected-path patch
-remains retained but blocked in route `C`, and an invalid result creates no
-artifact. Runner readiness marks
+remains retained but blocked in route `C`, an empty patch remains auditable but
+non-candidate, and an invalid result creates no artifact. Runner readiness marks
 `implementation_patch_post_validation=satisfied` while keeping
 `implementation_quality_gate_execution=missing_evidence`. The receipt records
-the quality gate as required, incomplete, and not passed; it has no independent
-consumer validator yet and authorizes nothing.
+the quality gate as required, incomplete, and not passed.
+
+The receipt-validation increment adds
+`.agent/checks/validate_implementation_patch_receipt.py`. It independently
+revalidates the exact result, expected session, retained patch bytes, current
+worktree match, diff-policy result, risk route, candidate state, receipt
+digest, and trusted bindings. Inputs must be distinct external regular files,
+and any observed state change fails closed.
+
+`prove_implementation_patch_receipt_validation.py` verifies an allowed receipt,
+a valid but policy-blocked route-`C` receipt, a valid empty receipt that cannot
+be candidate-ready, and rejection after patch tampering. Runner readiness marks
+`implementation_patch_receipt_validation=satisfied`. This is current-state
+integrity only: historical producer identity, runner integration, the plugin
+quality gate, agent invocation, approval, and publication remain unproven.
+
+The quality-gate mechanism increment adds
+`.agent/checks/run_implementation_quality_gate.py`. It requires an independently
+valid, nonempty, policy-allowed patch receipt before running the three fixed
+Gradle command groups in offline and no-daemon mode. It reconstructs a bounded
+environment, captures both streams with a fixed limit, stops after the first
+failure, records timeout and cleanup outcomes, and writes a canonical external
+receipt without raw build logs.
+
+`prove_implementation_quality_gate.py` exercises only synthetic capture,
+timeout, and output-limit fixtures. In the current sandbox, `taskkill /T /F`
+returns nonzero and the direct-root fallback reaps the root, so descendant
+cleanup remains unproven. Runner readiness therefore reports
+`implementation_quality_gate_execution=related_evidence_only` and
+initially reported `quality_gate_receipt_validation=missing_evidence`.
+
+A disposable README-only candidate was then executed manually through the
+exact gate on June 18, 2026. Static analysis, tests, and Plugin Verifier all
+passed; the external quality-gate receipt SHA-256 is
+`7b1ffd7408a76818e1c76aa2549fd3408759ff5785358219fc7dea73cd64dbd8`.
+Because the receipt remained external, temporary, and independently
+unvalidated, this rehearsal did not initially satisfy either readiness
+control.
+
+The receipt-validation increment adds
+`.agent/checks/validate_implementation_quality_gate.py`. It revalidates the
+candidate patch chain, exact quality-gate receipt digest, fixed command order,
+fail-fast sequence, runtime bounds, current Gradle cache, and producer
+bindings. It accepts an accurate failed receipt without treating the gate as
+passed and rejects rehashed command substitution.
+
+`prove_implementation_quality_gate_validation.py` verifies passed, failed, and
+tampered synthetic receipts. The retained real receipt
+`7b1ffd7408a76818e1c76aa2549fd3408759ff5785358219fc7dea73cd64dbd8`
+also passes current-state validation. Runner readiness now marks
+`quality_gate_receipt_validation=satisfied` while keeping
+`implementation_quality_gate_execution=related_evidence_only`, because output
+digests without retained logs do not authenticate the historical processes.
 
 ## Open Questions
 

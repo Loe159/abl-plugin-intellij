@@ -18,6 +18,9 @@ import prove_parent_environment_isolation
 import prove_bounded_output_capture
 import prove_implementation_result_validation
 import prove_implementation_patch_validation
+import prove_implementation_patch_receipt_validation
+import prove_implementation_quality_gate
+import prove_implementation_quality_gate_validation
 import prove_wall_clock_timeout
 import prove_windows_process_tree_timeout
 
@@ -40,6 +43,9 @@ SOURCE_IDS = (
     "bounded_output_capture_proof",
     "implementation_result_validation_proof",
     "implementation_patch_validation_proof",
+    "implementation_patch_receipt_validation_proof",
+    "implementation_quality_gate_proof",
+    "implementation_quality_gate_validation_proof",
 )
 SOURCE_CONTRACTS = {
     "local_runner_audit": {
@@ -125,6 +131,44 @@ SOURCE_CONTRACTS = {
             *prove_implementation_patch_validation.EXPECTED_POLICY["unproven_controls"],
         },
     },
+    "implementation_patch_receipt_validation_proof": {
+        "purpose": "implementation_patch_post_validation_receipt_validation_proof",
+        "mode": "enforcement-proof",
+        "completion_field": "proof_complete",
+        "assessment_fields": ("control_assessments",),
+        "expected_ids": {
+            prove_implementation_patch_receipt_validation.EXPECTED_POLICY[
+                "proven_control"
+            ],
+            *prove_implementation_patch_receipt_validation.EXPECTED_POLICY[
+                "unproven_controls"
+            ],
+        },
+    },
+    "implementation_quality_gate_proof": {
+        "purpose": "implementation_quality_gate_execution_mechanism_proof",
+        "mode": "fixture-only",
+        "completion_field": "proof_complete",
+        "assessment_fields": ("control_assessments",),
+        "expected_ids": {
+            prove_implementation_quality_gate.EXPECTED_POLICY["proven_control"],
+            *prove_implementation_quality_gate.EXPECTED_POLICY["unproven_controls"],
+        },
+    },
+    "implementation_quality_gate_validation_proof": {
+        "purpose": "implementation_quality_gate_receipt_validation_proof",
+        "mode": "enforcement-proof",
+        "completion_field": "proof_complete",
+        "assessment_fields": ("control_assessments",),
+        "expected_ids": {
+            prove_implementation_quality_gate_validation.EXPECTED_POLICY[
+                "proven_control"
+            ],
+            *prove_implementation_quality_gate_validation.EXPECTED_POLICY[
+                "unproven_controls"
+            ],
+        },
+    },
 }
 
 EXPECTED_POLICY: dict[str, Any] = {
@@ -143,7 +187,9 @@ EXPECTED_POLICY: dict[str, Any] = {
         "implementation_result_contract_validation",
         "runner_enforced_output_post_validation",
         "implementation_patch_post_validation",
+        "implementation_patch_receipt_validation",
         "implementation_quality_gate_execution",
+        "quality_gate_receipt_validation",
         "tool_allowlist",
     ],
     "satisfaction_rules": {
@@ -224,10 +270,24 @@ EXPECTED_POLICY: dict[str, Any] = {
                 "assessment": "verified_enforcement",
             }
         ],
+        "implementation_patch_receipt_validation": [
+            {
+                "source": "implementation_patch_receipt_validation_proof",
+                "id": "implementation_patch_receipt_validation",
+                "assessment": "verified_enforcement",
+            }
+        ],
         "implementation_quality_gate_execution": [
             {
-                "source": "implementation_patch_validation_proof",
+                "source": "implementation_quality_gate_proof",
                 "id": "implementation_quality_gate_execution",
+                "assessment": "verified_enforcement",
+            }
+        ],
+        "quality_gate_receipt_validation": [
+            {
+                "source": "implementation_quality_gate_validation_proof",
+                "id": "quality_gate_receipt_validation",
                 "assessment": "verified_enforcement",
             }
         ],
@@ -285,7 +345,15 @@ EXPECTED_POLICY: dict[str, Any] = {
         "implementation_result_contract_validation": [],
         "runner_enforced_output_post_validation": [],
         "implementation_patch_post_validation": [],
-        "implementation_quality_gate_execution": [],
+        "implementation_patch_receipt_validation": [],
+        "implementation_quality_gate_execution": [
+            {
+                "source": "implementation_quality_gate_proof",
+                "id": "bounded_quality_gate_execution_fixture",
+                "assessment": "verified_fixture",
+            }
+        ],
+        "quality_gate_receipt_validation": [],
         "tool_allowlist": [
             {
                 "source": "local_runner_audit",
@@ -307,6 +375,12 @@ EXPECTED_POLICY: dict[str, Any] = {
         ".agent/checks/prove_implementation_result_validation.py",
         ".agent/checks/validate_implementation_patch.py",
         ".agent/checks/prove_implementation_patch_validation.py",
+        ".agent/checks/validate_implementation_patch_receipt.py",
+        ".agent/checks/prove_implementation_patch_receipt_validation.py",
+        ".agent/checks/run_implementation_quality_gate.py",
+        ".agent/checks/prove_implementation_quality_gate.py",
+        ".agent/checks/validate_implementation_quality_gate.py",
+        ".agent/checks/prove_implementation_quality_gate_validation.py",
         ".agent/policies/local-runner-audit.json",
         ".agent/policies/disposable-worktree-proof.json",
         ".agent/policies/runner-readiness.json",
@@ -320,6 +394,12 @@ EXPECTED_POLICY: dict[str, Any] = {
         ".agent/schemas/implementation-result.schema.json",
         ".agent/policies/implementation-patch-post-validation.json",
         ".agent/policies/implementation-patch-post-validation-proof.json",
+        ".agent/policies/implementation-patch-post-validation-validation.json",
+        ".agent/policies/implementation-patch-post-validation-validation-proof.json",
+        ".agent/policies/implementation-quality-gate.json",
+        ".agent/policies/implementation-quality-gate-proof.json",
+        ".agent/policies/implementation-quality-gate-validation.json",
+        ".agent/policies/implementation-quality-gate-validation-proof.json",
     ],
 }
 
@@ -441,6 +521,24 @@ def default_sources(repo: Path) -> dict[str, dict[str, Any]]:
             prove_implementation_patch_validation.prove(
                 repo,
                 prove_implementation_patch_validation.load_policy(),
+            )
+        ),
+        "implementation_patch_receipt_validation_proof": (
+            prove_implementation_patch_receipt_validation.prove(
+                repo,
+                prove_implementation_patch_receipt_validation.load_policy(),
+            )
+        ),
+        "implementation_quality_gate_proof": (
+            prove_implementation_quality_gate.prove(
+                repo,
+                prove_implementation_quality_gate.load_policy(),
+            )
+        ),
+        "implementation_quality_gate_validation_proof": (
+            prove_implementation_quality_gate_validation.prove(
+                repo,
+                prove_implementation_quality_gate_validation.load_policy(),
             )
         ),
     }

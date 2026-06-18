@@ -87,8 +87,16 @@ class AssessRunnerReadinessTest(unittest.TestCase):
             statuses["implementation_patch_post_validation"],
         )
         self.assertEqual(
-            "missing_evidence",
+            "satisfied",
+            statuses["implementation_patch_receipt_validation"],
+        )
+        self.assertEqual(
+            "related_evidence_only",
             statuses["implementation_quality_gate_execution"],
+        )
+        self.assertEqual(
+            "satisfied",
+            statuses["quality_gate_receipt_validation"],
         )
         self.assertEqual("missing_evidence", statuses["model_turn_budget"])
         self.assertEqual("missing_evidence", statuses["network_isolation"])

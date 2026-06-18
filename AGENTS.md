@@ -100,6 +100,11 @@ and semantic model.
   the portable implementation-result contract or post-capture validation.
 - Read `docs/agent-guides/implementation-patch-post-validation.md` before
   generating or consuming a patch after an implementation result.
+- Read
+  `docs/agent-guides/implementation-patch-post-validation-validation.md`
+  before trusting a post-validation receipt as current-state evidence.
+- Read `docs/agent-guides/implementation-quality-gate.md` before executing or
+  validating deterministic checks for a candidate implementation patch.
 - Use `.agents/skills/agentic-workflow-pilot/` before extending local
   agentic workflow guardrails, portable-run contracts, or repo-local skills.
 - Use `.agents/skills/proparse-research/` before changing ABL language behavior.
@@ -274,10 +279,35 @@ and semantic model.
   is compatible.
 - Generate and validate a post-implementation patch only with
   `.agent/checks/validate_implementation_patch.py`; candidate-ready still does
-  not mean quality-gate-passed, approved, authorized, or publishable.
+  not mean quality-gate-passed, approved, authorized, or publishable, and an
+  empty patch is never candidate-ready.
 - Prove only the synthetic post-implementation patch fixtures with
   `.agent/checks/prove_implementation_patch_validation.py`; they do not run the
   plugin quality gate, invoke an agent, or validate a real-run receipt.
+- Validate a retained post-implementation patch receipt only with
+  `.agent/checks/validate_implementation_patch_receipt.py`; `valid=true` is
+  current-state integrity evidence, never historical producer proof, quality
+  approval, merge approval, or publication authorization.
+- Prove only the synthetic receipt-validation fixtures with
+  `.agent/checks/prove_implementation_patch_receipt_validation.py`; they do not
+  connect the validator to a runner, run the plugin quality gate, invoke an
+  agent, or authenticate a producer.
+- Run the fixed offline Gradle quality gate only with
+  `.agent/checks/run_implementation_quality_gate.py`; a passed receipt is not
+  approval, merge authorization, publication authorization, network-isolation
+  proof, or trusted downstream evidence until independently validated.
+- Prove only the bounded quality-gate process fixtures with
+  `.agent/checks/prove_implementation_quality_gate.py`; they do not run Gradle,
+  validate a candidate, prove descendant cleanup, or satisfy
+  `implementation_quality_gate_execution`.
+- Validate a quality-gate receipt only with
+  `.agent/checks/validate_implementation_quality_gate.py`; `valid=true` is
+  current-state integrity evidence, not historical output authentication,
+  implementation approval, merge approval, or publication authorization.
+- Prove only the synthetic quality-gate receipt fixtures with
+  `.agent/checks/prove_implementation_quality_gate_validation.py`; they do not
+  run Gradle, authenticate historical logs, prove network isolation, or prove
+  descendant cleanup.
 
 ## Verified Commands
 

@@ -9,6 +9,7 @@
   "require_absent_outputs": true,
   "require_distinct_outputs": true,
   "require_candidate_ready_result": true,
+  "require_nonempty_patch_for_candidate": true,
   "require_patch_retained_for_candidate": true,
   "require_policy_allowed_for_candidate": true,
   "quality_gate_execution_required": true,

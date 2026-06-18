@@ -64,7 +64,11 @@ def git(repo: Path, *args: str) -> str:
     return completed.stdout.strip()
 
 
-def prepare_fixture(root: Path, protected: bool) -> dict[str, Any]:
+def prepare_fixture(
+    root: Path,
+    protected: bool,
+    changed: bool = True,
+) -> dict[str, Any]:
     workspace = root / "workspace"
     workspace.mkdir()
     git(workspace, "init")
@@ -78,7 +82,7 @@ def prepare_fixture(root: Path, protected: bool) -> dict[str, Any]:
         target = workspace / ".agent" / "blocked.txt"
         target.parent.mkdir()
         target.write_text("blocked\n", encoding="utf-8")
-    else:
+    elif changed:
         (workspace / "app.txt").write_text("base\nchange\n", encoding="utf-8")
     workspace = workspace.resolve()
     identity = {
@@ -136,6 +140,10 @@ def prepare_fixture(root: Path, protected: bool) -> dict[str, Any]:
     }
 
 
+def prepare_empty_fixture(root: Path) -> dict[str, Any]:
+    return prepare_fixture(root, False, changed=False)
+
+
 def validate_fixture(fixture: dict[str, Any]) -> dict[str, Any]:
     return validate_implementation_patch_receipt.validate(
         REPO_ROOT,
@@ -158,6 +166,9 @@ def prove(repo: Path, policy: dict[str, Any]) -> dict[str, Any]:
     with tempfile.TemporaryDirectory(prefix="blocked-patch-receipt-") as temp_dir:
         blocked_fixture = prepare_fixture(Path(temp_dir), True)
         blocked = validate_fixture(blocked_fixture)
+    with tempfile.TemporaryDirectory(prefix="empty-patch-receipt-") as temp_dir:
+        empty_fixture = prepare_empty_fixture(Path(temp_dir))
+        empty = validate_fixture(empty_fixture)
     with tempfile.TemporaryDirectory(prefix="tampered-patch-receipt-") as temp_dir:
         tampered_fixture = prepare_fixture(Path(temp_dir), False)
         tampered_fixture["patch"].write_bytes(
@@ -182,6 +193,15 @@ def prove(repo: Path, policy: dict[str, Any]) -> dict[str, Any]:
                 and blocked["patch_policy_allowed"] is False
                 and blocked["risk"] == "high"
                 and blocked["route"] == "C"
+            ),
+        },
+        {
+            "id": "empty_patch_receipt_valid_not_candidate",
+            "matched": (
+                empty["valid"] is True
+                and empty["patch_candidate_ready"] is False
+                and empty["patch_policy_allowed"] is True
+                and empty["risk"] == "low"
             ),
         },
         {

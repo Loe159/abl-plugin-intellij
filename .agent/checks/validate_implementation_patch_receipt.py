@@ -254,6 +254,10 @@ def validate_receipt_value(
         )
     expected_candidate = (
         result_validation["implementation_candidate_ready"] is True
+        and (
+            patch_record["nonempty"] is True
+            or not producer["require_nonempty_patch_for_candidate"]
+        )
         and patch_record["retained"] is True
         and patch_record["policy_allowed"] is True
     )

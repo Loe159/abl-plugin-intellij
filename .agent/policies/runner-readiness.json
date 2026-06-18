@@ -14,7 +14,9 @@
     "implementation_result_contract_validation",
     "runner_enforced_output_post_validation",
     "implementation_patch_post_validation",
+    "implementation_patch_receipt_validation",
     "implementation_quality_gate_execution",
+    "quality_gate_receipt_validation",
     "tool_allowlist"
   ],
   "satisfaction_rules": {
@@ -95,10 +97,24 @@
         "assessment": "verified_enforcement"
       }
     ],
+    "implementation_patch_receipt_validation": [
+      {
+        "source": "implementation_patch_receipt_validation_proof",
+        "id": "implementation_patch_receipt_validation",
+        "assessment": "verified_enforcement"
+      }
+    ],
     "implementation_quality_gate_execution": [
       {
-        "source": "implementation_patch_validation_proof",
+        "source": "implementation_quality_gate_proof",
         "id": "implementation_quality_gate_execution",
+        "assessment": "verified_enforcement"
+      }
+    ],
+    "quality_gate_receipt_validation": [
+      {
+        "source": "implementation_quality_gate_validation_proof",
+        "id": "quality_gate_receipt_validation",
         "assessment": "verified_enforcement"
       }
     ],
@@ -156,7 +172,15 @@
     "implementation_result_contract_validation": [],
     "runner_enforced_output_post_validation": [],
     "implementation_patch_post_validation": [],
-    "implementation_quality_gate_execution": [],
+    "implementation_patch_receipt_validation": [],
+    "implementation_quality_gate_execution": [
+      {
+        "source": "implementation_quality_gate_proof",
+        "id": "bounded_quality_gate_execution_fixture",
+        "assessment": "verified_fixture"
+      }
+    ],
+    "quality_gate_receipt_validation": [],
     "tool_allowlist": [
       {
         "source": "local_runner_audit",
@@ -178,6 +202,12 @@
     ".agent/checks/prove_implementation_result_validation.py",
     ".agent/checks/validate_implementation_patch.py",
     ".agent/checks/prove_implementation_patch_validation.py",
+    ".agent/checks/validate_implementation_patch_receipt.py",
+    ".agent/checks/prove_implementation_patch_receipt_validation.py",
+    ".agent/checks/run_implementation_quality_gate.py",
+    ".agent/checks/prove_implementation_quality_gate.py",
+    ".agent/checks/validate_implementation_quality_gate.py",
+    ".agent/checks/prove_implementation_quality_gate_validation.py",
     ".agent/policies/local-runner-audit.json",
     ".agent/policies/disposable-worktree-proof.json",
     ".agent/policies/runner-readiness.json",
@@ -190,6 +220,12 @@
     ".agent/policies/implementation-result-validation-proof.json",
     ".agent/schemas/implementation-result.schema.json",
     ".agent/policies/implementation-patch-post-validation.json",
-    ".agent/policies/implementation-patch-post-validation-proof.json"
+    ".agent/policies/implementation-patch-post-validation-proof.json",
+    ".agent/policies/implementation-patch-post-validation-validation.json",
+    ".agent/policies/implementation-patch-post-validation-validation-proof.json",
+    ".agent/policies/implementation-quality-gate.json",
+    ".agent/policies/implementation-quality-gate-proof.json",
+    ".agent/policies/implementation-quality-gate-validation.json",
+    ".agent/policies/implementation-quality-gate-validation-proof.json"
   ]
 }

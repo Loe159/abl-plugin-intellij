@@ -30,6 +30,11 @@ turning evidence into permission.
    changing the portable implementation result or its post-capture checks.
    Read `docs/agent-guides/implementation-patch-post-validation.md` before
    connecting a candidate result to patch generation or policy validation.
+   Read
+   `docs/agent-guides/implementation-patch-post-validation-validation.md`
+   before consuming a post-validation receipt.
+   Read `docs/agent-guides/implementation-quality-gate.md` before changing or
+   running deterministic implementation checks.
 2. Identify the next smallest useful guardrail, skill, receipt, validator, or
    documentation increment. Prefer one boundary over a broad workflow rewrite.
 3. Preserve these separations:
@@ -42,8 +47,14 @@ turning evidence into permission.
    - bounded output capture is not result-contract validation;
    - result-contract validation is not runner-enforced post-validation;
    - a valid implementation result is not a validated patch;
+   - an empty validated patch is not an implementation candidate;
    - a policy-allowed patch is not a passed quality gate;
    - patch post-validation is not approval or publication authorization;
+   - a valid patch receipt is current-state evidence, not historical producer
+     proof, quality approval, or runner enforcement;
+   - a bounded quality-gate fixture is not a real Gradle execution;
+   - a passed quality gate is not patch approval or publication authorization;
+   - a valid quality-gate receipt does not authenticate historical build logs;
    - any `valid=true`, `ready=true`, `produced=true`, or `accepted=true` result
      is current-state evidence only unless a later guide says otherwise.
 4. Keep every implementation-session, runner, invocation, network, mutation,

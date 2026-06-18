@@ -60,7 +60,11 @@ def git(repo: Path, *args: str) -> str:
     return completed.stdout.strip()
 
 
-def prepare_repo(root: Path, protected_change: bool) -> tuple[Path, str]:
+def prepare_repo(
+    root: Path,
+    protected_change: bool,
+    changed: bool = True,
+) -> tuple[Path, str]:
     repo = root / "workspace"
     repo.mkdir()
     git(repo, "init")
@@ -74,7 +78,7 @@ def prepare_repo(root: Path, protected_change: bool) -> tuple[Path, str]:
         protected = repo / ".agent"
         protected.mkdir()
         (protected / "blocked.txt").write_text("blocked\n", encoding="utf-8")
-    else:
+    elif changed:
         (repo / "app.txt").write_text("base\nchange\n", encoding="utf-8")
     return repo.resolve(), base
 
@@ -124,6 +128,20 @@ def run_fixture(root: Path, protected: bool) -> dict[str, Any]:
     return result
 
 
+def run_empty_fixture(root: Path) -> dict[str, Any]:
+    repo, base = prepare_repo(root, False, changed=False)
+    identity = session(repo, base)
+    stdout = result_bytes(identity)
+    return validate_implementation_patch.validate_patch(
+        REPO_ROOT,
+        validate_implementation_patch.captured_execution(stdout, b""),
+        identity,
+        root / "patch.diff",
+        root / "receipt.json",
+        validate_implementation_patch.load_policy(),
+    )
+
+
 def prove(repo: Path, policy: dict[str, Any]) -> dict[str, Any]:
     repo = repo.resolve()
     if not repo.is_dir():
@@ -132,6 +150,8 @@ def prove(repo: Path, policy: dict[str, Any]) -> dict[str, Any]:
         allowed = run_fixture(Path(allowed_dir), False)
     with tempfile.TemporaryDirectory(prefix="blocked-post-validation-") as blocked_dir:
         blocked = run_fixture(Path(blocked_dir), True)
+    with tempfile.TemporaryDirectory(prefix="empty-post-validation-") as empty_dir:
+        empty = run_empty_fixture(Path(empty_dir))
     with tempfile.TemporaryDirectory(prefix="invalid-result-") as invalid_dir:
         root = Path(invalid_dir)
         workspace, base = prepare_repo(root, False)
@@ -171,6 +191,16 @@ def prove(repo: Path, policy: dict[str, Any]) -> dict[str, Any]:
                 and blocked["risk"]["risk"] == "high"
                 and blocked["risk"]["route"] == "C"
                 and blocked["receipt_written"] is True
+            ),
+        },
+        {
+            "id": "empty_patch_not_candidate",
+            "matched": (
+                empty["post_validation_complete"] is True
+                and empty["patch_candidate_ready"] is False
+                and empty["patch"]["policy_allowed"] is True
+                and empty["patch"]["nonempty"] is False
+                and empty["receipt_written"] is True
             ),
         },
         {

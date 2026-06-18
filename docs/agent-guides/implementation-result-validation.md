@@ -62,8 +62,10 @@ The readiness ledger marks
 `runner_enforced_output_post_validation=missing_evidence` because no
 implementation runner yet proves that every invocation calls this validator.
 
-It also keeps patch post-validation unproven. A result cannot approve its own
-edits. The next deterministic stage is documented in
+An implementation result still cannot approve its own edits. The next
+deterministic stages are documented in
 `docs/agent-guides/implementation-patch-post-validation.md`; it generates a
-complete patch, applies diff policy, and classifies risk. Required quality
-checks and human review remain later boundaries.
+complete patch, applies diff policy, and classifies risk, and in
+`docs/agent-guides/implementation-patch-post-validation-validation.md`; it
+independently checks the retained receipt against current state. Required
+quality checks and human review remain later boundaries.

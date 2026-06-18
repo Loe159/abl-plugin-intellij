@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "purpose": "implementation_quality_gate_execution_mechanism_proof",
+  "mode": "fixture-only",
+  "timeout_seconds": 0.2,
+  "cleanup_timeout_seconds": 1.0,
+  "capture_limit_bytes": 32768,
+  "proven_control": "bounded_quality_gate_execution_fixture",
+  "unproven_controls": [
+    "implementation_quality_gate_execution",
+    "quality_gate_receipt_validation",
+    "real_gradle_quality_gate_execution",
+    "quality_gate_descendant_cleanup"
+  ],
+  "bindings": [
+    ".agent/checks/run_implementation_quality_gate.py",
+    ".agent/policies/implementation-quality-gate.json",
+    ".agent/checks/prove_implementation_quality_gate.py",
+    ".agent/policies/implementation-quality-gate-proof.json"
+  ]
+}

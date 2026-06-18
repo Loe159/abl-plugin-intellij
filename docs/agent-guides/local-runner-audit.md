@@ -92,4 +92,14 @@ the contract proves that a future runner always invokes post-validation.
 Deterministic complete-patch generation, diff policy, and risk classification
 are connected in
 `docs/agent-guides/implementation-patch-post-validation.md`. That gate still
-does not execute the plugin quality checks.
+does not execute the plugin quality checks. Independent current-state
+validation of its retained receipt is documented in
+`docs/agent-guides/implementation-patch-post-validation-validation.md`; it does
+not prove historical production or runner integration.
+
+The fixed offline Gradle executor and its bounded synthetic process proof are
+documented in `docs/agent-guides/implementation-quality-gate.md`. The fixture
+does not run Gradle, prove descendant cleanup, or satisfy real quality-gate
+execution. The independent receipt validator checks current candidate,
+command, digest, bound, cache, and binding integrity without authenticating
+historical build output.

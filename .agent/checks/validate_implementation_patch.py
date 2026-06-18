@@ -40,6 +40,7 @@ EXPECTED_POLICY: dict[str, Any] = {
     "require_absent_outputs": True,
     "require_distinct_outputs": True,
     "require_candidate_ready_result": True,
+    "require_nonempty_patch_for_candidate": True,
     "require_patch_retained_for_candidate": True,
     "require_policy_allowed_for_candidate": True,
     "quality_gate_execution_required": True,
@@ -155,6 +156,7 @@ def compact_patch_record(generated: dict[str, Any]) -> dict[str, Any]:
     facts = generated["facts"]
     return {
         "path": artifact["patch"],
+        "nonempty": artifact["size_bytes"] > 0 and facts["file_count"] > 0,
         "retained": artifact["retained"],
         "sha256": artifact["sha256"],
         "size_bytes": artifact["size_bytes"],
@@ -249,8 +251,13 @@ def validate_patch(
         )
         retained = generated["artifact"]["retained"] is True
         allowed = generated["allowed"] is True
+        nonempty = result["patch"]["nonempty"] is True
         result["patch_candidate_ready"] = (
             result_validation["implementation_candidate_ready"] is True
+            and (
+                nonempty
+                or not policy["require_nonempty_patch_for_candidate"]
+            )
             and (
                 retained
                 or not policy["require_patch_retained_for_candidate"]

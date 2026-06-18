@@ -20,6 +20,11 @@ The CLI accepts no policy or readiness override.
 The ledger distinguishes:
 
 - verified local patch and artifact guardrails;
+- deterministic implementation-patch production and independent current-state
+  receipt validation, without quality-gate or publication authority;
+- a bounded offline quality-gate executor whose synthetic mechanism proof is
+  not yet authenticated real-execution evidence, plus independent current-state
+  validation of its bounded receipt;
 - manual-only research and planning rehearsal;
 - implementation-session contracts that describe readiness but do not run;
 - runner controls that are still not ready in the real checkout;

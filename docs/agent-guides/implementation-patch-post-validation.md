@@ -36,14 +36,16 @@ complete patch was generated, evaluated, and classified under the exact bound
 policies.
 
 `patch_candidate_ready=true` additionally requires the patch to be retained
-and allowed by diff policy. A policy-blocked patch may still produce a receipt
-and remain available for human review, but it is never candidate-ready.
-Classification cannot override that block.
+and allowed by diff policy, and to contain at least one changed file and one
+byte. A policy-blocked or empty patch may still produce a receipt and remain
+auditable, but it is never candidate-ready. Classification cannot override a
+policy block.
 
 The receipt binds:
 
 - the exact implementation session identity and result digest;
 - patch path, digest, size, facts, policy decision, and violations;
+- whether the patch is nonempty for candidate-readiness purposes;
 - deterministic risk, route, and required human gates;
 - the still-pending quality-gate state;
 - trusted tool and policy bytes.
@@ -63,6 +65,7 @@ The proof creates disposable local Git repositories and verifies:
 
 - an allowed complete patch becomes candidate-ready;
 - a protected-path patch is retained but policy-blocked and routed to `C`;
+- an empty patch remains auditable but cannot become candidate-ready;
 - an invalid implementation result creates neither patch nor receipt.
 
 ## Honest Boundary
@@ -74,5 +77,7 @@ boundary.
 
 `runner_enforced_output_post_validation` also remains unproven until a real
 runner atomically connects its captured result to this gate. A complete receipt
-is current-state evidence, not approval or permission to publish. No later
-consumer should trust it until an independent receipt validator exists.
+is current-state evidence, not approval or permission to publish. Its
+independent current-state consumer is documented in
+`implementation-patch-post-validation-validation.md`; that validator still
+does not prove historical production or runner enforcement.

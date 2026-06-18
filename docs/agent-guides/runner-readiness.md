@@ -11,7 +11,7 @@ runner, invoke an agent, or authorize a session.
 python .agent/checks/assess_runner_readiness.py --repo . --format json
 ```
 
-The CLI accepts no policy or evidence override. It executes the seven fixed
+The CLI accepts no policy or evidence override. It executes the eleven fixed
 local evidence sources:
 
 - `.agent/checks/audit_local_runner.py`;
@@ -20,7 +20,11 @@ local evidence sources:
 - `.agent/checks/prove_windows_process_tree_timeout.py`;
 - `.agent/checks/prove_parent_environment_isolation.py`;
 - `.agent/checks/prove_bounded_output_capture.py`;
-- `.agent/checks/prove_implementation_result_validation.py`.
+- `.agent/checks/prove_implementation_result_validation.py`;
+- `.agent/checks/prove_implementation_patch_validation.py`;
+- `.agent/checks/prove_implementation_patch_receipt_validation.py`;
+- `.agent/checks/prove_implementation_quality_gate.py`;
+- `.agent/checks/prove_implementation_quality_gate_validation.py`.
 
 The readiness policy binds those source files, the launcher, the aggregator,
 and every exact policy by SHA-256. The report rejects changed source identity,
@@ -55,7 +59,9 @@ The pilot currently requires evidence for:
 - implementation-result contract validation;
 - runner-enforced output post-validation;
 - implementation-patch post-validation;
+- implementation-patch receipt validation;
 - implementation quality-gate execution;
+- quality-gate receipt validation;
 - tool allowlist.
 
 The current real-checkout report returns `controls_ready=false`.
@@ -64,12 +70,17 @@ environment launcher and adversarial child fixture. Provider-credential
 noninheritance remains missing because that requires a future real agent
 boundary. Disposable worktrees have both observed metadata and one verified
 synthetic fixture, but still only related evidence. Filesystem scope, timeout,
-and tool allowlisting have only related evidence. Bounded output capture and
-the exact implementation-result contract, and deterministic patch
-post-validation are satisfied by their focused proofs. Runner-enforced
-post-validation remains missing because no implementation runner yet proves
-that every invocation calls the validator. Quality-gate execution, model-turn
-budgeting, and network isolation have no satisfying evidence.
+and tool allowlisting have only related evidence. Bounded output capture, the
+exact implementation-result contract, deterministic patch post-validation,
+and independent patch-receipt validation are satisfied by their focused
+proofs. Patch candidacy also requires a nonempty change set; a clean worktree
+cannot advance merely because untrusted output claimed it changed.
+Runner-enforced post-validation remains missing because no
+implementation runner yet proves that every invocation calls the validators.
+Quality-gate execution has only a bounded synthetic process fixture and
+therefore remains related evidence. Independent receipt validation is
+satisfied, but it does not authenticate historical build output. Model-turn
+budgeting and network isolation have no satisfying evidence.
 
 ## Honest Boundary
 

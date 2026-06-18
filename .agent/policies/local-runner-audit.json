@@ -139,7 +139,9 @@
     "implementation_result_contract_validation",
     "runner_enforced_output_post_validation",
     "implementation_patch_post_validation",
+    "implementation_patch_receipt_validation",
     "implementation_quality_gate_execution",
+    "quality_gate_receipt_validation",
     "tool_allowlist",
     "wall_clock_timeout"
   ]

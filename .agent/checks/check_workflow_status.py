@@ -41,6 +41,8 @@ EXPECTED_POLICY: dict[str, Any] = {
                 ".agent/checks/diff_policy.py",
                 ".agent/checks/generate_complete_patch.py",
                 ".agent/checks/classify_patch_risk.py",
+                ".agent/checks/validate_implementation_patch.py",
+                ".agent/checks/validate_implementation_patch_receipt.py",
             ],
         },
         {
@@ -73,6 +75,8 @@ EXPECTED_POLICY: dict[str, Any] = {
                 ".agent/checks/build_implementation_session.py",
                 ".agent/checks/check_implementation_invocation_readiness.py",
                 ".agent/checks/check_implementation_session_start.py",
+                ".agent/checks/run_implementation_quality_gate.py",
+                ".agent/checks/validate_implementation_quality_gate.py",
             ],
         },
         {

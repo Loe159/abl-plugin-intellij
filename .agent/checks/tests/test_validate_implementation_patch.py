@@ -47,6 +47,18 @@ def prepare_repo(root: Path, path: str = "app.txt") -> tuple[Path, str]:
     return repo.resolve(), base
 
 
+def prepare_clean_repo(root: Path) -> tuple[Path, str]:
+    repo = root / "workspace"
+    repo.mkdir()
+    git(repo, "init")
+    git(repo, "config", "user.email", "test@example.invalid")
+    git(repo, "config", "user.name", "Test Fixture")
+    (repo / "app.txt").write_text("base\n", encoding="utf-8")
+    git(repo, "add", "app.txt")
+    git(repo, "commit", "-m", "base")
+    return repo.resolve(), git(repo, "rev-parse", "HEAD")
+
+
 def identity(repo: Path, base: str) -> dict[str, object]:
     return {
         "issue": 58,
@@ -84,6 +96,7 @@ class ValidateImplementationPatchTest(unittest.TestCase):
 
         self.assertEqual(validator.EXPECTED_POLICY, policy)
         self.assertTrue(policy["quality_gate_execution_required"])
+        self.assertTrue(policy["require_nonempty_patch_for_candidate"])
         self.assertTrue(policy["require_policy_allowed_for_candidate"])
 
     def test_allowed_patch_writes_receipt_and_is_candidate_ready(self) -> None:
@@ -112,6 +125,27 @@ class ValidateImplementationPatchTest(unittest.TestCase):
             self.assertFalse(result["quality_gate"]["completed"])
             for field in validator.FALSE_FIELDS:
                 self.assertFalse(result[field])
+
+    def test_empty_patch_is_complete_but_not_candidate_ready(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            repo, base = prepare_clean_repo(root)
+            session = identity(repo, base)
+
+            result = validator.validate_patch(
+                REPO_ROOT,
+                validator.captured_execution(result_bytes(session), b""),
+                session,
+                root / "candidate.patch",
+                root / "receipt.json",
+                validator.load_policy(),
+            )
+
+            self.assertTrue(result["post_validation_complete"])
+            self.assertFalse(result["patch_candidate_ready"])
+            self.assertTrue(result["patch"]["policy_allowed"])
+            self.assertFalse(result["patch"]["nonempty"])
+            self.assertEqual(0, result["patch"]["facts"]["file_count"])
 
     def test_protected_patch_is_complete_but_not_candidate_ready(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
