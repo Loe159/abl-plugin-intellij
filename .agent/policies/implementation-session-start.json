@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "purpose": "implementation_session_start_readiness_check",
+  "mode": "session-start-readiness-only",
+  "require_runner_selection_ready": true,
+  "track_explicit_start_authorization": true,
+  "explicit_start_authorization_available": true,
+  "bindings": [
+    ".agent/checks/check_implementation_session_start.py",
+    ".agent/policies/implementation-session-start.json",
+    ".agent/checks/check_implementation_runner_selection.py",
+    ".agent/policies/implementation-runner-selection.json",
+    ".agent/checks/validate_implementation_invocation_preflight.py",
+    ".agent/policies/implementation-invocation-preflight-validation.json",
+    ".agent/checks/assess_runner_readiness.py",
+    ".agent/policies/runner-readiness.json",
+    ".agent/checks/authorize_implementation_session_start.py",
+    ".agent/policies/implementation-session-start-authorization.json",
+    ".agent/checks/validate_implementation_session_start_authorization.py",
+    ".agent/policies/implementation-session-start-authorization-validation.json"
+  ]
+}

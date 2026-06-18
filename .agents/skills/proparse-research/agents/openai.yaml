@@ -1,0 +1,4 @@
+interface:
+  display_name: "Proparse Research"
+  short_description: "Verify RSSW Proparse behavior before ABL changes"
+  default_prompt: "Use $proparse-research to investigate the relevant RSSW Proparse behavior before proposing an ABL language change."

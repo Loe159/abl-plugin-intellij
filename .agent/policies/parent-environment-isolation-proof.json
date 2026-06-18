@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "purpose": "parent_environment_credential_isolation_proof",
+  "mode": "enforcement-proof",
+  "timeout_seconds": 5.0,
+  "sensitive_variable_names": [
+    "AWS_SECRET_ACCESS_KEY",
+    "AZURE_CLIENT_SECRET",
+    "CODEX_HOME",
+    "GH_TOKEN",
+    "GITHUB_TOKEN",
+    "OPENAI_API_KEY"
+  ],
+  "required_child_variables": [
+    "AGENT_RUNNER_ENVIRONMENT_MODE",
+    "PYTHONIOENCODING",
+    "PYTHONUTF8"
+  ],
+  "expected_child_environment_mode": "isolated",
+  "proven_control": "parent_environment_credential_isolation",
+  "unproven_controls": [
+    "provider_credential_descendant_noninheritance",
+    "credential_file_isolation",
+    "operating_system_credential_store_isolation"
+  ],
+  "bindings": [
+    ".agent/checks/isolated_process.py",
+    ".agent/policies/parent-environment-isolation.json",
+    ".agent/checks/prove_parent_environment_isolation.py",
+    ".agent/policies/parent-environment-isolation-proof.json"
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "purpose": "implementation_result_contract_validation_proof",
+  "mode": "enforcement-proof",
+  "proven_control": "implementation_result_contract_validation",
+  "unproven_controls": [
+    "runner_enforced_output_post_validation",
+    "implementation_patch_post_validation",
+    "real_agent_result_compatibility"
+  ],
+  "bindings": [
+    ".agent/checks/validate_implementation_result.py",
+    ".agent/policies/implementation-result-validation.json",
+    ".agent/schemas/implementation-result.schema.json",
+    ".agent/checks/prove_implementation_result_validation.py",
+    ".agent/policies/implementation-result-validation-proof.json"
+  ]
+}

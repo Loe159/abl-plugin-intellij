@@ -1,0 +1,195 @@
+{
+  "version": 1,
+  "purpose": "implementation_runner_control_readiness_assessment",
+  "mode": "assessment-only",
+  "required_runtime_controls": [
+    "parent_environment_credential_isolation",
+    "provider_credential_descendant_noninheritance",
+    "disposable_worktree_lifecycle",
+    "filesystem_write_scope",
+    "implementation_session_wall_clock_timeout",
+    "model_turn_budget",
+    "network_isolation",
+    "bounded_output_capture",
+    "implementation_result_contract_validation",
+    "runner_enforced_output_post_validation",
+    "implementation_patch_post_validation",
+    "implementation_quality_gate_execution",
+    "tool_allowlist"
+  ],
+  "satisfaction_rules": {
+    "parent_environment_credential_isolation": [
+      {
+        "source": "parent_environment_isolation_proof",
+        "id": "parent_environment_credential_isolation",
+        "assessment": "verified_enforcement"
+      }
+    ],
+    "provider_credential_descendant_noninheritance": [
+      {
+        "source": "parent_environment_isolation_proof",
+        "id": "provider_credential_descendant_noninheritance",
+        "assessment": "verified_enforcement"
+      }
+    ],
+    "disposable_worktree_lifecycle": [
+      {
+        "source": "local_runner_audit",
+        "id": "disposable_worktree_lifecycle",
+        "assessment": "verified_enforcement"
+      }
+    ],
+    "filesystem_write_scope": [
+      {
+        "source": "local_runner_audit",
+        "id": "filesystem_write_scope",
+        "assessment": "verified_enforcement"
+      }
+    ],
+    "implementation_session_wall_clock_timeout": [
+      {
+        "source": "windows_process_tree_timeout_proof",
+        "id": "implementation_session_wall_clock_timeout",
+        "assessment": "verified_enforcement"
+      }
+    ],
+    "model_turn_budget": [
+      {
+        "source": "local_runner_audit",
+        "id": "model_turn_budget",
+        "assessment": "verified_enforcement"
+      }
+    ],
+    "network_isolation": [
+      {
+        "source": "local_runner_audit",
+        "id": "network_isolation",
+        "assessment": "verified_enforcement"
+      }
+    ],
+    "bounded_output_capture": [
+      {
+        "source": "bounded_output_capture_proof",
+        "id": "bounded_output_capture",
+        "assessment": "verified_enforcement"
+      }
+    ],
+    "implementation_result_contract_validation": [
+      {
+        "source": "implementation_result_validation_proof",
+        "id": "implementation_result_contract_validation",
+        "assessment": "verified_enforcement"
+      }
+    ],
+    "runner_enforced_output_post_validation": [
+      {
+        "source": "implementation_result_validation_proof",
+        "id": "runner_enforced_output_post_validation",
+        "assessment": "verified_enforcement"
+      }
+    ],
+    "implementation_patch_post_validation": [
+      {
+        "source": "implementation_patch_validation_proof",
+        "id": "implementation_patch_post_validation",
+        "assessment": "verified_enforcement"
+      }
+    ],
+    "implementation_quality_gate_execution": [
+      {
+        "source": "implementation_patch_validation_proof",
+        "id": "implementation_quality_gate_execution",
+        "assessment": "verified_enforcement"
+      }
+    ],
+    "tool_allowlist": [
+      {
+        "source": "local_runner_audit",
+        "id": "tool_allowlist",
+        "assessment": "verified_enforcement"
+      }
+    ]
+  },
+  "related_evidence_rules": {
+    "parent_environment_credential_isolation": [],
+    "provider_credential_descendant_noninheritance": [],
+    "disposable_worktree_lifecycle": [
+      {
+        "source": "local_runner_audit",
+        "id": "git_worktree_metadata",
+        "assessment": "observed_metadata"
+      },
+      {
+        "source": "disposable_worktree_proof",
+        "id": "disposable_git_worktree_lifecycle_fixture",
+        "assessment": "verified_fixture"
+      }
+    ],
+    "filesystem_write_scope": [
+      {
+        "source": "local_runner_audit",
+        "id": "codex_sandbox_metadata",
+        "assessment": "observed_metadata"
+      }
+    ],
+    "implementation_session_wall_clock_timeout": [
+      {
+        "source": "direct_child_timeout_proof",
+        "id": "post_spawn_direct_child_timeout",
+        "assessment": "verified_fixture"
+      },
+      {
+        "source": "windows_process_tree_timeout_proof",
+        "id": "windows_taskkill_two_level_process_tree_timeout_fixture",
+        "assessment": "verified_fixture"
+      }
+    ],
+    "model_turn_budget": [],
+    "network_isolation": [],
+    "bounded_output_capture": [
+      {
+        "source": "local_runner_audit",
+        "id": "codex_noninteractive_exec_metadata",
+        "assessment": "observed_metadata"
+      }
+    ],
+    "implementation_result_contract_validation": [],
+    "runner_enforced_output_post_validation": [],
+    "implementation_patch_post_validation": [],
+    "implementation_quality_gate_execution": [],
+    "tool_allowlist": [
+      {
+        "source": "local_runner_audit",
+        "id": "codex_sandbox_metadata",
+        "assessment": "observed_metadata"
+      }
+    ]
+  },
+  "policy_bindings": [
+    ".agent/checks/assess_runner_readiness.py",
+    ".agent/checks/audit_local_runner.py",
+    ".agent/checks/prove_disposable_worktree.py",
+    ".agent/checks/prove_wall_clock_timeout.py",
+    ".agent/checks/prove_windows_process_tree_timeout.py",
+    ".agent/checks/isolated_process.py",
+    ".agent/checks/prove_parent_environment_isolation.py",
+    ".agent/checks/prove_bounded_output_capture.py",
+    ".agent/checks/validate_implementation_result.py",
+    ".agent/checks/prove_implementation_result_validation.py",
+    ".agent/checks/validate_implementation_patch.py",
+    ".agent/checks/prove_implementation_patch_validation.py",
+    ".agent/policies/local-runner-audit.json",
+    ".agent/policies/disposable-worktree-proof.json",
+    ".agent/policies/runner-readiness.json",
+    ".agent/policies/wall-clock-timeout-proof.json",
+    ".agent/policies/windows-process-tree-timeout-proof.json",
+    ".agent/policies/parent-environment-isolation.json",
+    ".agent/policies/parent-environment-isolation-proof.json",
+    ".agent/policies/bounded-output-capture-proof.json",
+    ".agent/policies/implementation-result-validation.json",
+    ".agent/policies/implementation-result-validation-proof.json",
+    ".agent/schemas/implementation-result.schema.json",
+    ".agent/policies/implementation-patch-post-validation.json",
+    ".agent/policies/implementation-patch-post-validation-proof.json"
+  ]
+}

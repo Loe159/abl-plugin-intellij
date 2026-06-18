@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "purpose": "implementation_patch_post_validation_receipt_validation_proof",
+  "mode": "enforcement-proof",
+  "proven_control": "implementation_patch_receipt_validation",
+  "unproven_controls": [
+    "runner_enforced_output_post_validation",
+    "implementation_quality_gate_execution",
+    "real_agent_patch_post_validation"
+  ],
+  "bindings": [
+    ".agent/checks/validate_implementation_patch.py",
+    ".agent/policies/implementation-patch-post-validation.json",
+    ".agent/checks/validate_implementation_patch_receipt.py",
+    ".agent/policies/implementation-patch-post-validation-validation.json",
+    ".agent/checks/prove_implementation_patch_receipt_validation.py",
+    ".agent/policies/implementation-patch-post-validation-validation-proof.json"
+  ]
+}

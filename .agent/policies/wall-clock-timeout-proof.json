@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "purpose": "post_spawn_direct_child_timeout_proof",
+  "mode": "fixture-only",
+  "timeout_seconds": 0.5,
+  "cleanup_timeout_seconds": 2.0,
+  "max_observed_seconds": 3.0,
+  "fixtures": [
+    {
+      "id": "fast_control",
+      "script": "raise SystemExit(0)",
+      "expected": "completed"
+    },
+    {
+      "id": "sleeping_child",
+      "script": "import time; time.sleep(10)",
+      "expected": "timed_out_and_reaped"
+    }
+  ],
+  "proven_control": "post_spawn_direct_child_timeout",
+  "unproven_controls": [
+    "descendant_process_tree_timeout",
+    "implementation_session_wall_clock_timeout",
+    "process_spawn_timeout"
+  ]
+}

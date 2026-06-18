@@ -1,0 +1,30 @@
+{
+  "version": 3,
+  "purpose": "implementation_invocation_readiness_check",
+  "mode": "readiness-check-only",
+  "require_valid_preflight": true,
+  "require_runner_selection_gate": true,
+  "require_session_start_gate": true,
+  "require_explicit_start_authorization": true,
+  "runner_selection_gate_available": true,
+  "session_start_gate_available": true,
+  "explicit_start_authorization_available": true,
+  "bindings": [
+    ".agent/checks/check_implementation_invocation_readiness.py",
+    ".agent/policies/implementation-invocation-readiness.json",
+    ".agent/checks/check_implementation_session_start.py",
+    ".agent/policies/implementation-session-start.json",
+    ".agent/checks/check_implementation_runner_selection.py",
+    ".agent/policies/implementation-runner-selection.json",
+    ".agent/checks/validate_implementation_invocation_preflight.py",
+    ".agent/policies/implementation-invocation-preflight-validation.json",
+    ".agent/checks/validate_implementation_session_approval.py",
+    ".agent/policies/implementation-session-approval-validation.json",
+    ".agent/checks/assess_runner_readiness.py",
+    ".agent/policies/runner-readiness.json",
+    ".agent/checks/authorize_implementation_session_start.py",
+    ".agent/policies/implementation-session-start-authorization.json",
+    ".agent/checks/validate_implementation_session_start_authorization.py",
+    ".agent/policies/implementation-session-start-authorization-validation.json"
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "purpose": "historical_golden_set_candidate_assessment",
+  "mode": "candidate-only",
+  "repository": "Loe159/abl-plugin-intellij",
+  "min_cases": 5,
+  "max_cases": 20,
+  "max_manifest_bytes": 100000,
+  "max_text_characters": 1000,
+  "max_criteria_per_case": 10,
+  "max_verification_steps_per_case": 10,
+  "require_external_manifest": true,
+  "require_issue_state": "closed",
+  "required_categories": [
+    "docs_or_typo",
+    "simple_bug",
+    "missing_test",
+    "local_feature",
+    "abl_rssw_research",
+    "refuse_or_escalate"
+  ],
+  "expected_outcomes": [
+    "patch",
+    "refuse_or_escalate"
+  ],
+  "reference_kinds": [
+    "commit",
+    "decision"
+  ],
+  "bindings": [
+    ".agent/checks/assess_golden_set_readiness.py",
+    ".agent/policies/golden-set-readiness.json"
+  ]
+}

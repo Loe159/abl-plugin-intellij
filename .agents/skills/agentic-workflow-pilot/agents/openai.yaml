@@ -1,0 +1,4 @@
+interface:
+  display_name: "Agentic Workflow Pilot"
+  short_description: "Pilot workflow guardrails for ABL plugin"
+  default_prompt: "Use $agentic-workflow-pilot to plan or validate a small, non-authorizing workflow increment in the ABL IntelliJ plugin."

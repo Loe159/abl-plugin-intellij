@@ -1,0 +1,146 @@
+{
+  "version": 1,
+  "purpose": "local_runner_capability_audit",
+  "mode": "metadata-only",
+  "max_probe_seconds": 5,
+  "max_output_bytes": 120000,
+  "probes": [
+    {
+      "id": "codex_version",
+      "command": ["codex", "--version"],
+      "markers": ["codex-cli"]
+    },
+    {
+      "id": "codex_help",
+      "command": ["codex", "--help"],
+      "markers": ["--ask-for-approval"]
+    },
+    {
+      "id": "codex_exec_help",
+      "command": ["codex", "exec", "--help"],
+      "markers": [
+        "Run Codex non-interactively",
+        "--sandbox",
+        "--ephemeral",
+        "--ignore-user-config",
+        "--output-schema",
+        "--json",
+        "--output-last-message"
+      ]
+    },
+    {
+      "id": "codex_sandbox_help",
+      "command": ["codex", "sandbox", "--help"],
+      "markers": [
+        "Run commands within a Codex-provided sandbox",
+        "--permissions-profile"
+      ]
+    },
+    {
+      "id": "git_version",
+      "command": ["git", "--version"],
+      "markers": ["git version"]
+    },
+    {
+      "id": "git_worktree_list",
+      "command": [
+        "git",
+        "-c",
+        "safe.directory={repo}",
+        "-C",
+        "{repo}",
+        "worktree",
+        "list",
+        "--porcelain"
+      ],
+      "markers": ["worktree ", "HEAD "]
+    },
+    {
+      "id": "wsl_status",
+      "command": ["wsl", "--status"],
+      "markers": []
+    },
+    {
+      "id": "docker_version",
+      "command": ["docker", "--version"],
+      "markers": ["Docker version"]
+    },
+    {
+      "id": "podman_version",
+      "command": ["podman", "--version"],
+      "markers": ["podman version"]
+    }
+  ],
+  "metadata_assessments": [
+    {
+      "id": "codex_cli_metadata",
+      "probe": "codex_version",
+      "required_markers": ["codex-cli"]
+    },
+    {
+      "id": "codex_global_approval_metadata",
+      "probe": "codex_help",
+      "required_markers": ["--ask-for-approval"]
+    },
+    {
+      "id": "codex_noninteractive_exec_metadata",
+      "probe": "codex_exec_help",
+      "required_markers": [
+        "Run Codex non-interactively",
+        "--sandbox",
+        "--ephemeral",
+        "--ignore-user-config",
+        "--output-schema",
+        "--json",
+        "--output-last-message"
+      ]
+    },
+    {
+      "id": "codex_sandbox_metadata",
+      "probe": "codex_sandbox_help",
+      "required_markers": [
+        "Run commands within a Codex-provided sandbox",
+        "--permissions-profile"
+      ]
+    },
+    {
+      "id": "git_cli_metadata",
+      "probe": "git_version",
+      "required_markers": ["git version"]
+    },
+    {
+      "id": "git_worktree_metadata",
+      "probe": "git_worktree_list",
+      "required_markers": ["worktree ", "HEAD "]
+    },
+    {
+      "id": "wsl_status_metadata",
+      "probe": "wsl_status",
+      "required_markers": []
+    },
+    {
+      "id": "docker_cli_metadata",
+      "probe": "docker_version",
+      "required_markers": ["Docker version"]
+    },
+    {
+      "id": "podman_cli_metadata",
+      "probe": "podman_version",
+      "required_markers": ["podman version"]
+    }
+  ],
+  "unproven_enforcement_controls": [
+    "credential_isolation",
+    "disposable_worktree_lifecycle",
+    "filesystem_write_scope",
+    "model_turn_budget",
+    "network_isolation",
+    "bounded_output_capture",
+    "implementation_result_contract_validation",
+    "runner_enforced_output_post_validation",
+    "implementation_patch_post_validation",
+    "implementation_quality_gate_execution",
+    "tool_allowlist",
+    "wall_clock_timeout"
+  ]
+}

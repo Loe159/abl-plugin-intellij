@@ -1,0 +1,121 @@
+{
+  "version": 1,
+  "purpose": "agentic_workflow_capability_status",
+  "mode": "status-only",
+  "capabilities": [
+    {
+      "id": "local_patch_guardrails",
+      "status": "verified_non_authorizing",
+      "implemented": true,
+      "required_for_pilot": true,
+      "evidence": [
+        ".agent/checks/diff_policy.py",
+        ".agent/checks/generate_complete_patch.py",
+        ".agent/checks/classify_patch_risk.py"
+      ]
+    },
+    {
+      "id": "portable_phase_artifacts",
+      "status": "verified_non_authorizing",
+      "implemented": true,
+      "required_for_pilot": true,
+      "evidence": [
+        ".agent/checks/validate_artifacts.py",
+        ".agent/checks/initialize_portable_run.py"
+      ]
+    },
+    {
+      "id": "read_only_research_and_plan",
+      "status": "manual_rehearsal_only",
+      "implemented": true,
+      "required_for_pilot": true,
+      "evidence": [
+        ".agent/adapters/manual_read_only.py",
+        ".agent/checks/build_stage_context.py",
+        ".agent/checks/validate_stage_output.py"
+      ]
+    },
+    {
+      "id": "supervised_implementation_contract",
+      "status": "readiness_only",
+      "implemented": true,
+      "required_for_pilot": true,
+      "evidence": [
+        ".agent/checks/build_implementation_session.py",
+        ".agent/checks/check_implementation_invocation_readiness.py",
+        ".agent/checks/check_implementation_session_start.py"
+      ]
+    },
+    {
+      "id": "enforced_implementation_runner",
+      "status": "not_ready",
+      "implemented": false,
+      "required_for_pilot": true,
+      "evidence": [
+        ".agent/checks/assess_runner_readiness.py"
+      ]
+    },
+    {
+      "id": "explicit_session_start_authorization",
+      "status": "exact_local_receipt_only",
+      "implemented": true,
+      "required_for_pilot": true,
+      "evidence": [
+        ".agent/checks/authorize_implementation_session_start.py",
+        ".agent/checks/validate_implementation_session_start_authorization.py",
+        ".agent/policies/implementation-session-start-authorization.json",
+        ".agent/policies/implementation-session-start-authorization-validation.json"
+      ]
+    },
+    {
+      "id": "approved_github_issue_ingestion",
+      "status": "manual_snapshot_approval_only",
+      "implemented": true,
+      "required_for_pilot": true,
+      "evidence": [
+        ".agent/checks/approve_github_issue_snapshot.py",
+        ".agent/policies/github-issue-ingestion.json"
+      ]
+    },
+    {
+      "id": "deterministic_draft_pr_publisher",
+      "status": "not_implemented",
+      "implemented": false,
+      "required_for_pilot": true,
+      "evidence": []
+    },
+    {
+      "id": "run_metrics",
+      "status": "manual_evidence_recording_only",
+      "implemented": true,
+      "required_for_pilot": true,
+      "evidence": [
+        ".agent/checks/record_run_metrics.py",
+        ".agent/policies/run-metrics.json"
+      ]
+    },
+    {
+      "id": "historical_golden_set",
+      "status": "candidate_contract_only",
+      "implemented": false,
+      "required_for_pilot": true,
+      "evidence": [
+        ".agent/checks/assess_golden_set_readiness.py",
+        ".agent/policies/golden-set-readiness.json"
+      ]
+    },
+    {
+      "id": "multi_adapter_comparison",
+      "status": "not_implemented",
+      "implemented": false,
+      "required_for_pilot": true,
+      "evidence": []
+    }
+  ],
+  "bindings": [
+    ".agent/checks/check_workflow_status.py",
+    ".agent/policies/workflow-status.json",
+    ".agent/checks/assess_runner_readiness.py",
+    ".agent/policies/runner-readiness.json"
+  ]
+}

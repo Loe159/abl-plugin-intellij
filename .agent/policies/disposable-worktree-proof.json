@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "purpose": "disposable_git_worktree_lifecycle_proof",
+  "mode": "fixture-only",
+  "command_timeout_seconds": 10,
+  "fixture": {
+    "base_file": "README.md",
+    "base_content": "base\n",
+    "dirty_content": "dirty worktree\n",
+    "untracked_file": "untracked.txt",
+    "untracked_content": "temporary\n"
+  },
+  "proven_control": "disposable_git_worktree_lifecycle_fixture",
+  "unproven_controls": [
+    "concurrent_worktree_lifecycle",
+    "implementation_runner_disposable_worktree_lifecycle",
+    "worktree_cleanup_after_host_crash"
+  ]
+}

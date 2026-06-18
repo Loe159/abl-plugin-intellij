@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "purpose": "implementation_runner_selection_readiness_check",
+  "mode": "runner-selection-readiness-only",
+  "candidate_runner": {
+    "id": "codex-cli-disposable-worktree",
+    "kind": "local-codex-cli",
+    "requires_valid_preflight": true,
+    "requires_runner_controls_ready": true
+  },
+  "require_valid_preflight": true,
+  "require_runner_controls_ready": true,
+  "bindings": [
+    ".agent/checks/check_implementation_runner_selection.py",
+    ".agent/policies/implementation-runner-selection.json",
+    ".agent/checks/validate_implementation_invocation_preflight.py",
+    ".agent/policies/implementation-invocation-preflight-validation.json",
+    ".agent/checks/assess_runner_readiness.py",
+    ".agent/policies/runner-readiness.json"
+  ]
+}

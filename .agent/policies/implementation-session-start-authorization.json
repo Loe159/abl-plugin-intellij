@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "purpose": "implementation_session_start_authorization",
+  "mode": "exact-local-start-authorization-only",
+  "confirmation_prefix": "AUTHORIZE-EXACT-IMPLEMENTATION-SESSION-START",
+  "max_authorizer_chars": 80,
+  "max_authorization_receipt_bytes": 40000,
+  "require_session_start_ready": true,
+  "require_external_authorization_receipt": true,
+  "require_authorization_receipt_outside_workspace": true,
+  "require_absent_authorization_receipt": true,
+  "require_clean_worktree": true,
+  "require_repo_head_match": true,
+  "replay_prevention_enforced": false,
+  "bindings": [
+    ".agent/checks/authorize_implementation_session_start.py",
+    ".agent/policies/implementation-session-start-authorization.json",
+    ".agent/checks/check_implementation_session_start.py",
+    ".agent/policies/implementation-session-start.json",
+    ".agent/checks/check_implementation_runner_selection.py",
+    ".agent/policies/implementation-runner-selection.json",
+    ".agent/checks/validate_implementation_invocation_preflight.py",
+    ".agent/policies/implementation-invocation-preflight-validation.json",
+    ".agent/checks/assess_runner_readiness.py",
+    ".agent/policies/runner-readiness.json"
+  ]
+}

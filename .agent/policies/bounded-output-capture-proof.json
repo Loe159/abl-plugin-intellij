@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "purpose": "bounded_stream_output_capture_proof",
+  "mode": "enforcement-proof",
+  "timeout_seconds": 5.0,
+  "fixtures": {
+    "dual_stream": {
+      "stdout_bytes": 49152,
+      "stderr_bytes": 49152
+    },
+    "output_limit": {
+      "attempted_stdout_bytes": 262144
+    }
+  },
+  "proven_control": "bounded_output_capture",
+  "unproven_controls": [
+    "implementation_result_contract_validation",
+    "runner_enforced_output_post_validation",
+    "descendant_process_tree_cleanup_after_output_limit",
+    "cross_platform_capture_equivalence"
+  ],
+  "bindings": [
+    ".agent/checks/isolated_process.py",
+    ".agent/policies/parent-environment-isolation.json",
+    ".agent/checks/prove_bounded_output_capture.py",
+    ".agent/policies/bounded-output-capture-proof.json"
+  ]
+}

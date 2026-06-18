@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "purpose": "implementation_invocation_preflight_validation",
+  "mode": "validation-only",
+  "require_external_preflight": true,
+  "require_preflight_outside_workspace": true,
+  "require_valid_approval_validation": true,
+  "require_clean_worktree": true,
+  "require_repo_head_match": true,
+  "validator_bindings": [
+    ".agent/checks/validate_implementation_invocation_preflight.py",
+    ".agent/policies/implementation-invocation-preflight-validation.json"
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "purpose": "windows_taskkill_process_tree_timeout_proof",
+  "mode": "fixture-only",
+  "required_platform": "Windows",
+  "tree_terminator": "taskkill",
+  "tree_terminator_arguments": ["/PID", "{root_pid}", "/T", "/F"],
+  "discovery_timeout_seconds": 2.0,
+  "timeout_seconds": 0.5,
+  "cleanup_timeout_seconds": 3.0,
+  "max_observed_seconds": 6.0,
+  "fixture": {
+    "id": "two_level_sleeping_tree",
+    "descendant_depth": 2,
+    "sleep_seconds": 10
+  },
+  "proven_control": "windows_taskkill_two_level_process_tree_timeout_fixture",
+  "unproven_controls": [
+    "arbitrary_process_tree_timeout",
+    "cross_platform_process_tree_timeout",
+    "implementation_session_wall_clock_timeout",
+    "process_spawn_timeout"
+  ]
+}
