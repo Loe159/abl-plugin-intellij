@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "purpose": "implementation_session_start_authorization_consumption",
+  "mode": "local-exclusive-consumption-only",
+  "marker_suffix": ".consumed.json",
+  "max_marker_bytes": 40000,
+  "require_valid_authorization_receipt": true,
+  "require_absent_consumption_marker": true,
+  "bindings": [
+    ".agent/checks/consume_implementation_session_start_authorization.py",
+    ".agent/policies/implementation-session-start-consumption.json",
+    ".agent/checks/validate_implementation_session_start_authorization.py",
+    ".agent/policies/implementation-session-start-authorization-validation.json"
+  ]
+}

@@ -75,12 +75,31 @@ class AssessRunnerReadinessTest(unittest.TestCase):
         )
         self.assertEqual("satisfied", statuses["bounded_output_capture"])
         self.assertEqual(
+            "related_evidence_only",
+            statuses["authorization_consumption_to_process_start"],
+        )
+        self.assertEqual(
             "satisfied",
             statuses["implementation_result_contract_validation"],
         )
         self.assertEqual(
-            "missing_evidence",
+            "related_evidence_only",
             statuses["runner_enforced_output_post_validation"],
+        )
+        runner_post_validation = next(
+            control
+            for control in result["controls"]
+            if control["id"] == "runner_enforced_output_post_validation"
+        )
+        self.assertEqual(
+            [
+                {
+                    "source": "runner_output_post_validation_proof",
+                    "id": "runner_output_post_validation_fixture",
+                    "assessment": "verified_fixture",
+                }
+            ],
+            runner_post_validation["related_evidence"],
         )
         self.assertEqual(
             "satisfied",

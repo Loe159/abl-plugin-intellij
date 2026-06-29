@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "purpose": "draft_pr_publication_readiness_check",
+  "mode": "local-preflight-only",
+  "required_missing_controls": [
+    "explicit_publication_request",
+    "authenticated_remote_repository",
+    "policy_allowed_candidate_patch",
+    "validated_quality_gate_receipt",
+    "exact_branch_push_result",
+    "draft_pr_creation_result"
+  ],
+  "bindings": [
+    ".agent/checks/check_draft_pr_publication_readiness.py",
+    ".agent/policies/draft-pr-publication-readiness.json",
+    "docs/agent-guides/draft-pr-publication-readiness.md"
+  ]
+}

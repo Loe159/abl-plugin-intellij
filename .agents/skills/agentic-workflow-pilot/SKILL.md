@@ -43,6 +43,13 @@ turning evidence into permission.
    - runner selection readiness is not runner selection;
    - session-start readiness is not session-start authorization;
    - session-start authorization is not invocation or replay protection;
+   - local exclusive authorization consumption is not tamper-resistant or
+     cross-host replay prevention;
+   - a valid consumption marker is not atomic consumption-to-invocation
+     coupling;
+   - post-consumption launch readiness is not runner selection or invocation;
+   - a local claim-before-spawn fixture is not crash-atomic authorization
+     consumption or real agent launch;
    - parent-environment isolation is not provider-credential noninheritance;
    - bounded output capture is not result-contract validation;
    - result-contract validation is not runner-enforced post-validation;

@@ -11,6 +11,7 @@
     "model_turn_budget",
     "network_isolation",
     "bounded_output_capture",
+    "authorization_consumption_to_process_start",
     "implementation_result_contract_validation",
     "runner_enforced_output_post_validation",
     "implementation_patch_post_validation",
@@ -73,6 +74,13 @@
       {
         "source": "bounded_output_capture_proof",
         "id": "bounded_output_capture",
+        "assessment": "verified_enforcement"
+      }
+    ],
+    "authorization_consumption_to_process_start": [
+      {
+        "source": "local_runner_audit",
+        "id": "authorization_consumption_to_process_start",
         "assessment": "verified_enforcement"
       }
     ],
@@ -169,8 +177,21 @@
         "assessment": "observed_metadata"
       }
     ],
+    "authorization_consumption_to_process_start": [
+      {
+        "source": "implementation_launch_transaction_proof",
+        "id": "local_exclusive_claim_before_direct_child_spawn_fixture",
+        "assessment": "verified_fixture"
+      }
+    ],
     "implementation_result_contract_validation": [],
-    "runner_enforced_output_post_validation": [],
+    "runner_enforced_output_post_validation": [
+      {
+        "source": "runner_output_post_validation_proof",
+        "id": "runner_output_post_validation_fixture",
+        "assessment": "verified_fixture"
+      }
+    ],
     "implementation_patch_post_validation": [],
     "implementation_patch_receipt_validation": [],
     "implementation_quality_gate_execution": [
@@ -198,8 +219,10 @@
     ".agent/checks/isolated_process.py",
     ".agent/checks/prove_parent_environment_isolation.py",
     ".agent/checks/prove_bounded_output_capture.py",
+    ".agent/checks/prove_implementation_launch_transaction.py",
     ".agent/checks/validate_implementation_result.py",
     ".agent/checks/prove_implementation_result_validation.py",
+    ".agent/checks/prove_runner_output_post_validation.py",
     ".agent/checks/validate_implementation_patch.py",
     ".agent/checks/prove_implementation_patch_validation.py",
     ".agent/checks/validate_implementation_patch_receipt.py",
@@ -216,8 +239,10 @@
     ".agent/policies/parent-environment-isolation.json",
     ".agent/policies/parent-environment-isolation-proof.json",
     ".agent/policies/bounded-output-capture-proof.json",
+    ".agent/policies/implementation-launch-transaction-proof.json",
     ".agent/policies/implementation-result-validation.json",
     ".agent/policies/implementation-result-validation-proof.json",
+    ".agent/policies/runner-output-post-validation-proof.json",
     ".agent/schemas/implementation-result.schema.json",
     ".agent/policies/implementation-patch-post-validation.json",
     ".agent/policies/implementation-patch-post-validation-proof.json",

@@ -28,6 +28,21 @@ patch. It records the reference patch digest, size, and changed paths.
 
 ## Run
 
+For the local no-manifest preflight:
+
+```text
+python .agent/checks/check_historical_golden_set_readiness.py \
+  --repo . \
+  --format json
+```
+
+The current expected result is exit code `2` with `golden_set_ready=false`.
+The preflight binds local files and lists the missing external controls without
+selecting a corpus, authenticating GitHub, validating issue closure, or
+authorizing benchmark adoption.
+
+For an external candidate manifest:
+
 ```text
 python .agent/checks/assess_golden_set_readiness.py \
   --repo . \
@@ -50,7 +65,9 @@ particular, local commit `75914f64dfe051e3d19fecab7d40dc5ecc22aba5` says
 `AblSymbolIndex` concurrency instead.
 
 Consequently, no repository golden-set manifest is checked in and the
-`historical_golden_set` capability remains incomplete.
+`historical_golden_set` capability remains incomplete. The local preflight now
+records this as an explicit current-state result rather than as absent
+evidence.
 
 ## Boundary
 

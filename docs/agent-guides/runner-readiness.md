@@ -11,7 +11,7 @@ runner, invoke an agent, or authorize a session.
 python .agent/checks/assess_runner_readiness.py --repo . --format json
 ```
 
-The CLI accepts no policy or evidence override. It executes the eleven fixed
+The CLI accepts no policy or evidence override. It executes the thirteen fixed
 local evidence sources:
 
 - `.agent/checks/audit_local_runner.py`;
@@ -20,7 +20,9 @@ local evidence sources:
 - `.agent/checks/prove_windows_process_tree_timeout.py`;
 - `.agent/checks/prove_parent_environment_isolation.py`;
 - `.agent/checks/prove_bounded_output_capture.py`;
+- `.agent/checks/prove_implementation_launch_transaction.py`;
 - `.agent/checks/prove_implementation_result_validation.py`;
+- `.agent/checks/prove_runner_output_post_validation.py`;
 - `.agent/checks/prove_implementation_patch_validation.py`;
 - `.agent/checks/prove_implementation_patch_receipt_validation.py`;
 - `.agent/checks/prove_implementation_quality_gate.py`;
@@ -56,6 +58,7 @@ The pilot currently requires evidence for:
 - model turn budget;
 - network isolation;
 - bounded output capture;
+- authorization-consumption-to-process-start coupling;
 - implementation-result contract validation;
 - runner-enforced output post-validation;
 - implementation-patch post-validation;
@@ -75,8 +78,12 @@ exact implementation-result contract, deterministic patch post-validation,
 and independent patch-receipt validation are satisfied by their focused
 proofs. Patch candidacy also requires a nonempty change set; a clean worktree
 cannot advance merely because untrusted output claimed it changed.
-Runner-enforced post-validation remains missing because no
-implementation runner yet proves that every invocation calls the validators.
+The local claim-before-spawn proof supplies related fixture evidence only:
+it leaves a crash window and does not consume a real authorization chain.
+Runner-enforced post-validation now has related fixture evidence only: a
+synthetic wrapper invokes the implementation-result validator and detects a
+bypass record, but no implementation runner yet proves that every invocation
+calls the validators.
 Quality-gate execution has only a bounded synthetic process fixture and
 therefore remains related evidence. Independent receipt validation is
 satisfied, but it does not authenticate historical build output. Model-turn

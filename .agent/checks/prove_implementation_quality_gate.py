@@ -50,9 +50,16 @@ def load_policy(path: Path = POLICY_PATH) -> dict[str, Any]:
     return policy
 
 
+def fixture_python_executable() -> Path:
+    candidate = Path(sys.prefix) / "python.exe"
+    if os.name == "nt" and candidate.is_file() and not candidate.is_symlink():
+        return candidate.resolve()
+    return Path(sys.executable).resolve()
+
+
 def python_command(script: str) -> list[str]:
     return [
-        str(Path(sys.executable).resolve()),
+        str(fixture_python_executable()),
         "-I",
         "-S",
         "-B",

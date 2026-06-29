@@ -3,9 +3,12 @@
   "purpose": "parent_environment_credential_isolation_enforcement",
   "mode": "bounded-runtime-enforcement",
   "allowed_parent_variables": [
+    "ALLUSERSPROFILE",
     "COMSPEC",
     "PATH",
     "PATHEXT",
+    "PROGRAMDATA",
+    "SYSTEMDRIVE",
     "SYSTEMROOT",
     "TEMP",
     "TMP",
@@ -23,6 +26,7 @@
   "cleanup_timeout_seconds": 2.0,
   "require_absolute_executable": true,
   "require_existing_working_directory": true,
+  "forbid_windows_app_execution_alias": true,
   "forbid_shell": true,
   "forbid_stdin": true
 }

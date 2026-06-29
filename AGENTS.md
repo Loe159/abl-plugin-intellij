@@ -66,8 +66,21 @@ and semantic model.
 - Read
   `docs/agent-guides/implementation-session-start-authorization-validation.md`
   before consuming a session-start authorization receipt.
+- Read `docs/agent-guides/implementation-session-start-consumption.md` before
+  atomically consuming a session-start authorization receipt.
+- Read
+  `docs/agent-guides/implementation-session-start-consumption-validation.md`
+  before trusting a local session-start consumption marker.
+- Read `docs/agent-guides/implementation-launch-readiness.md` before treating
+  validated post-consumption evidence as launch-ready.
+- Read `docs/agent-guides/implementation-launch-transaction-proof.md` before
+  claiming any coupling between local consumption and process creation.
 - Read `docs/agent-guides/workflow-status.md` before claiming the local
   agentic workflow pilot is complete or ready for end-to-end use.
+- Read `docs/agent-guides/draft-pr-publication-readiness.md` before claiming
+  draft-PR publication readiness or preparing a publication boundary.
+- Read `docs/agent-guides/multi-adapter-comparison-readiness.md` before
+  claiming multi-adapter comparison readiness or preparing comparison inputs.
 - Read `docs/agent-guides/run-metrics.md` before recording or comparing any
   agentic run measurement.
 - Read `docs/agent-guides/golden-set-readiness.md` before selecting or claiming
@@ -98,6 +111,8 @@ and semantic model.
   output handling or making output-validation claims.
 - Read `docs/agent-guides/implementation-result-validation.md` before changing
   the portable implementation-result contract or post-capture validation.
+- Read `docs/agent-guides/runner-output-post-validation-proof.md` before
+  claiming runner post-validation enforcement.
 - Read `docs/agent-guides/implementation-patch-post-validation.md` before
   generating or consuming a patch after an implementation result.
 - Read
@@ -220,9 +235,33 @@ and semantic model.
 - Validate a session-start authorization receipt only with
   `.agent/checks/validate_implementation_session_start_authorization.py`;
   `valid=true` is current-state evidence and does not consume the receipt.
+- Consume a validated session-start authorization only with
+  `.agent/checks/consume_implementation_session_start_authorization.py`; its
+  exclusive local marker rejects ordinary replay but is not tamper resistant,
+  cross-host replay prevention, runner selection, or agent invocation.
+- Validate a local session-start consumption marker only with
+  `.agent/checks/validate_implementation_session_start_consumption.py`;
+  `valid=true` is current-state evidence, not invocation, tamper resistance,
+  cross-host replay prevention, or atomic consumption-to-launch coupling.
+- Check post-consumption launch readiness only with
+  `.agent/checks/check_implementation_launch_readiness.py`; `launch_ready=true`
+  neither selects nor invokes a runner and does not prove network isolation or
+  atomic marker-to-process coupling.
+- Prove only the synthetic claim-before-spawn fixture with
+  `.agent/checks/prove_implementation_launch_transaction.py`; it does not prove
+  real authorization coupling, crash atomicity, cross-host replay prevention,
+  or agent invocation.
 - Check the current pilot capability ledger only with
   `.agent/checks/check_workflow_status.py`; `pilot_ready=false` is an explicit
   inventory result, not a failure to keep building the workflow incrementally.
+- Check draft-PR publication readiness only with
+  `.agent/checks/check_draft_pr_publication_readiness.py`; the current local
+  preflight never pushes a branch, creates a PR, writes to external services,
+  authenticates GitHub, or authorizes publication.
+- Check multi-adapter comparison readiness only with
+  `.agent/checks/check_multi_adapter_comparison_readiness.py`; the current
+  local preflight never invokes adapters, calls model providers, records
+  metrics, writes to external services, or authorizes network access.
 - Record bounded post-run measurements only with
   `.agent/checks/record_run_metrics.py`; a record is manually supplied evidence,
   not trusted runner telemetry, authorization, provider billing proof, or a
@@ -231,6 +270,10 @@ and semantic model.
   `.agent/checks/assess_golden_set_readiness.py`; candidate validity does not
   authenticate GitHub state, prove issue-to-commit equivalence, or make the
   historical golden set ready.
+- Check historical golden-set readiness only with
+  `.agent/checks/check_historical_golden_set_readiness.py`; the current local
+  preflight never selects a corpus, authenticates GitHub, verifies issue
+  closure, invokes an agent, or authorizes benchmark adoption.
 - Approve and validate an external GitHub issue snapshot only with
   `.agent/checks/approve_github_issue_snapshot.py`; exact local approval does
   not authenticate GitHub, independently verify labels, trust issue prose, or
@@ -277,6 +320,10 @@ and semantic model.
   `.agent/checks/prove_implementation_result_validation.py`; they do not prove
   that a future runner always invokes the validator or that real agent output
   is compatible.
+- Prove only the synthetic runner output post-validation fixture with
+  `.agent/checks/prove_runner_output_post_validation.py`; it does not prove a
+  real runner always invokes the validator or that real agent output is
+  compatible.
 - Generate and validate a post-implementation patch only with
   `.agent/checks/validate_implementation_patch.py`; candidate-ready still does
   not mean quality-gate-passed, approved, authorized, or publishable, and an

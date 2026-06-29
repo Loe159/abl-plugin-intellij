@@ -21,9 +21,12 @@ EXPECTED_POLICY: dict[str, Any] = {
     "purpose": "parent_environment_credential_isolation_enforcement",
     "mode": "bounded-runtime-enforcement",
     "allowed_parent_variables": [
+        "ALLUSERSPROFILE",
         "COMSPEC",
         "PATH",
         "PATHEXT",
+        "PROGRAMDATA",
+        "SYSTEMDRIVE",
         "SYSTEMROOT",
         "TEMP",
         "TMP",
@@ -41,6 +44,7 @@ EXPECTED_POLICY: dict[str, Any] = {
     "cleanup_timeout_seconds": 2.0,
     "require_absolute_executable": True,
     "require_existing_working_directory": True,
+    "forbid_windows_app_execution_alias": True,
     "forbid_shell": True,
     "forbid_stdin": True,
 }
@@ -85,6 +89,11 @@ def build_child_environment(
     return child
 
 
+def is_windows_app_execution_alias(path: Path) -> bool:
+    normalized = str(path).replace("/", "\\").upper()
+    return "\\APPDATA\\LOCAL\\MICROSOFT\\WINDOWSAPPS\\" in normalized
+
+
 def validate_command(command: Sequence[str], cwd: Path, policy: dict[str, Any]) -> list[str]:
     if (
         isinstance(command, (str, bytes))
@@ -97,6 +106,10 @@ def validate_command(command: Sequence[str], cwd: Path, policy: dict[str, Any]) 
         raise ValueError("Child executable must be an absolute path")
     if executable.is_symlink() or not executable.is_file():
         raise ValueError("Child executable must be an existing regular file")
+    if policy["forbid_windows_app_execution_alias"] and is_windows_app_execution_alias(
+        executable.resolve()
+    ):
+        raise ValueError("Windows App Execution Alias executables are not allowed")
     if cwd.is_symlink():
         raise ValueError("Child working directory symlinks are not allowed")
     if policy["require_existing_working_directory"] and not cwd.resolve().is_dir():

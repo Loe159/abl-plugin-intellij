@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "purpose": "multi_adapter_comparison_readiness_check",
+  "mode": "local-preflight-only",
+  "required_missing_controls": [
+    "explicit_comparison_task",
+    "at_least_two_reviewed_adapter_contracts",
+    "bounded_identical_stage_context",
+    "adapter_invocation_sandbox_controls",
+    "captured_output_validation",
+    "manual_metric_interpretation"
+  ],
+  "bindings": [
+    ".agent/checks/check_multi_adapter_comparison_readiness.py",
+    ".agent/policies/multi-adapter-comparison-readiness.json",
+    "docs/agent-guides/multi-adapter-comparison-readiness.md"
+  ]
+}

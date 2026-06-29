@@ -30,10 +30,13 @@
   "tree_terminator": "taskkill",
   "tree_terminator_arguments": ["/PID", "{root_pid}", "/T", "/F"],
   "allowed_parent_variables": [
+    "ALLUSERSPROFILE",
     "COMSPEC",
     "JAVA_HOME",
     "PATH",
     "PATHEXT",
+    "PROGRAMDATA",
+    "SYSTEMDRIVE",
     "SYSTEMROOT",
     "TEMP",
     "TMP",
@@ -51,6 +54,7 @@
   "require_receipt_outside_workspace": true,
   "require_absent_receipt": true,
   "require_workspace_git_state_unchanged": true,
+  "forbid_windows_app_execution_alias": true,
   "stop_after_first_failure": true,
   "network_requested": false,
   "bindings": [

@@ -1531,6 +1531,98 @@ also passes current-state validation. Runner readiness now marks
 `implementation_quality_gate_execution=related_evidence_only`, because output
 digests without retained logs do not authenticate the historical processes.
 
+The next increment adds exact local consumption of a validated session-start
+authorization receipt. `consume_implementation_session_start_authorization.py`
+revalidates the full chain and exclusively creates an adjacent `.consumed.json`
+marker, so a second ordinary local consumption is rejected. The marker keeps
+all invocation and authorization fields false; it is neither tamper resistant
+nor cross-host, invokes no agent, and promotes no runner-readiness control.
+
+The following increment adds independent validation of that marker.
+`validate_implementation_session_start_consumption.py` checks its separately
+carried digest before parsing, canonical schema, false authorization fields,
+identity, exact derived path, producer bindings, current authorization
+validity, and final state drift. The producer also repeats authorization
+validation immediately before exclusive marker creation.
+
+This closes ordinary local producer/consumer drift but still does not sign or
+protect the marker from deletion, share replay state across hosts, invoke an
+agent, or atomically couple consumption to process launch.
+
+The next increment adds `check_implementation_launch_readiness.py`, a final
+read-only agreement check requiring both current invocation readiness and the
+validated consumption marker. A fully ready synthetic runner fixture reaches
+`launch_ready=true`; current real runner controls remain not ready. The checker
+does not select a runner, invoke a process, or atomically couple the marker to a
+launch.
+
+The next increment adds a synthetic local claim-before-spawn fixture.
+`prove_implementation_launch_transaction.py` exclusively creates a claim bound
+to a harmless marker digest, launches one bounded Python child through
+`isolated_process.py`, and rejects replay before a second spawn. Runner
+readiness names `authorization_consumption_to_process_start` explicitly and
+records this proof as `related_evidence_only`.
+
+The fixture does not consume a real authorization chain, invoke Codex, close
+the crash window between claim creation and spawn, or prevent cross-host
+replay. It cannot satisfy the required control or make the runner ready.
+
+A June 19, 2026 local audit attempted to turn the Codex Windows sandbox into a
+bounded network-isolation fixture. With `codex-cli 0.137.0`, an exact profile
+declaring `network.enabled=false` still allowed both loopback TCP and an
+external TCP connection. More importantly, the sandbox returned before a
+Windows cache write completed and later created a literal `%SystemDrive%`
+directory under the checkout when launched from the reconstructed environment.
+
+The experimental network probe was removed rather than retained as readiness
+evidence. Its generated cache was deleted after exact path verification. The
+result is a documented local observation only: network isolation remains
+`missing_evidence`, and no current check invokes that active sandbox fixture.
+The metadata-only `codex sandbox --help` probe was verified separately and
+remains read-only.
+
+The cache mutation also exposed a separate defect in the synthetic quality-gate
+proof. It used the Windows App Execution Alias for Python under an environment
+that omitted `SYSTEMDRIVE`, `ALLUSERSPROFILE`, and `PROGRAMDATA`. The fixture
+now uses the regular interpreter under `sys.prefix`, and both bounded launch
+policies preserve those non-secret platform paths. Both policies also reject
+local Windows App Execution Alias executables under
+`AppData\Local\Microsoft\WindowsApps`.
+
+The draft-PR publication preflight increment adds
+`.agent/checks/check_draft_pr_publication_readiness.py`. It binds only local
+files, reports `publication_ready=false`, keeps every repository mutation,
+network, external-service, and publication field false, and lists the missing
+external controls required for any future deterministic publisher. The workflow
+ledger now records this as `local_preflight_only`; the deterministic publisher
+capability remains unimplemented and required.
+
+The multi-adapter comparison preflight increment adds
+`.agent/checks/check_multi_adapter_comparison_readiness.py`. It binds only
+local files, reports `comparison_ready=false`, keeps adapter invocation, model
+invocation, network, repository mutation, external-service, and metrics fields
+false, and lists the missing controls required before any future comparison can
+be treated as ready. The workflow ledger records this as `local_preflight_only`;
+the multi-adapter comparison capability remains unimplemented and required.
+
+The historical golden-set preflight increment adds
+`.agent/checks/check_historical_golden_set_readiness.py`. It binds the local
+golden-set checker, policy, and guide; reports `golden_set_ready=false`; keeps
+GitHub authentication, issue-closure verification, issue-reference equivalence,
+agent invocation, repository mutation, network, publication, and adoption fields
+false; and lists the missing controls required before a historical corpus can
+be selected. The workflow ledger records this as `local_preflight_only`; the
+historical golden-set capability remains unimplemented and required.
+
+The runner output post-validation fixture increment adds
+`.agent/checks/prove_runner_output_post_validation.py`. It exercises only a
+synthetic wrapper around `validate_implementation_result.validate_execution(...)`
+with a valid captured result, a session-identity mismatch, and a bypass record
+with no validator invocation. Runner readiness records this as related evidence
+for `runner_enforced_output_post_validation`; the required control remains
+unsatisfied because no real implementation runner proves that every invocation
+calls the validator or that real model output is compatible.
+
 ## Open Questions
 
 - Should the old `skills/` experiments be migrated, archived, or removed after

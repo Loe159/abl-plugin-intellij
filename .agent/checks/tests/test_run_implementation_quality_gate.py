@@ -109,12 +109,20 @@ def candidate(root: Path, changed: bool = True) -> dict[str, object]:
 
 def environment() -> dict[str, str]:
     return {
+        "ALLUSERSPROFILE": os.environ.get("ALLUSERSPROFILE", r"C:\ProgramData"),
         "COMSPEC": os.environ.get("COMSPEC", r"C:\Windows\System32\cmd.exe"),
         "PATH": os.environ.get("PATH", ""),
+        "PROGRAMDATA": os.environ.get("PROGRAMDATA", r"C:\ProgramData"),
+        "SYSTEMDRIVE": os.environ.get("SYSTEMDRIVE", "C:"),
         "SYSTEMROOT": os.environ.get("SYSTEMROOT", r"C:\Windows"),
         "WINDIR": os.environ.get("WINDIR", r"C:\Windows"),
         "SECRET_TOKEN": "must-not-be-inherited",
     }
+
+
+def fixture_python() -> str:
+    candidate = Path(sys.prefix) / "python.exe"
+    return str(candidate.resolve() if candidate.is_file() else Path(sys.executable).resolve())
 
 
 def execution(returncode: int = 0) -> dict[str, object]:
@@ -175,6 +183,42 @@ class RunImplementationQualityGateTest(unittest.TestCase):
         self.assertIn("--offline", policy["fixed_arguments"])
         self.assertEqual("taskkill", policy["tree_terminator"])
         self.assertFalse(policy["network_requested"])
+
+    def test_windows_app_execution_alias_commands_are_rejected(self) -> None:
+        policy = gate.load_policy()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            workspace = root / "workspace"
+            workspace.mkdir()
+            (workspace / "gradlew.bat").write_text("@echo off\r\n", encoding="ascii")
+            alias = (
+                root
+                / "AppData"
+                / "Local"
+                / "Microsoft"
+                / "WindowsApps"
+                / "python.exe"
+            )
+            alias.parent.mkdir(parents=True)
+            alias.write_text("", encoding="ascii")
+
+            with self.assertRaisesRegex(ValueError, "Windows App Execution Alias"):
+                gate.exact_gradle_command(
+                    workspace,
+                    ["test"],
+                    {"COMSPEC": str(alias)},
+                    policy,
+                )
+            with self.assertRaisesRegex(ValueError, "Windows App Execution Alias"):
+                gate.run_bounded(
+                    [str(alias), "-V"],
+                    REPO_ROOT,
+                    environment(),
+                    policy,
+                    1.0,
+                    r"C:\Windows\System32\taskkill.exe",
+                    popen=mock.Mock(side_effect=AssertionError("must not spawn")),
+                )
 
     def test_exact_candidate_runs_all_commands_and_writes_pass_receipt(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -342,7 +386,7 @@ class RunImplementationQualityGateTest(unittest.TestCase):
         policy["capture_chunk_bytes"] = 4096
         policy["cleanup_timeout_seconds"] = 3.0
         command = [
-            str(Path(sys.executable).resolve()),
+            fixture_python(),
             "-I",
             "-S",
             "-B",
@@ -359,7 +403,7 @@ class RunImplementationQualityGateTest(unittest.TestCase):
         )
         timeout = gate.run_bounded(
             [
-                str(Path(sys.executable).resolve()),
+                fixture_python(),
                 "-I",
                 "-S",
                 "-B",
@@ -387,7 +431,7 @@ class RunImplementationQualityGateTest(unittest.TestCase):
         policy["cleanup_timeout_seconds"] = 0.2
         taskkill_error = gate.run_bounded(
             [
-                str(Path(sys.executable).resolve()),
+                fixture_python(),
                 "-I",
                 "-S",
                 "-B",

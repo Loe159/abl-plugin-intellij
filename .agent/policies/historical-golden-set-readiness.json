@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "purpose": "historical_golden_set_readiness_check",
+  "mode": "local-preflight-only",
+  "required_missing_controls": [
+    "approved_external_issue_snapshot_corpus",
+    "external_candidate_manifest",
+    "authenticated_closed_issue_states",
+    "issue_to_reference_equivalence_review",
+    "complete_category_coverage",
+    "human_golden_set_adoption_decision"
+  ],
+  "bindings": [
+    ".agent/checks/check_historical_golden_set_readiness.py",
+    ".agent/policies/historical-golden-set-readiness.json",
+    ".agent/checks/assess_golden_set_readiness.py",
+    ".agent/policies/golden-set-readiness.json",
+    "docs/agent-guides/golden-set-readiness.md"
+  ]
+}

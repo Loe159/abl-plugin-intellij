@@ -59,7 +59,8 @@ python .agent/checks/prove_implementation_result_validation.py \
 
 The readiness ledger marks
 `implementation_result_contract_validation=satisfied`. It keeps
-`runner_enforced_output_post_validation=missing_evidence` because no
+`runner_enforced_output_post_validation` unsatisfied. A separate synthetic
+runner-output post-validation fixture can provide related evidence, but no
 implementation runner yet proves that every invocation calls this validator.
 
 An implementation result still cannot approve its own edits. The next

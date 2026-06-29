@@ -28,9 +28,11 @@ environment, command, or launcher override.
 The launcher:
 
 - requires an absolute existing executable;
+- rejects local Windows App Execution Alias executables under
+  `AppData\Local\Microsoft\WindowsApps`;
 - requires an existing working directory;
 - uses `shell=false` and closed standard input;
-- reconstructs the child environment from seven named platform variables;
+- reconstructs the child environment from ten named platform variables;
 - adds three fixed non-secret runtime variables;
 - enforces a bounded direct-child timeout;
 - captures both output streams under an exact retained-byte ceiling.

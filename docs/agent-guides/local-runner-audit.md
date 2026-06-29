@@ -58,6 +58,9 @@ of those observations proves that a future runner combines them correctly,
 applies the intended configuration, resists bypass, stops on budget, or cleans
 up safely.
 
+The audit also keeps authorization-consumption-to-process-start coupling
+unproven. A separate synthetic fixture supplies related evidence only.
+
 OpenAI documents that Codex sandboxing is the technical boundary for spawned
 commands and that its implementation differs between native Windows and WSL2:
 

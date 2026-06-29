@@ -26,18 +26,29 @@ The ledger distinguishes:
   not yet authenticated real-execution evidence, plus independent current-state
   validation of its bounded receipt;
 - manual-only research and planning rehearsal;
-- implementation-session contracts that describe readiness but do not run;
+- implementation-session contracts through validated post-consumption launch
+  readiness, without runner selection or execution;
 - runner controls that are still not ready in the real checkout;
 - an exact local session-start authorization receipt that does not authenticate
-  the authorizer, prevent replay, or invoke a runner;
+  the authorizer or invoke a runner, plus an exclusive adjacent consumption
+  marker with independent current-state validation; it rejects ordinary local
+  replay but is not tamper resistant, cross-host, or atomically coupled to
+  invocation;
 - missing deterministic draft-PR publication, an authenticated historical
   golden set, and multi-adapter comparison;
+- a local-only draft-PR publication preflight that lists missing external
+  controls but does not push, create a PR, authenticate a remote, or authorize
+  publication;
+- a local-only multi-adapter comparison preflight that lists missing adapter,
+  sandbox, context, validation, and metric-interpretation controls without
+  invoking adapters or model providers;
 - manual exact approval of external GitHub issue snapshots that does not
   authenticate GitHub or independently verify labels;
 - manual post-run metrics recording that does not claim automatic runner or
   provider telemetry.
-- a golden-set candidate contract that validates local reference commits but
-  cannot authenticate GitHub issue state.
+- a golden-set readiness preflight and candidate contract that can validate
+  local reference commits but cannot authenticate GitHub issue state or select
+  the historical corpus.
 
 The checker validates the exact policy, hashes every declared evidence file,
 and consumes the current runner-readiness assessment. A future satisfying

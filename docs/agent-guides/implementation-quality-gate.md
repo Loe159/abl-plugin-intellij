@@ -17,6 +17,19 @@ reconstructed from a small allowlist, and the policy records
 `network_requested=false`. Gradle offline mode is a dependency-resolution
 constraint, not proof of operating-system network isolation.
 
+The bounded launcher rejects local Windows App Execution Alias executables
+under `AppData\Local\Microsoft\WindowsApps` for both `COMSPEC` and direct
+command execution.
+
+On Windows the allowlist includes `SYSTEMDRIVE`, `ALLUSERSPROFILE`, and
+`PROGRAMDATA`. These non-secret platform paths prevent WindowsApps children
+from resolving `%SystemDrive%\ProgramData` relative to the implementation
+workspace.
+
+The synthetic mechanism proof uses the regular interpreter under `sys.prefix`
+instead of the Windows App Execution Alias. This keeps the fixture from
+starting package-cache work outside the bounded child-process observation.
+
 The caller must provide an existing external `--gradle-user-home`. The
 executor refuses to spawn Gradle unless that cache already contains the exact
 8.11.1 wrapper distribution. This prevents the wrapper bootstrap from

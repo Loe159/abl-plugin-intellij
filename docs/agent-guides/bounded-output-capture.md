@@ -44,10 +44,10 @@ follows a result schema, refers to the approved task, contains no secret,
 yields an acceptable patch, or passes deterministic checks.
 
 The separate exact result contract is documented in
-`docs/agent-guides/implementation-result-validation.md`. Even with that
-contract, `runner_enforced_output_post_validation` remains
-`missing_evidence` until a real implementation runner proves that every
-captured result is passed through it.
+`docs/agent-guides/implementation-result-validation.md`. A separate synthetic
+post-validation fixture may provide related evidence, but
+`runner_enforced_output_post_validation` remains unsatisfied until a real
+implementation runner proves that every captured result is passed through it.
 
 The proof covers one direct child and the current platform. It does not prove
 arbitrary descendant-tree cleanup, cross-platform equivalence, network

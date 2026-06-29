@@ -138,6 +138,7 @@ EXPECTED_POLICY: dict[str, Any] = {
         "model_turn_budget",
         "network_isolation",
         "bounded_output_capture",
+        "authorization_consumption_to_process_start",
         "implementation_result_contract_validation",
         "runner_enforced_output_post_validation",
         "implementation_patch_post_validation",

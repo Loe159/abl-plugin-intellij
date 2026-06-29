@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "purpose": "implementation_launch_transaction_mechanism_proof",
+  "mode": "fixture-only",
+  "claim_suffix": ".launch-claimed.json",
+  "marker_content": "synthetic-valid-consumption-marker\n",
+  "child_stdout": "synthetic-launch-child-started\n",
+  "child_timeout_seconds": 2.0,
+  "max_claim_bytes": 4000,
+  "proven_control": "local_exclusive_claim_before_direct_child_spawn_fixture",
+  "unproven_controls": [
+    "authorization_consumption_to_process_start",
+    "agent_process_invocation",
+    "crash_atomicity",
+    "cross_host_replay_prevention"
+  ]
+}

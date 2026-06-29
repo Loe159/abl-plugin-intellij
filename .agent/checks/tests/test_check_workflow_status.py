@@ -62,18 +62,68 @@ class CheckWorkflowStatusTest(unittest.TestCase):
             for item in result["capabilities"]
             if item["id"] == "explicit_session_start_authorization"
         )
-        self.assertEqual("exact_local_receipt_only", start_authorization["status"])
+        implementation = next(
+            item
+            for item in result["capabilities"]
+            if item["id"] == "supervised_implementation_contract"
+        )
+        self.assertEqual(
+            "post_consumption_readiness_only",
+            implementation["status"],
+        )
+        self.assertIn(
+            ".agent/checks/check_implementation_launch_readiness.py",
+            implementation["evidence"],
+        )
+        self.assertEqual(
+            "validated_exclusive_local_consumption",
+            start_authorization["status"],
+        )
+        self.assertIn(
+            ".agent/checks/consume_implementation_session_start_authorization.py",
+            start_authorization["evidence"],
+        )
+        self.assertIn(
+            ".agent/checks/validate_implementation_session_start_consumption.py",
+            start_authorization["evidence"],
+        )
         self.assertTrue(start_authorization["implemented"])
         metrics = next(
             item for item in result["capabilities"] if item["id"] == "run_metrics"
         )
         self.assertEqual("manual_evidence_recording_only", metrics["status"])
         self.assertTrue(metrics["implemented"])
+        publication = next(
+            item
+            for item in result["capabilities"]
+            if item["id"] == "deterministic_draft_pr_publisher"
+        )
+        self.assertEqual("local_preflight_only", publication["status"])
+        self.assertFalse(publication["implemented"])
+        self.assertIn(
+            ".agent/checks/check_draft_pr_publication_readiness.py",
+            publication["evidence"],
+        )
         golden_set = next(
             item for item in result["capabilities"] if item["id"] == "historical_golden_set"
         )
-        self.assertEqual("candidate_contract_only", golden_set["status"])
+        self.assertEqual("local_preflight_only", golden_set["status"])
         self.assertFalse(golden_set["implemented"])
+        self.assertIn(
+            ".agent/checks/check_historical_golden_set_readiness.py",
+            golden_set["evidence"],
+        )
+        comparison = next(
+            item
+            for item in result["capabilities"]
+            if item["id"] == "multi_adapter_comparison"
+        )
+        self.assertEqual("local_preflight_only", comparison["status"])
+        self.assertFalse(comparison["implemented"])
+        self.assertIn(
+            ".agent/checks/check_multi_adapter_comparison_readiness.py",
+            comparison["evidence"],
+        )
         ingestion = next(
             item
             for item in result["capabilities"]

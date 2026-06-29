@@ -76,6 +76,12 @@ evidence, not permission to start.
 
 `invocation_ready=true` is reachable only when fixture or future real runner
 evidence satisfies every declared control and an exact authorization receipt
-validates. It remains a read-only readiness result: it does not invoke an agent
-or prevent authorization replay. Atomic consumption and execution remain
-responsibilities of the still-missing enforced runner.
+validates. It remains a read-only readiness result and does not invoke an
+agent. A separate local marker now provides validated exclusive consumption,
+but atomic coupling between that consumption and execution remains the
+responsibility of the still-missing enforced runner.
+
+After consuming the authorization, use
+`check_implementation_launch_readiness.py` to require this readiness result and
+the independently validated marker together. That later check remains
+non-invoking.

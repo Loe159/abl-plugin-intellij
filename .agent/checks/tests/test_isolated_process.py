@@ -20,6 +20,11 @@ sys.modules[SPEC.name] = isolated
 SPEC.loader.exec_module(isolated)
 
 
+def fixture_python() -> str:
+    candidate = Path(sys.prefix) / "python.exe"
+    return str(candidate.resolve() if candidate.is_file() else Path(sys.executable).resolve())
+
+
 class IsolatedProcessTest(unittest.TestCase):
     def test_policy_is_exact_and_environment_is_reconstructed(self) -> None:
         policy = isolated.load_policy()
@@ -56,6 +61,23 @@ class IsolatedProcessTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "absolute path"):
                 isolated.validate_command(["python", "-V"], Path(temp_dir), policy)
 
+    def test_windows_app_execution_alias_executable_is_rejected(self) -> None:
+        policy = isolated.load_policy()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            alias = (
+                Path(temp_dir)
+                / "AppData"
+                / "Local"
+                / "Microsoft"
+                / "WindowsApps"
+                / "python.exe"
+            )
+            alias.parent.mkdir(parents=True)
+            alias.write_text("", encoding="ascii")
+
+            with self.assertRaisesRegex(ValueError, "Windows App Execution Alias"):
+                isolated.validate_command([str(alias), "-V"], Path(temp_dir), policy)
+
     def test_run_uses_exact_non_shell_bounded_process_contract(self) -> None:
         policy = isolated.load_policy()
         observed: dict[str, object] = {}
@@ -76,7 +98,7 @@ class IsolatedProcessTest(unittest.TestCase):
             return Process()
 
         result = isolated.run(
-            [str(Path(sys.executable).resolve()), "-V"],
+            [fixture_python(), "-V"],
             CHECKS_DIR,
             {"PATH": "allowed", "GH_TOKEN": "synthetic-marker"},
             policy,
@@ -97,7 +119,7 @@ class IsolatedProcessTest(unittest.TestCase):
         policy = isolated.load_policy()
         timed_out = isolated.run(
             [
-                str(Path(sys.executable).resolve()),
+                fixture_python(),
                 "-I",
                 "-S",
                 "-B",
@@ -111,7 +133,7 @@ class IsolatedProcessTest(unittest.TestCase):
         )
         oversized = isolated.run(
             [
-                str(Path(sys.executable).resolve()),
+                fixture_python(),
                 "-I",
                 "-S",
                 "-B",
@@ -137,7 +159,7 @@ class IsolatedProcessTest(unittest.TestCase):
         policy = isolated.load_policy()
         result = isolated.run(
             [
-                str(Path(sys.executable).resolve()),
+                fixture_python(),
                 "-I",
                 "-S",
                 "-B",

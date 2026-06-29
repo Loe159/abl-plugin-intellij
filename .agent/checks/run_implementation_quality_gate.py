@@ -54,10 +54,13 @@ EXPECTED_POLICY: dict[str, Any] = {
     "tree_terminator": "taskkill",
     "tree_terminator_arguments": ["/PID", "{root_pid}", "/T", "/F"],
     "allowed_parent_variables": [
+        "ALLUSERSPROFILE",
         "COMSPEC",
         "JAVA_HOME",
         "PATH",
         "PATHEXT",
+        "PROGRAMDATA",
+        "SYSTEMDRIVE",
         "SYSTEMROOT",
         "TEMP",
         "TMP",
@@ -75,6 +78,7 @@ EXPECTED_POLICY: dict[str, Any] = {
     "require_receipt_outside_workspace": True,
     "require_absent_receipt": True,
     "require_workspace_git_state_unchanged": True,
+    "forbid_windows_app_execution_alias": True,
     "stop_after_first_failure": True,
     "network_requested": False,
     "bindings": [
@@ -125,6 +129,11 @@ def taskkill_command(path: str, pid: int, policy: dict[str, Any]) -> list[str]:
     ]
 
 
+def is_windows_app_execution_alias(path: Path) -> bool:
+    normalized = str(path).replace("/", "\\").upper()
+    return "\\APPDATA\\LOCAL\\MICROSOFT\\WINDOWSAPPS\\" in normalized
+
+
 def exact_gradle_command(
     workspace: Path,
     tasks: Sequence[str],
@@ -140,6 +149,10 @@ def exact_gradle_command(
     executable = Path(comspec)
     if not executable.is_absolute() or executable.is_symlink() or not executable.is_file():
         raise ValueError("COMSPEC must identify an absolute regular file")
+    if policy["forbid_windows_app_execution_alias"] and is_windows_app_execution_alias(
+        executable.resolve()
+    ):
+        raise ValueError("COMSPEC must not use a Windows App Execution Alias")
     return [
         str(executable),
         "/d",
@@ -165,6 +178,11 @@ def run_bounded(
 ) -> dict[str, Any]:
     if not command or any(not isinstance(part, str) or not part for part in command):
         raise ValueError("Quality-gate command is invalid")
+    executable = Path(command[0])
+    if policy["forbid_windows_app_execution_alias"] and is_windows_app_execution_alias(
+        executable.resolve()
+    ):
+        raise ValueError("Quality-gate command must not use a Windows App Execution Alias")
     process = popen(
         list(command),
         cwd=cwd,

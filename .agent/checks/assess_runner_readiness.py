@@ -21,7 +21,9 @@ import prove_implementation_patch_validation
 import prove_implementation_patch_receipt_validation
 import prove_implementation_quality_gate
 import prove_implementation_quality_gate_validation
+import prove_implementation_launch_transaction
 import prove_wall_clock_timeout
+import prove_runner_output_post_validation
 import prove_windows_process_tree_timeout
 
 
@@ -41,7 +43,9 @@ SOURCE_IDS = (
     "windows_process_tree_timeout_proof",
     "parent_environment_isolation_proof",
     "bounded_output_capture_proof",
+    "implementation_launch_transaction_proof",
     "implementation_result_validation_proof",
+    "runner_output_post_validation_proof",
     "implementation_patch_validation_proof",
     "implementation_patch_receipt_validation_proof",
     "implementation_quality_gate_proof",
@@ -111,6 +115,20 @@ SOURCE_CONTRACTS = {
             *prove_bounded_output_capture.EXPECTED_POLICY["unproven_controls"],
         },
     },
+    "implementation_launch_transaction_proof": {
+        "purpose": "implementation_launch_transaction_mechanism_proof",
+        "mode": "fixture-only",
+        "completion_field": "proof_complete",
+        "assessment_fields": ("control_assessments",),
+        "expected_ids": {
+            prove_implementation_launch_transaction.EXPECTED_POLICY[
+                "proven_control"
+            ],
+            *prove_implementation_launch_transaction.EXPECTED_POLICY[
+                "unproven_controls"
+            ],
+        },
+    },
     "implementation_result_validation_proof": {
         "purpose": "implementation_result_contract_validation_proof",
         "mode": "enforcement-proof",
@@ -119,6 +137,16 @@ SOURCE_CONTRACTS = {
         "expected_ids": {
             prove_implementation_result_validation.EXPECTED_POLICY["proven_control"],
             *prove_implementation_result_validation.EXPECTED_POLICY["unproven_controls"],
+        },
+    },
+    "runner_output_post_validation_proof": {
+        "purpose": "runner_output_post_validation_mechanism_proof",
+        "mode": "fixture-only",
+        "completion_field": "proof_complete",
+        "assessment_fields": ("control_assessments",),
+        "expected_ids": {
+            prove_runner_output_post_validation.EXPECTED_POLICY["proven_control"],
+            *prove_runner_output_post_validation.EXPECTED_POLICY["unproven_controls"],
         },
     },
     "implementation_patch_validation_proof": {
@@ -184,6 +212,7 @@ EXPECTED_POLICY: dict[str, Any] = {
         "model_turn_budget",
         "network_isolation",
         "bounded_output_capture",
+        "authorization_consumption_to_process_start",
         "implementation_result_contract_validation",
         "runner_enforced_output_post_validation",
         "implementation_patch_post_validation",
@@ -246,6 +275,13 @@ EXPECTED_POLICY: dict[str, Any] = {
             {
                 "source": "bounded_output_capture_proof",
                 "id": "bounded_output_capture",
+                "assessment": "verified_enforcement",
+            }
+        ],
+        "authorization_consumption_to_process_start": [
+            {
+                "source": "local_runner_audit",
+                "id": "authorization_consumption_to_process_start",
                 "assessment": "verified_enforcement",
             }
         ],
@@ -342,8 +378,21 @@ EXPECTED_POLICY: dict[str, Any] = {
                 "assessment": "observed_metadata",
             }
         ],
+        "authorization_consumption_to_process_start": [
+            {
+                "source": "implementation_launch_transaction_proof",
+                "id": "local_exclusive_claim_before_direct_child_spawn_fixture",
+                "assessment": "verified_fixture",
+            }
+        ],
         "implementation_result_contract_validation": [],
-        "runner_enforced_output_post_validation": [],
+        "runner_enforced_output_post_validation": [
+            {
+                "source": "runner_output_post_validation_proof",
+                "id": "runner_output_post_validation_fixture",
+                "assessment": "verified_fixture",
+            }
+        ],
         "implementation_patch_post_validation": [],
         "implementation_patch_receipt_validation": [],
         "implementation_quality_gate_execution": [
@@ -371,8 +420,10 @@ EXPECTED_POLICY: dict[str, Any] = {
         ".agent/checks/isolated_process.py",
         ".agent/checks/prove_parent_environment_isolation.py",
         ".agent/checks/prove_bounded_output_capture.py",
+        ".agent/checks/prove_implementation_launch_transaction.py",
         ".agent/checks/validate_implementation_result.py",
         ".agent/checks/prove_implementation_result_validation.py",
+        ".agent/checks/prove_runner_output_post_validation.py",
         ".agent/checks/validate_implementation_patch.py",
         ".agent/checks/prove_implementation_patch_validation.py",
         ".agent/checks/validate_implementation_patch_receipt.py",
@@ -389,8 +440,10 @@ EXPECTED_POLICY: dict[str, Any] = {
         ".agent/policies/parent-environment-isolation.json",
         ".agent/policies/parent-environment-isolation-proof.json",
         ".agent/policies/bounded-output-capture-proof.json",
+        ".agent/policies/implementation-launch-transaction-proof.json",
         ".agent/policies/implementation-result-validation.json",
         ".agent/policies/implementation-result-validation-proof.json",
+        ".agent/policies/runner-output-post-validation-proof.json",
         ".agent/schemas/implementation-result.schema.json",
         ".agent/policies/implementation-patch-post-validation.json",
         ".agent/policies/implementation-patch-post-validation-proof.json",
@@ -511,10 +564,22 @@ def default_sources(repo: Path) -> dict[str, dict[str, Any]]:
             repo,
             prove_bounded_output_capture.load_policy(),
         ),
+        "implementation_launch_transaction_proof": (
+            prove_implementation_launch_transaction.prove(
+                repo,
+                prove_implementation_launch_transaction.load_policy(),
+            )
+        ),
         "implementation_result_validation_proof": (
             prove_implementation_result_validation.prove(
                 repo,
                 prove_implementation_result_validation.load_policy(),
+            )
+        ),
+        "runner_output_post_validation_proof": (
+            prove_runner_output_post_validation.prove(
+                repo,
+                prove_runner_output_post_validation.load_policy(),
             )
         ),
         "implementation_patch_validation_proof": (

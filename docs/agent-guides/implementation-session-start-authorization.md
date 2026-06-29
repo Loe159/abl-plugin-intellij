@@ -73,8 +73,10 @@ replay_prevention_enforced=false
 
 This is an exact consent receipt, not an execution capability. The local
 authorizer declaration is not authenticated or cryptographically signed.
-Replay prevention is intentionally not claimed: a future enforced runner must
-consume an authorization atomically and reject reuse before it may invoke an
+The separate local consumption boundary documented in
+`docs/agent-guides/implementation-session-start-consumption.md` can create one
+exclusive adjacent marker and reject ordinary local replay. That marker is not
+tamper resistant or a cross-host replay registry, and it does not invoke an
 agent.
 
 The current checkout still lacks satisfying enforcement evidence for all

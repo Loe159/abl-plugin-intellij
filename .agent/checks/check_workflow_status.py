@@ -68,15 +68,17 @@ EXPECTED_POLICY: dict[str, Any] = {
         },
         {
             "id": "supervised_implementation_contract",
-            "status": "readiness_only",
+            "status": "post_consumption_readiness_only",
             "implemented": True,
             "required_for_pilot": True,
             "evidence": [
                 ".agent/checks/build_implementation_session.py",
                 ".agent/checks/check_implementation_invocation_readiness.py",
                 ".agent/checks/check_implementation_session_start.py",
+                ".agent/checks/check_implementation_launch_readiness.py",
                 ".agent/checks/run_implementation_quality_gate.py",
                 ".agent/checks/validate_implementation_quality_gate.py",
+                ".agent/policies/implementation-launch-readiness.json",
             ],
         },
         {
@@ -88,14 +90,18 @@ EXPECTED_POLICY: dict[str, Any] = {
         },
         {
             "id": "explicit_session_start_authorization",
-            "status": "exact_local_receipt_only",
+            "status": "validated_exclusive_local_consumption",
             "implemented": True,
             "required_for_pilot": True,
             "evidence": [
                 ".agent/checks/authorize_implementation_session_start.py",
                 ".agent/checks/validate_implementation_session_start_authorization.py",
+                ".agent/checks/consume_implementation_session_start_authorization.py",
+                ".agent/checks/validate_implementation_session_start_consumption.py",
                 ".agent/policies/implementation-session-start-authorization.json",
                 ".agent/policies/implementation-session-start-authorization-validation.json",
+                ".agent/policies/implementation-session-start-consumption.json",
+                ".agent/policies/implementation-session-start-consumption-validation.json",
             ],
         },
         {
@@ -110,10 +116,13 @@ EXPECTED_POLICY: dict[str, Any] = {
         },
         {
             "id": "deterministic_draft_pr_publisher",
-            "status": "not_implemented",
+            "status": "local_preflight_only",
             "implemented": False,
             "required_for_pilot": True,
-            "evidence": [],
+            "evidence": [
+                ".agent/checks/check_draft_pr_publication_readiness.py",
+                ".agent/policies/draft-pr-publication-readiness.json",
+            ],
         },
         {
             "id": "run_metrics",
@@ -127,20 +136,25 @@ EXPECTED_POLICY: dict[str, Any] = {
         },
         {
             "id": "historical_golden_set",
-            "status": "candidate_contract_only",
+            "status": "local_preflight_only",
             "implemented": False,
             "required_for_pilot": True,
             "evidence": [
+                ".agent/checks/check_historical_golden_set_readiness.py",
+                ".agent/policies/historical-golden-set-readiness.json",
                 ".agent/checks/assess_golden_set_readiness.py",
                 ".agent/policies/golden-set-readiness.json",
             ],
         },
         {
             "id": "multi_adapter_comparison",
-            "status": "not_implemented",
+            "status": "local_preflight_only",
             "implemented": False,
             "required_for_pilot": True,
-            "evidence": [],
+            "evidence": [
+                ".agent/checks/check_multi_adapter_comparison_readiness.py",
+                ".agent/policies/multi-adapter-comparison-readiness.json",
+            ],
         },
     ],
     "bindings": [
