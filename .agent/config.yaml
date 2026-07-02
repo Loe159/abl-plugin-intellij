@@ -1,0 +1,53 @@
+version: 1
+purpose: local-agentic-workflow-inventory
+mode: non-authorizing-reference
+
+project:
+  type: intellij-plugin-kotlin
+
+checks:
+  fast: .agent/checks/fast.sh
+  full: .agent/checks/full.sh
+  diff_policy: .agent/checks/diff_policy.py
+  tests_policy: .agent/checks/tests-policy.sh
+  secret_scan: .agent/checks/secret-scan.sh
+  quality_gate: .agent/checks/run_implementation_quality_gate.py
+
+artifacts:
+  contract: .agent/policies/artifact-contract.json
+  templates: .agent/templates
+  prompts: .agent/prompts
+
+runner:
+  supervised_local: .agent/checks/run_supervised_implementation.py
+  adapter: .agent/adapters/local_implementation_adapter.py
+  read_only_adapter: .agent/adapters/local_read_only.py
+  invocation_builder: .agent/checks/build_supervised_runner_invocation.py
+  optional_adapter_wrappers:
+    codex: .agent/adapters/codex.sh
+    opencode: .agent/adapters/opencode.sh
+    aider: .agent/adapters/aider.sh
+    claude_code: .agent/adapters/claude-code.sh
+    mini_swe_agent: .agent/adapters/mini-swe-agent.sh
+
+scripts:
+  python_resolver: .agent/scripts/resolve-python.sh
+  fetch_issue_snapshot: .agent/scripts/fetch-issue-snapshot.sh
+  list_approved_issue_queue: .agent/checks/list_github_approved_issues.py
+  prepare_github_task: .agent/checks/prepare_github_task.py
+  run_stage: .agent/scripts/run-stage.sh
+  prepare_task: .agent/scripts/prepare-task.sh
+  classify_task: .agent/scripts/classify-task.sh
+  validate_patch: .agent/scripts/validate-patch.sh
+  collect_metrics: .agent/scripts/collect-metrics.sh
+  publish_draft_pr: .agent/scripts/publish-draft-pr.sh
+
+publication:
+  draft_pr_only: true
+  publisher: .agent/checks/publish_draft_pr.py
+  authorized_by_status: false
+
+security:
+  github_write_access_in_agent: false
+  network_default: not_proven_isolated
+  auto_merge: false

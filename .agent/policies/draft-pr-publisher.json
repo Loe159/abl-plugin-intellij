@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "purpose": "deterministic_draft_pr_publisher",
+  "mode": "explicit-requested-external-publication",
+  "default_dry_run": true,
+  "require_execute_flag_for_external_writes": true,
+  "require_draft_pr": true,
+  "require_quality_gate_receipt_valid": true,
+  "require_quality_gate_passed": true,
+  "require_external_outputs": true,
+  "require_outputs_outside_workspace": true,
+  "require_absent_outputs": true,
+  "require_distinct_outputs": true,
+  "allowed_branch_prefixes": [
+    "codex/"
+  ],
+  "max_title_chars": 160,
+  "max_body_chars": 12000,
+  "command_timeout_seconds": 60.0,
+  "max_captured_output_bytes": 20000,
+  "bindings": [
+    ".agent/checks/publish_draft_pr.py",
+    ".agent/policies/draft-pr-publisher.json",
+    ".agent/checks/validate_implementation_quality_gate.py",
+    ".agent/policies/implementation-quality-gate-validation.json",
+    "docs/agent-guides/draft-pr-publication-readiness.md"
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "purpose": "implementation_launch_readiness_check",
+  "mode": "post-consumption-readiness-only",
+  "require_invocation_ready": true,
+  "require_valid_consumption_marker": true,
+  "bindings": [
+    ".agent/checks/check_implementation_launch_readiness.py",
+    ".agent/policies/implementation-launch-readiness.json",
+    ".agent/checks/check_implementation_invocation_readiness.py",
+    ".agent/policies/implementation-invocation-readiness.json",
+    ".agent/checks/validate_implementation_session_start_consumption.py",
+    ".agent/policies/implementation-session-start-consumption-validation.json"
+  ]
+}

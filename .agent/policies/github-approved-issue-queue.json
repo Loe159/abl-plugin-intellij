@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "purpose": "github_approved_issue_queue_snapshot",
+  "mode": "read-only-gh-issue-list",
+  "repository": "Loe159/abl-plugin-intellij",
+  "required_issue_state": "open",
+  "required_approval_label": "agent:approved",
+  "workflow_status_labels": [
+    "agent:candidate",
+    "agent:approved",
+    "agent:researching",
+    "agent:research-review",
+    "agent:planning",
+    "agent:plan-review",
+    "agent:implementing",
+    "agent:blocked",
+    "agent:done"
+  ],
+  "gh_json_fields": [
+    "author",
+    "createdAt",
+    "labels",
+    "number",
+    "state",
+    "title",
+    "updatedAt",
+    "url"
+  ],
+  "max_issues": 100,
+  "max_title_characters": 500,
+  "max_author_characters": 100,
+  "max_labels": 50,
+  "max_label_characters": 100,
+  "max_queue_bytes": 120000,
+  "require_external_queue": true,
+  "require_absent_queue": true,
+  "bindings": [
+    ".agent/checks/list_github_approved_issues.py",
+    ".agent/policies/github-approved-issue-queue.json",
+    ".agent/checks/fetch_github_issue_snapshot.py",
+    ".agent/policies/github-issue-snapshot-fetch.json"
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "purpose": "prepare_github_task_from_approved_issue",
+  "mode": "two-phase-fetch-approve-initialize",
+  "repository": "Loe159/abl-plugin-intellij",
+  "require_fetch_before_check": true,
+  "require_exact_snapshot_confirmation": true,
+  "task_approval_performed": false,
+  "bindings": [
+    ".agent/checks/prepare_github_task.py",
+    ".agent/policies/prepare-github-task.json",
+    ".agent/checks/fetch_github_issue_snapshot.py",
+    ".agent/policies/github-issue-snapshot-fetch.json",
+    ".agent/checks/approve_github_issue_snapshot.py",
+    ".agent/policies/github-issue-ingestion.json",
+    ".agent/checks/initialize_portable_run.py",
+    ".agent/policies/portable-run-initialization.json"
+  ]
+}

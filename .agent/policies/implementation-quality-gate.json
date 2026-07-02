@@ -1,0 +1,68 @@
+{
+  "version": 1,
+  "purpose": "implementation_quality_gate_execution",
+  "mode": "controlled-gradle-execution-only",
+  "required_platform": "Windows",
+  "wrapper": "gradlew.bat",
+  "required_distribution_directory": "gradle-8.11.1-bin",
+  "commands": [
+    {
+      "id": "static_analysis",
+      "tasks": ["ktlintCheck", "detekt"]
+    },
+    {
+      "id": "tests",
+      "tasks": ["test"]
+    },
+    {
+      "id": "plugin_verification",
+      "tasks": ["verifyPlugin"]
+    }
+  ],
+  "fixed_arguments": ["--offline", "--no-daemon", "--console=plain"],
+  "command_timeout_seconds": 900.0,
+  "max_total_seconds": 1800.0,
+  "max_captured_output_bytes": 2097152,
+  "capture_chunk_bytes": 8192,
+  "max_pending_capture_chunks": 8,
+  "cleanup_timeout_seconds": 10.0,
+  "max_receipt_bytes": 100000,
+  "tree_terminator": "taskkill",
+  "tree_terminator_arguments": ["/PID", "{root_pid}", "/T", "/F"],
+  "allowed_parent_variables": [
+    "ALLUSERSPROFILE",
+    "COMSPEC",
+    "JAVA_HOME",
+    "PATH",
+    "PATHEXT",
+    "PROGRAMDATA",
+    "SYSTEMDRIVE",
+    "SYSTEMROOT",
+    "TEMP",
+    "TMP",
+    "WINDIR"
+  ],
+  "fixed_child_environment": {
+    "AGENT_QUALITY_GATE_MODE": "isolated",
+    "CI": "true"
+  },
+  "require_valid_patch_receipt": true,
+  "require_patch_candidate_ready": true,
+  "require_external_gradle_user_home": true,
+  "require_cached_wrapper_distribution": true,
+  "require_external_receipt": true,
+  "require_receipt_outside_workspace": true,
+  "require_absent_receipt": true,
+  "require_workspace_git_state_unchanged": true,
+  "forbid_windows_app_execution_alias": true,
+  "stop_after_first_failure": true,
+  "network_requested": false,
+  "bindings": [
+    ".agent/checks/run_implementation_quality_gate.py",
+    ".agent/policies/implementation-quality-gate.json",
+    ".agent/checks/validate_implementation_patch_receipt.py",
+    ".agent/policies/implementation-patch-post-validation-validation.json",
+    "gradlew.bat",
+    "gradle/wrapper/gradle-wrapper.properties"
+  ]
+}

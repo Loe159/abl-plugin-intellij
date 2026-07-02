@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "purpose": "runner_tool_allowlist_enforcement_proof",
+  "mode": "enforcement-proof",
+  "proven_control": "tool_allowlist",
+  "bindings": [
+    ".agent/checks/prove_runner_tool_allowlist.py",
+    ".agent/policies/runner-tool-allowlist-proof.json",
+    ".agent/checks/run_supervised_implementation.py",
+    ".agent/policies/supervised-implementation-runner.json",
+    ".agent/adapters/local_implementation_adapter.py",
+    ".agent/policies/local-implementation-adapter.json"
+  ]
+}

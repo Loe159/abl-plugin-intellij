@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "purpose": "provenance_aware_research_readiness",
+  "mode": "readiness-only",
+  "stage": "research",
+  "require_declared_readiness": true,
+  "require_valid_task_approval": true,
+  "bindings": [
+    ".agent/checks/check_research_readiness.py",
+    ".agent/checks/check_stage_readiness.py",
+    ".agent/checks/validate_task_approval.py",
+    ".agent/policies/research-readiness.json",
+    ".agent/policies/stage-readiness.json",
+    ".agent/policies/task-approval-validation.json"
+  ]
+}

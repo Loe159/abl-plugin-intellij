@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "purpose": "implementation_session_start_consumption_validation",
+  "mode": "validation-only",
+  "max_marker_bytes": 40000,
+  "require_external_consumption_marker": true,
+  "require_marker_outside_workspace": true,
+  "require_exact_derived_marker_path": true,
+  "require_canonical_marker": true,
+  "require_valid_authorization_receipt": true,
+  "trusted_marker_bindings": [
+    ".agent/checks/consume_implementation_session_start_authorization.py",
+    ".agent/policies/implementation-session-start-consumption.json",
+    ".agent/checks/validate_implementation_session_start_authorization.py",
+    ".agent/policies/implementation-session-start-authorization-validation.json"
+  ],
+  "validator_bindings": [
+    ".agent/checks/validate_implementation_session_start_consumption.py",
+    ".agent/policies/implementation-session-start-consumption-validation.json"
+  ]
+}

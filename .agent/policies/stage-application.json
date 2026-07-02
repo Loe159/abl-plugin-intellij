@@ -1,0 +1,47 @@
+{
+  "version": 2,
+  "purpose": "operator_confirmed_stage_application",
+  "mode": "exact-local-copy-only",
+  "confirmation_prefix": "APPLY-VALIDATED-STAGE-OUTPUT",
+  "max_reviewer_chars": 100,
+  "max_application_receipt_bytes": 30000,
+  "require_external_run": true,
+  "require_external_application_receipt": true,
+  "require_application_receipt_outside_run": true,
+  "require_absent_application_receipt": true,
+  "require_clean_worktree": true,
+  "require_repo_head_match": true,
+  "bindings": [
+    ".agent/checks/apply_stage_output.py",
+    ".agent/checks/build_stage_context.py",
+    ".agent/checks/diff_policy.py",
+    ".agent/checks/initialize_portable_run.py",
+    ".agent/checks/validate_artifacts.py",
+    ".agent/checks/validate_prompts.py",
+    ".agent/checks/validate_stage_output.py",
+    ".agent/policies/stage-application.json",
+    ".agent/policies/stage-context.json",
+    ".agent/policies/stage-output.json",
+    ".agent/policies/artifact-contract.json",
+    ".agent/policies/prompt-contract.json",
+    ".agent/policies/diff-policy.json"
+  ],
+  "stages": {
+    "research": {
+      "target_artifact": "research.md",
+      "allowed_current_statuses": ["pending"]
+    },
+    "plan": {
+      "target_artifact": "plan.md",
+      "allowed_current_statuses": ["awaiting_approval"]
+    },
+    "compact-progress": {
+      "target_artifact": "progress.md",
+      "allowed_current_statuses": ["not_started", "in_progress"]
+    },
+    "review": {
+      "target_artifact": "review.md",
+      "allowed_current_statuses": ["pending"]
+    }
+  }
+}

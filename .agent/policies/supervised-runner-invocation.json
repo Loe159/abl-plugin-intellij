@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "purpose": "supervised_runner_invocation_builder",
+  "mode": "command-construction-only",
+  "require_valid_disposable_worktree_receipt": true,
+  "require_external_output_dir": true,
+  "require_outputs_outside_workspace": true,
+  "require_absent_outputs": true,
+  "output_files": [
+    "expected-session.json",
+    "result.json",
+    "patch.diff",
+    "patch-validation.json",
+    "quality-gate.json",
+    "final-receipt.json"
+  ],
+  "bindings": [
+    ".agent/checks/build_supervised_runner_invocation.py",
+    ".agent/policies/supervised-runner-invocation.json",
+    ".agent/checks/run_supervised_implementation.py",
+    ".agent/policies/supervised-implementation-runner.json",
+    ".agent/checks/validate_disposable_worktree.py",
+    ".agent/policies/disposable-worktree-validation.json"
+  ]
+}

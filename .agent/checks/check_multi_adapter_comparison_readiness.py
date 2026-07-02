@@ -1,0 +1,144 @@
+#!/usr/bin/env python3
+"""Check local multi-adapter comparison readiness without invoking adapters."""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import sys
+from pathlib import Path
+from typing import Any
+
+import diff_policy
+
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+POLICY_PATH = REPO_ROOT / ".agent" / "policies" / "multi-adapter-comparison-readiness.json"
+FALSE_FIELDS = (
+    "authorized",
+    "adapter_invocation_authorized",
+    "model_invocation_authorized",
+    "network_authorized",
+    "repository_mutation_authorized",
+    "external_service_written",
+    "comparison_executed",
+    "metrics_recorded",
+)
+
+EXPECTED_POLICY: dict[str, Any] = {
+    "version": 2,
+    "purpose": "multi_adapter_comparison_readiness_check",
+    "mode": "local-preflight-only",
+    "implemented_scaffolding": [
+        "bounded_comparison_manifest",
+        "local_artifact_digest_validation",
+        "metrics_record_digest_validation",
+        "deterministic_metric_table",
+    ],
+    "required_missing_controls": [
+        "reviewed_adapter_contracts_for_each_candidate",
+        "validated_identical_stage_context_provenance",
+        "adapter_invocation_sandbox_controls",
+        "captured_output_validation_from_each_adapter",
+        "provider_usage_authentication",
+        "manual_metric_interpretation",
+    ],
+    "bindings": [
+        ".agent/checks/check_multi_adapter_comparison_readiness.py",
+        ".agent/checks/validate_multi_adapter_comparison.py",
+        ".agent/policies/multi-adapter-comparison-readiness.json",
+        ".agent/policies/multi-adapter-comparison.json",
+        "docs/agent-guides/multi-adapter-comparison-readiness.md",
+    ],
+}
+
+
+def load_policy(path: Path = POLICY_PATH) -> dict[str, Any]:
+    policy = json.loads(path.read_text(encoding="utf-8"))
+    if policy != EXPECTED_POLICY:
+        raise ValueError("Multi-adapter comparison readiness policy does not match")
+    return policy
+
+
+def git_status(repo: Path) -> bytes:
+    return diff_policy.run_git(repo, "status", "--porcelain=v1", "--untracked-files=all")
+
+
+def binding_records(repo: Path, paths: list[str]) -> list[dict[str, Any]]:
+    records = []
+    for name in paths:
+        path = repo / name
+        if path.is_symlink() or not path.is_file():
+            raise ValueError(f"Multi-adapter-readiness binding must be a regular file: {name}")
+        content = path.read_bytes()
+        records.append(
+            {
+                "name": name,
+                "sha256": hashlib.sha256(content).hexdigest(),
+                "size_bytes": len(content),
+            }
+        )
+    return records
+
+
+def check_readiness(repo: Path, policy: dict[str, Any]) -> dict[str, Any]:
+    repo_root = Path(
+        diff_policy.run_git(repo, "rev-parse", "--show-toplevel").decode("utf-8").strip()
+    ).resolve()
+    before = git_status(repo_root)
+    bindings = binding_records(repo_root, policy["bindings"])
+    after = git_status(repo_root)
+    if after != before:
+        raise ValueError("Repository state changed during multi-adapter readiness check")
+
+    return {
+        "readiness_version": policy["version"],
+        "purpose": policy["purpose"],
+        "mode": policy["mode"],
+        "comparison_ready": False,
+        **{field: False for field in FALSE_FIELDS},
+        "comparison_contract_available": True,
+        "implemented_scaffolding": list(policy["implemented_scaffolding"]),
+        "missing_controls": list(policy["required_missing_controls"]),
+        "repo_unchanged": True,
+        "bindings": bindings,
+    }
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--repo", type=Path, required=True)
+    parser.add_argument("--format", choices=("text", "json"), default="text")
+    return parser
+
+
+def format_text(result: dict[str, Any]) -> str:
+    status = "READY" if result["comparison_ready"] else "NOT_READY"
+    lines = [
+        f"multi-adapter-comparison-readiness: {status}",
+        "adapter_invocation_authorized=false",
+        "model_invocation_authorized=false",
+        "network_authorized=false",
+    ]
+    lines.extend(f"- scaffold: {item}" for item in result["implemented_scaffolding"])
+    lines.extend(f"- missing: {item}" for item in result["missing_controls"])
+    return "\n".join(lines)
+
+
+def main() -> int:
+    args = build_parser().parse_args()
+    try:
+        result = check_readiness(args.repo, load_policy())
+    except (OSError, UnicodeError, json.JSONDecodeError, ValueError) as error:
+        print(f"multi-adapter-comparison-readiness: ERROR\n- {error}", file=sys.stderr)
+        return 1
+    if args.format == "json":
+        print(json.dumps(result, indent=2, sort_keys=True))
+    else:
+        print(format_text(result))
+    return 0 if result["comparison_ready"] else 2
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

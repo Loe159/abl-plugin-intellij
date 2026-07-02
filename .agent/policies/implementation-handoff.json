@@ -1,0 +1,15 @@
+{
+  "version": 2,
+  "purpose": "implementation_handoff",
+  "mode": "handoff-only",
+  "max_bundle_bytes": 70000,
+  "require_external_run": true,
+  "require_external_output": true,
+  "require_output_outside_run": true,
+  "require_clean_worktree": true,
+  "require_repo_head_match": true,
+  "require_approved_plan": true,
+  "require_valid_plan_approval": true,
+  "readiness_stage": "implement",
+  "content_artifacts": ["task.md", "research.md", "plan.md"]
+}

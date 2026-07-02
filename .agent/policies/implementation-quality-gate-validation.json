@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "purpose": "implementation_quality_gate_receipt_validation",
+  "mode": "validation-only",
+  "max_receipt_bytes": 100000,
+  "require_external_receipt": true,
+  "require_receipt_outside_workspace": true,
+  "require_canonical_receipt": true,
+  "require_valid_patch_receipt": true,
+  "require_patch_candidate_ready": true,
+  "require_current_gradle_cache": true,
+  "trusted_receipt_bindings": [
+    ".agent/checks/run_implementation_quality_gate.py",
+    ".agent/policies/implementation-quality-gate.json",
+    ".agent/checks/validate_implementation_patch_receipt.py",
+    ".agent/policies/implementation-patch-post-validation-validation.json",
+    "gradlew.bat",
+    "gradle/wrapper/gradle-wrapper.properties"
+  ],
+  "validator_bindings": [
+    ".agent/checks/validate_implementation_quality_gate.py",
+    ".agent/policies/implementation-quality-gate-validation.json"
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "purpose": "implementation_session_proposal_approval",
+  "mode": "exact-local-approval-only",
+  "confirmation_prefix": "APPROVE-EXACT-IMPLEMENTATION-SESSION",
+  "max_approver_chars": 80,
+  "max_session_approval_receipt_bytes": 30000,
+  "require_valid_proposal": true,
+  "require_runner_controls_ready": true,
+  "require_external_approval_receipt": true,
+  "require_approval_receipt_outside_workspace": true,
+  "require_absent_approval_receipt": true,
+  "require_clean_worktree": true,
+  "require_repo_head_match": true,
+  "bindings": [
+    ".agent/checks/approve_implementation_session.py",
+    ".agent/policies/implementation-session-approval.json",
+    ".agent/checks/validate_implementation_session.py",
+    ".agent/policies/implementation-session.json",
+    ".agent/checks/assess_runner_readiness.py",
+    ".agent/policies/runner-readiness.json"
+  ]
+}

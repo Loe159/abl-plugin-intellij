@@ -1,0 +1,162 @@
+{
+  "version": 1,
+  "purpose": "agentic_workflow_capability_status",
+  "mode": "status-only",
+  "capabilities": [
+    {
+      "id": "local_patch_guardrails",
+      "status": "verified_non_authorizing",
+      "implemented": true,
+      "required_for_pilot": true,
+      "evidence": [
+        ".agent/checks/diff_policy.py",
+        ".agent/checks/generate_complete_patch.py",
+        ".agent/checks/classify_patch_risk.py",
+        ".agent/checks/validate_implementation_patch.py",
+        ".agent/checks/validate_implementation_patch_receipt.py"
+      ]
+    },
+    {
+      "id": "portable_phase_artifacts",
+      "status": "verified_non_authorizing",
+      "implemented": true,
+      "required_for_pilot": true,
+      "evidence": [
+        ".agent/checks/validate_artifacts.py",
+        ".agent/checks/initialize_portable_run.py"
+      ]
+    },
+    {
+      "id": "read_only_research_and_plan",
+      "status": "manual_rehearsal_only",
+      "implemented": true,
+      "required_for_pilot": true,
+      "evidence": [
+        ".agent/adapters/manual_read_only.py",
+        ".agent/checks/build_stage_context.py",
+        ".agent/checks/validate_stage_output.py"
+      ]
+    },
+    {
+      "id": "supervised_implementation_contract",
+      "status": "post_consumption_readiness_only",
+      "implemented": true,
+      "required_for_pilot": true,
+      "evidence": [
+        ".agent/checks/build_implementation_session.py",
+        ".agent/checks/check_implementation_invocation_readiness.py",
+        ".agent/checks/check_implementation_session_start.py",
+        ".agent/checks/check_implementation_launch_readiness.py",
+        ".agent/checks/run_implementation_quality_gate.py",
+        ".agent/checks/validate_implementation_quality_gate.py",
+        ".agent/policies/implementation-launch-readiness.json"
+      ]
+    },
+    {
+      "id": "enforced_implementation_runner",
+      "status": "functional_supervised_runner_controls_incomplete",
+      "implemented": true,
+      "required_for_pilot": true,
+      "evidence": [
+        ".agent/checks/assess_runner_readiness.py",
+        ".agent/checks/prove_runner_tool_allowlist.py",
+        ".agent/checks/prove_local_adapter_environment_filter.py",
+        ".agent/checks/build_supervised_runner_invocation.py",
+        ".agent/checks/run_supervised_implementation.py",
+        ".agent/adapters/local_implementation_adapter.py",
+        ".agent/policies/runner-tool-allowlist-proof.json",
+        ".agent/policies/local-adapter-environment-filter-proof.json",
+        ".agent/policies/supervised-runner-invocation.json",
+        ".agent/policies/supervised-implementation-runner.json",
+        ".agent/policies/local-implementation-adapter.json"
+      ]
+    },
+    {
+      "id": "explicit_session_start_authorization",
+      "status": "validated_exclusive_local_consumption",
+      "implemented": true,
+      "required_for_pilot": true,
+      "evidence": [
+        ".agent/checks/authorize_implementation_session_start.py",
+        ".agent/checks/validate_implementation_session_start_authorization.py",
+        ".agent/checks/consume_implementation_session_start_authorization.py",
+        ".agent/checks/validate_implementation_session_start_consumption.py",
+        ".agent/policies/implementation-session-start-authorization.json",
+        ".agent/policies/implementation-session-start-authorization-validation.json",
+        ".agent/policies/implementation-session-start-consumption.json",
+        ".agent/policies/implementation-session-start-consumption-validation.json"
+      ]
+    },
+    {
+      "id": "approved_github_issue_ingestion",
+      "status": "manual_snapshot_approval_only",
+      "implemented": true,
+      "required_for_pilot": true,
+      "evidence": [
+        ".agent/checks/approve_github_issue_snapshot.py",
+        ".agent/policies/github-issue-ingestion.json"
+      ]
+    },
+    {
+      "id": "deterministic_draft_pr_publisher",
+      "status": "explicit_request_only_not_authorized_by_status",
+      "implemented": true,
+      "required_for_pilot": true,
+      "evidence": [
+        ".agent/checks/check_draft_pr_publication_readiness.py",
+        ".agent/checks/publish_draft_pr.py",
+        ".agent/policies/draft-pr-publication-readiness.json",
+        ".agent/policies/draft-pr-publisher.json"
+      ]
+    },
+    {
+      "id": "run_metrics",
+      "status": "receipt_derived_observation_and_manual_recording",
+      "implemented": true,
+      "required_for_pilot": true,
+      "evidence": [
+        ".agent/checks/build_runner_metrics_observation.py",
+        ".agent/policies/runner-metrics-observation.json",
+        ".agent/checks/record_run_metrics.py",
+        ".agent/policies/run-metrics.json"
+      ]
+    },
+    {
+      "id": "historical_golden_set",
+      "status": "local_preflight_only",
+      "implemented": false,
+      "required_for_pilot": true,
+      "evidence": [
+        ".agent/checks/check_historical_golden_set_readiness.py",
+        ".agent/policies/historical-golden-set-readiness.json",
+        ".agent/checks/assess_golden_set_readiness.py",
+        ".agent/policies/golden-set-readiness.json",
+        ".agent/checks/draft_golden_set_manifest.py",
+        ".agent/policies/golden-set-draft.json",
+        ".agent/checks/draft_pr_golden_set_manifest.py",
+        ".agent/policies/golden-set-pr-draft.json",
+        ".agent/checks/approve_golden_set.py",
+        ".agent/policies/golden-set-adoption.json",
+        "evals/golden-set.yaml"
+      ]
+    },
+    {
+      "id": "multi_adapter_comparison",
+      "status": "local_artifact_comparison_available_not_invoking",
+      "implemented": true,
+      "required_for_pilot": true,
+      "evidence": [
+        ".agent/checks/check_multi_adapter_comparison_readiness.py",
+        ".agent/checks/validate_multi_adapter_comparison.py",
+        ".agent/policies/multi-adapter-comparison-readiness.json",
+        ".agent/policies/multi-adapter-comparison.json"
+      ]
+    }
+  ],
+  "bindings": [
+    ".agent/checks/check_workflow_status.py",
+    ".agent/policies/workflow-status.json",
+    ".agent/checks/assess_runner_readiness.py",
+    ".agent/policies/runner-readiness.json"
+  ]
+}

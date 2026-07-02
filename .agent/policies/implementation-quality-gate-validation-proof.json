@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "purpose": "implementation_quality_gate_receipt_validation_proof",
+  "mode": "enforcement-proof",
+  "proven_control": "quality_gate_receipt_validation",
+  "unproven_controls": [
+    "implementation_quality_gate_execution",
+    "historical_quality_gate_output_authenticity",
+    "quality_gate_network_isolation",
+    "quality_gate_descendant_cleanup"
+  ],
+  "bindings": [
+    ".agent/checks/run_implementation_quality_gate.py",
+    ".agent/policies/implementation-quality-gate.json",
+    ".agent/checks/validate_implementation_quality_gate.py",
+    ".agent/policies/implementation-quality-gate-validation.json",
+    ".agent/checks/prove_implementation_quality_gate_validation.py",
+    ".agent/policies/implementation-quality-gate-validation-proof.json"
+  ]
+}

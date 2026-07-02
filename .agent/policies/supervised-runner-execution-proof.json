@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "purpose": "supervised_runner_execution_fixture_proof",
+  "mode": "fixture-only",
+  "proven_control": "runner_enforced_output_post_validation",
+  "related_controls": [
+    "supervised_runner_quality_gate_sequence",
+    "cleanup_after_successful_runner_completion",
+    "cleanup_after_controlled_blocked_completion",
+    "cleanup_receipt_validation_after_runner_cleanup",
+    "supervised_runner_consumption_launch_before_adapter_sequence",
+    "final_receipt_validation_after_runner_write",
+    "controlled_adapter_timeout_blocks_before_patch",
+    "cleanup_after_controlled_adapter_timeout"
+  ],
+  "unproven_controls": [
+    "real_agent_result_compatibility",
+    "real_gradle_quality_gate_execution",
+    "provider_credential_descendant_noninheritance",
+    "network_isolation",
+    "authorization_consumption_to_process_start_atomicity",
+    "cleanup_after_failed_runner_completion",
+    "cleanup_after_timeout_or_process_termination",
+    "cleanup_after_host_crash"
+  ],
+  "bindings": [
+    ".agent/checks/prove_supervised_runner_execution.py",
+    ".agent/policies/supervised-runner-execution-proof.json",
+    ".agent/checks/run_supervised_implementation.py",
+    ".agent/policies/supervised-implementation-runner.json"
+  ]
+}

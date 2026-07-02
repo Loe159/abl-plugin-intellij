@@ -1,0 +1,76 @@
+{
+  "version": 2,
+  "purpose": "supervised_implementation_session_proposal",
+  "mode": "proposal-only",
+  "max_handoff_bytes": 70000,
+  "max_prompt_bytes": 12000,
+  "max_proposal_bytes": 150000,
+  "require_external_handoff": true,
+  "require_external_output": true,
+  "require_clean_worktree": true,
+  "require_repo_head_match": true,
+  "require_valid_disposable_worktree": true,
+  "prompt": "implementation/implement.md",
+  "prompt_required_sections": [
+    "Objective",
+    "Trusted Inputs",
+    "Required Process",
+    "Workspace Permissions",
+    "Required Output",
+    "Stop Conditions",
+    "Prohibited Actions"
+  ],
+  "prompt_required_literals": [
+    "AGENTS.md",
+    ".agents/skills/proparse-research/",
+    "disposable Git workspace",
+    "Do not access the network",
+    "Do not mutate the external run",
+    "Do not claim completion",
+    "diff-policy budget"
+  ],
+  "policy_bindings": [
+    "AGENTS.md",
+    ".agent/policies/artifact-contract.json",
+    ".agent/policies/diff-policy.json",
+    ".agent/policies/implementation-session.json",
+    ".agent/policies/risk-rules.json",
+    ".agent/checks/validate_disposable_worktree.py",
+    ".agent/policies/disposable-worktree-validation.json",
+    ".agents/skills/proparse-research/SKILL.md"
+  ],
+  "workspace": {
+    "kind": "disposable-git-worktree",
+    "require_clean_start": true,
+    "require_exact_base_commit": true,
+    "repository_file_writes": true,
+    "git_index_writes": false,
+    "git_commits": false,
+    "branch_operations": false
+  },
+  "capabilities": {
+    "repository_reads": true,
+    "repository_file_writes": true,
+    "local_commands": true,
+    "network_access": false,
+    "external_service_writes": false,
+    "external_run_writes": false,
+    "handoff_writes": false,
+    "proposal_writes": false,
+    "publication": false
+  },
+  "budgets": {
+    "max_turns": 12,
+    "max_duration_minutes": 30,
+    "max_changed_files": 12,
+    "max_changed_lines": 500
+  },
+  "required_external_controls": [
+    "complete_patch_generation",
+    "diff_policy_validation",
+    "patch_risk_classification",
+    "disposable_worktree_validation",
+    "focused_tests",
+    "human_implementation_review"
+  ]
+}

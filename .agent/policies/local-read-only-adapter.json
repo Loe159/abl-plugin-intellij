@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "adapter": "local-read-only-command",
+  "mode": "command-wrapper",
+  "command_timeout_seconds": 300,
+  "max_stdout_bytes": 20000,
+  "max_stderr_bytes": 4000,
+  "require_external_bundle": true,
+  "require_external_response": true,
+  "require_absent_response": true,
+  "require_clean_worktree_before": true,
+  "require_clean_worktree_after": true,
+  "safety": {
+    "mutates_run": false,
+    "applies_response": false,
+    "authorizes": false,
+    "network_authorized": false,
+    "publication_authorized": false
+  },
+  "bindings": [
+    ".agent/adapters/local_read_only.py",
+    ".agent/policies/local-read-only-adapter.json",
+    ".agent/checks/build_stage_context.py",
+    ".agent/checks/validate_stage_output.py",
+    ".agent/policies/stage-context.json",
+    ".agent/policies/stage-output.json",
+    ".agent/policies/artifact-contract.json",
+    ".agent/policies/prompt-contract.json",
+    ".agent/policies/diff-policy.json"
+  ]
+}

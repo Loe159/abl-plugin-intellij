@@ -1,0 +1,26 @@
+{
+  "version": 2,
+  "purpose": "multi_adapter_comparison_readiness_check",
+  "mode": "local-preflight-only",
+  "implemented_scaffolding": [
+    "bounded_comparison_manifest",
+    "local_artifact_digest_validation",
+    "metrics_record_digest_validation",
+    "deterministic_metric_table"
+  ],
+  "required_missing_controls": [
+    "reviewed_adapter_contracts_for_each_candidate",
+    "validated_identical_stage_context_provenance",
+    "adapter_invocation_sandbox_controls",
+    "captured_output_validation_from_each_adapter",
+    "provider_usage_authentication",
+    "manual_metric_interpretation"
+  ],
+  "bindings": [
+    ".agent/checks/check_multi_adapter_comparison_readiness.py",
+    ".agent/checks/validate_multi_adapter_comparison.py",
+    ".agent/policies/multi-adapter-comparison-readiness.json",
+    ".agent/policies/multi-adapter-comparison.json",
+    "docs/agent-guides/multi-adapter-comparison-readiness.md"
+  ]
+}

@@ -1,0 +1,26 @@
+# Local historical golden-set status.
+#
+# This file is a versioned status marker, not a benchmark corpus. It keeps the
+# repository's current golden-set boundary explicit while the adopted corpus
+# remains external and unauthenticated.
+
+version: 1
+purpose: historical_golden_set_status
+adoption_status: not_adopted
+golden_set_ready: false
+candidate_manifest_valid: false
+source_state_authenticated: false
+issue_closure_independently_verified: false
+issue_reference_equivalence_verified: false
+candidate_manifest_approved: false
+human_golden_set_adoption_decision: false
+case_count: 0
+cases: []
+canonical_checker: .agent/checks/check_historical_golden_set_readiness.py
+candidate_checker: .agent/checks/assess_golden_set_readiness.py
+adoption_checker: .agent/checks/approve_golden_set.py
+external_candidate_manifest_required: true
+external_adoption_receipt_required: true
+notes:
+  - The checked-in repository does not contain an adopted historical golden set.
+  - This marker does not select issues, authenticate GitHub, invoke an agent, or authorize benchmark adoption.

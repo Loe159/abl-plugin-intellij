@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "adapter": "manual-read-only",
+  "supported_stages": ["research", "plan", "compact-progress", "review"],
+  "safety": {
+    "invokes_agent": false,
+    "mutates_run": false,
+    "applies_response": false,
+    "authorizes": false
+  }
+}

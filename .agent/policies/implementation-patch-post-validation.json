@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "purpose": "implementation_patch_post_validation",
+  "mode": "deterministic-post-validation-only",
+  "max_receipt_bytes": 250000,
+  "require_external_patch": true,
+  "require_external_receipt": true,
+  "require_outputs_outside_workspace": true,
+  "require_absent_outputs": true,
+  "require_distinct_outputs": true,
+  "require_candidate_ready_result": true,
+  "require_nonempty_patch_for_candidate": true,
+  "require_patch_retained_for_candidate": true,
+  "require_policy_allowed_for_candidate": true,
+  "quality_gate_execution_required": true,
+  "bindings": [
+    ".agent/checks/validate_implementation_patch.py",
+    ".agent/policies/implementation-patch-post-validation.json",
+    ".agent/checks/validate_implementation_result.py",
+    ".agent/policies/implementation-result-validation.json",
+    ".agent/schemas/implementation-result.schema.json",
+    ".agent/checks/generate_complete_patch.py",
+    ".agent/checks/diff_policy.py",
+    ".agent/policies/diff-policy.json",
+    ".agent/checks/classify_patch_risk.py",
+    ".agent/policies/risk-rules.json"
+  ]
+}

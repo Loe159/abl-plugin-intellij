@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "max_response_bytes": 20000,
+  "require_external_inputs": true,
+  "stages": {
+    "research": {
+      "artifact": "research.md",
+      "allowed_statuses": ["complete", "blocked"]
+    },
+    "plan": {
+      "artifact": "plan.md",
+      "allowed_statuses": ["awaiting_approval", "blocked"]
+    },
+    "compact-progress": {
+      "artifact": "progress.md",
+      "allowed_statuses": ["in_progress", "complete", "blocked"]
+    },
+    "review": {
+      "artifact": "review.md",
+      "allowed_statuses": ["complete", "blocked"]
+    }
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "purpose": "disposable_implementation_worktree_cleanup",
+  "mode": "destructive-cleanup-only",
+  "command_timeout_seconds": 15,
+  "max_receipt_bytes": 20000,
+  "require_external_workspace": true,
+  "require_external_preparation_receipt": true,
+  "require_preparation_receipt_outside_workspace": true,
+  "require_external_cleanup_receipt": true,
+  "require_cleanup_receipt_outside_workspace": true,
+  "require_absent_cleanup_receipt": true,
+  "require_exact_workspace_confirmation": true,
+  "require_source_clean": true,
+  "require_source_head_match": true,
+  "require_workspace_registered": true,
+  "require_workspace_detached": true,
+  "require_workspace_head_match": true,
+  "allow_dirty_workspace": true,
+  "force_remove_dirty_workspace": true,
+  "preserve_preparation_receipt": true,
+  "trusted_receipt_bindings": [
+    ".agent/checks/prepare_disposable_worktree.py",
+    ".agent/policies/disposable-worktree-preparation.json"
+  ],
+  "cleanup_bindings": [
+    ".agent/checks/prepare_disposable_worktree.py",
+    ".agent/policies/disposable-worktree-preparation.json",
+    ".agent/checks/validate_disposable_worktree.py",
+    ".agent/checks/cleanup_disposable_worktree.py",
+    ".agent/policies/disposable-worktree-cleanup.json"
+  ]
+}

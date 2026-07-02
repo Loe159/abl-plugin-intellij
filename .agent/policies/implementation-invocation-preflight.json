@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "purpose": "implementation_invocation_preflight",
+  "mode": "preflight-only",
+  "max_preflight_bytes": 220000,
+  "require_valid_approval_validation": true,
+  "require_external_output": true,
+  "require_output_outside_workspace": true,
+  "require_absent_output": true,
+  "require_clean_worktree": true,
+  "require_repo_head_match": true,
+  "policy_bindings": [
+    ".agent/checks/build_implementation_invocation_preflight.py",
+    ".agent/policies/implementation-invocation-preflight.json",
+    ".agent/checks/validate_implementation_session_approval.py",
+    ".agent/policies/implementation-session-approval-validation.json",
+    ".agent/checks/validate_implementation_session.py",
+    ".agent/policies/implementation-session.json",
+    ".agent/checks/assess_runner_readiness.py",
+    ".agent/policies/runner-readiness.json"
+  ]
+}

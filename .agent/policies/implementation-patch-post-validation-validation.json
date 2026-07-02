@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "purpose": "implementation_patch_post_validation_receipt_validation",
+  "mode": "validation-only",
+  "max_patch_bytes": 10000000,
+  "max_receipt_bytes": 250000,
+  "require_external_result": true,
+  "require_external_expected_session": true,
+  "require_external_patch": true,
+  "require_external_receipt": true,
+  "require_inputs_outside_workspace": true,
+  "require_distinct_inputs": true,
+  "require_retained_patch": true,
+  "require_candidate_ready_result": true,
+  "require_canonical_receipt": true,
+  "trusted_receipt_bindings": [
+    ".agent/checks/validate_implementation_patch.py",
+    ".agent/policies/implementation-patch-post-validation.json",
+    ".agent/checks/validate_implementation_result.py",
+    ".agent/policies/implementation-result-validation.json",
+    ".agent/schemas/implementation-result.schema.json",
+    ".agent/checks/generate_complete_patch.py",
+    ".agent/checks/diff_policy.py",
+    ".agent/policies/diff-policy.json",
+    ".agent/checks/classify_patch_risk.py",
+    ".agent/policies/risk-rules.json"
+  ],
+  "validator_bindings": [
+    ".agent/checks/validate_implementation_patch_receipt.py",
+    ".agent/policies/implementation-patch-post-validation-validation.json"
+  ]
+}

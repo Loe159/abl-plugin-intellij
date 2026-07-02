@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "purpose": "historical_golden_set_draft_from_local_commits",
+  "mode": "draft-only",
+  "max_commits_scanned": 100,
+  "max_candidates": 20,
+  "max_subject_chars": 160,
+  "required_categories": [
+    "docs_or_typo",
+    "simple_bug",
+    "missing_test",
+    "local_feature",
+    "abl_rssw_research",
+    "refuse_or_escalate"
+  ],
+  "category_hints": {
+    "docs_or_typo": [
+      "doc",
+      "docs",
+      "typo"
+    ],
+    "simple_bug": [
+      "fix",
+      "bug"
+    ],
+    "missing_test": [
+      "test"
+    ],
+    "local_feature": [
+      "feat",
+      "feature"
+    ],
+    "abl_rssw_research": [
+      "rssw",
+      "proparse",
+      "parser",
+      "abl",
+      "psi"
+    ]
+  },
+  "require_external_output": true,
+  "require_absent_output": true,
+  "bindings": [
+    ".agent/checks/draft_golden_set_manifest.py",
+    ".agent/policies/golden-set-draft.json",
+    ".agent/checks/assess_golden_set_readiness.py",
+    ".agent/policies/golden-set-readiness.json",
+    "docs/agent-guides/golden-set-readiness.md"
+  ]
+}

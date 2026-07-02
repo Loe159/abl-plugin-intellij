@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "purpose": "disposable_implementation_worktree_preparation",
+  "mode": "preparation-only",
+  "command_timeout_seconds": 15,
+  "max_receipt_bytes": 20000,
+  "require_exact_base_commit": true,
+  "require_source_head_match": true,
+  "require_source_clean": true,
+  "require_external_target": true,
+  "require_absent_target": true,
+  "require_external_receipt": true,
+  "require_receipt_outside_target": true,
+  "require_absent_receipt": true,
+  "require_detached_workspace": true,
+  "require_clean_workspace": true,
+  "rollback_on_failure": true
+}

@@ -27,6 +27,8 @@ Desktop.ini
 *.tmp
 *.bak
 *.swp
+*.py[cod]
+__pycache__/
 
 # Environnement local
 .env

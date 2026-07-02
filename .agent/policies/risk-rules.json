@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "medium_file_count": 4,
+  "medium_changed_lines": 51,
+  "high_path_patterns": [
+    "src/main/kotlin/com/ablls/plugin/parser/**",
+    "src/main/kotlin/com/ablls/plugin/core/AblParseResult.kt",
+    "src/main/kotlin/com/ablls/plugin/core/AblParserFacade.kt",
+    "src/main/kotlin/com/ablls/plugin/core/AblProjectAnalysisService.kt",
+    "src/main/kotlin/com/ablls/plugin/core/AblSemanticResult.kt",
+    "src/main/kotlin/com/ablls/plugin/core/AblSymbolCollector.kt",
+    "src/main/kotlin/com/ablls/plugin/debug/**",
+    "src/main/resources/abl/oe-debug-bootstrap.p"
+  ],
+  "medium_path_patterns": [
+    "src/main/**"
+  ]
+}

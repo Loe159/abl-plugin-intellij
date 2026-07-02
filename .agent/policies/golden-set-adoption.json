@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "purpose": "historical_golden_set_adoption",
+  "mode": "exact-local-adoption-only",
+  "confirmation_prefix": "ADOPT-HISTORICAL-GOLDEN-SET",
+  "max_approver_chars": 120,
+  "max_receipt_bytes": 250000,
+  "require_candidate_manifest_valid": true,
+  "require_source_state_authenticated": true,
+  "require_issue_closure_independently_verified": true,
+  "require_issue_reference_equivalence_reviewed": true,
+  "require_external_receipt": true,
+  "require_absent_receipt": true,
+  "bindings": [
+    ".agent/checks/approve_golden_set.py",
+    ".agent/policies/golden-set-adoption.json",
+    ".agent/checks/assess_golden_set_readiness.py",
+    ".agent/policies/golden-set-readiness.json",
+    "docs/agent-guides/golden-set-readiness.md"
+  ]
+}
