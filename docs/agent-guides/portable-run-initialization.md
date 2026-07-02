@@ -77,7 +77,7 @@ The command:
 - requires an exact bounded input schema with non-empty task sections;
 - rejects high-confidence secret signatures without echoing matching values;
 - requires a clean checkout whose `HEAD` equals the exact base commit;
-- creates exactly the five contracted Markdown artifacts from trusted
+- creates exactly the six contracted Markdown artifacts from trusted
   repository templates;
 - validates the complete resulting artifact contract;
 - verifies fixed initial statuses and requires `research` readiness to remain

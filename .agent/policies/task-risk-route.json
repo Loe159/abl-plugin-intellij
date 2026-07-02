@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "purpose": "declared_task_risk_route",
+  "mode": "portable-run-frontmatter-only",
+  "risk_to_route": {
+    "low": "A",
+    "medium": "B",
+    "high": "C"
+  },
+  "required_artifact": "task.md",
+  "requires_valid_portable_artifacts": true,
+  "authorizes": false,
+  "bindings": [
+    ".agent/checks/classify_task_route.py",
+    ".agent/policies/task-risk-route.json",
+    ".agent/checks/validate_artifacts.py",
+    ".agent/policies/artifact-contract.json"
+  ]
+}

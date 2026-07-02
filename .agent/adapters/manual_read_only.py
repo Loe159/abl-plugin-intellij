@@ -146,7 +146,11 @@ def build_parser() -> argparse.ArgumentParser:
     )
     prepare_parser.add_argument("--repo", type=Path, required=True)
     prepare_parser.add_argument("--run", type=Path, required=True)
-    prepare_parser.add_argument("--stage", choices=("research", "plan"), required=True)
+    prepare_parser.add_argument(
+        "--stage",
+        choices=("research", "plan", "compact-progress", "review"),
+        required=True,
+    )
     prepare_parser.add_argument("--bundle", type=Path, required=True)
     prepare_parser.add_argument("--approval-receipt", type=Path)
     prepare_parser.add_argument("--approval-receipt-sha256")

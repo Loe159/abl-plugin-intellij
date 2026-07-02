@@ -1,9 +1,14 @@
 # Run Metrics
 
 `record_run_metrics.py` creates one bounded JSON metrics record from an
-explicit post-run observation and, for an implementation run, an exact complete
-patch. It is intentionally a manual evidence boundary until an enforced runner
-can supply trusted timestamps, provider usage, and outcomes.
+explicit post-run observation and, when available, an exact complete patch.
+It is intentionally a bounded evidence boundary until an enforced runner can
+supply trusted timestamps, provider usage, and outcomes.
+
+`build_runner_metrics_observation.py` can derive the observation identity,
+outcome, and patch digest from a validated supervised-runner final receipt. It
+still requires the operator to supply start/completion timestamps and model
+identity explicitly, and it records token and cost data as unavailable.
 
 ## Observation Contract
 
@@ -22,10 +27,12 @@ million microunits. This avoids floating-point rounding while retaining
 sub-cent values. An unavailable value must be `null`; zero is a real measured
 or estimated value and cannot stand in for unknown data.
 
-An `implement` observation must bind an external complete patch by SHA-256.
-The checker calculates duration, patch size, file count, changed lines,
-additions, deletions, paths, binary paths, and symbolic-link paths. It refuses a
-digest mismatch or malformed patch.
+A successful `implement` observation must bind an external complete patch by
+SHA-256. A blocked implementation run that stopped before patch production may
+use `diff_status: "not_applicable"` with `patch_sha256: null`. When a patch is
+measured, the checker calculates duration, patch size, file count, changed
+lines, additions, deletions, paths, binary paths, and symbolic-link paths. It
+refuses a digest mismatch or malformed patch.
 
 Example implementation observation:
 
@@ -78,6 +85,29 @@ Example implementation observation:
 
 ## Check Before Writing
 
+When starting from the supervised runner, first derive a bounded observation
+from the validated final receipt:
+
+```text
+python .agent/checks/build_runner_metrics_observation.py \
+  --repo . \
+  --final-receipt <external-run>/final-receipt.json \
+  --final-receipt-sha256 <separately-carried-sha256> \
+  --run-id issue-17-run-1 \
+  --started-at 2026-06-17T10:00:00Z \
+  --completed-at 2026-06-17T10:02:03Z \
+  --model-provider openai \
+  --model-id unknown \
+  --output <external-run>/metrics-observation.json \
+  --format json
+```
+
+This builder validates the final receipt with
+`.agent/checks/validate_supervised_runner_receipt.py`, derives only fields
+present in that receipt, writes the observation once, and leaves all
+authorization fields false. It does not authenticate timestamps, query a
+provider, infer token usage, or create the metrics record.
+
 ```text
 python .agent/checks/record_run_metrics.py check \
   --repo . \
@@ -124,11 +154,13 @@ to equal the record recalculated from current exact evidence.
 
 ## Boundary
 
-This tool does not invoke an agent, observe a process, query a provider, verify
+These tools do not invoke an agent, observe a process, query a provider, verify
 a provider invoice, authenticate the observer, assess post-merge regressions,
-or decide that a run should be merged. `reported` and `estimated` are explicit
-provenance labels, not independent proof. `unavailable`, `not_assessed`, and
-`pending` remain valid and preferable to invented precision.
+or decide that a run should be merged. Receipt-derived observations prove only
+that current receipt bytes and referenced artifacts validate. `reported` and
+`estimated` are explicit provenance labels, not independent proof.
+`unavailable`, `not_assessed`, and `pending` remain valid and preferable to
+invented precision.
 
 Every authorization, runner-selection, repository-mutation, network,
 publication, and session-start field remains false. A metrics record is

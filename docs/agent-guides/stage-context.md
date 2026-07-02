@@ -11,9 +11,11 @@ The builder emits deterministic JSON containing:
 - `mode: read-only` and `authorized: false`.
 
 Research receives only `task.md`. Planning receives only `task.md` and
-`research.md`. Raw issue comments, transcripts, unrelated workflow artifacts,
-repository files, environment variables, and credentials are not copied into
-the bundle.
+`research.md`. Compaction receives `task.md`, `plan.md`, `progress.md`, and
+`verification.md`. Review receives `task.md`, `research.md`, `plan.md`, and
+`verification.md`. Raw issue comments, transcripts, unrelated workflow
+artifacts, repository files, environment variables, and credentials are not
+copied into the bundle.
 
 ## Preconditions
 

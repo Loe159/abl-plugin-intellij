@@ -19,7 +19,7 @@
     "PYTHONIOENCODING": "utf-8",
     "PYTHONUTF8": "1"
   },
-  "max_timeout_seconds": 10.0,
+  "max_timeout_seconds": 600.0,
   "max_captured_output_bytes": 131072,
   "capture_chunk_bytes": 4096,
   "max_pending_capture_chunks": 4,

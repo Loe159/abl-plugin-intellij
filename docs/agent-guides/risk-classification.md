@@ -51,6 +51,22 @@ code `0` means classification completed, including for `high` or policy-blocked
 patches. Exit code `1` means classifier input or configuration error. Policy
 enforcement remains the responsibility of `diff_policy.py`.
 
+For a portable task route declared before patch generation:
+
+```text
+python .agent/checks/classify_task_route.py \
+  --run <external-run-directory> \
+  --format json
+
+.agent/scripts/classify-task.sh <external-run-directory>
+```
+
+This validates the portable run artifacts, reads only `task.md` frontmatter,
+maps `risk` to route `A`, `B`, or `C`, and reports the current task status.
+It does not prove that the declared risk is correct, approve the task, select a
+runner, authorize implementation, or inspect issue text. `task_approved=true`
+only reports that `task.md` already has `status: approved`.
+
 ## Deliberate Limits
 
 The classifier does not inspect issue text, infer public API changes, detect

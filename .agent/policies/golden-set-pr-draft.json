@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "purpose": "historical_golden_set_draft_from_merged_prs",
+  "mode": "draft-only",
+  "repository": "Loe159/abl-plugin-intellij",
+  "min_prs": 5,
+  "max_prs": 20,
+  "max_title_chars": 200,
+  "required_missing_controls": [
+    "closed_issue_snapshot_corpus",
+    "refuse_or_escalate_case",
+    "human_normalized_task_corpus",
+    "issue_to_reference_equivalence_review",
+    "human_golden_set_adoption_decision"
+  ],
+  "require_external_output": true,
+  "require_absent_output": true,
+  "bindings": [
+    ".agent/checks/draft_pr_golden_set_manifest.py",
+    ".agent/policies/golden-set-pr-draft.json",
+    ".agent/checks/assess_golden_set_readiness.py",
+    ".agent/policies/golden-set-readiness.json",
+    "docs/agent-guides/golden-set-readiness.md"
+  ]
+}

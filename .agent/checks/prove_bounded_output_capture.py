@@ -74,9 +74,16 @@ def parent_environment(launcher_policy: dict[str, Any]) -> dict[str, str]:
     }
 
 
+def fixture_python() -> Path:
+    candidate = Path(sys.prefix) / "python.exe"
+    if candidate.is_file():
+        return candidate.resolve()
+    return Path(sys.executable).resolve()
+
+
 def python_command(script: str) -> list[str]:
     return [
-        str(Path(sys.executable).resolve()),
+        str(fixture_python()),
         "-I",
         "-S",
         "-B",

@@ -14,6 +14,16 @@
       "prompt": "plan.md",
       "artifacts": ["task.md", "research.md"],
       "provenance": "validated_stage_application"
+    },
+    "compact-progress": {
+      "prompt": "compact-progress.md",
+      "artifacts": ["task.md", "plan.md", "progress.md", "verification.md"],
+      "provenance": "local_artifact_contract"
+    },
+    "review": {
+      "prompt": "review.md",
+      "artifacts": ["task.md", "research.md", "plan.md", "verification.md"],
+      "provenance": "local_artifact_contract"
     }
   }
 }

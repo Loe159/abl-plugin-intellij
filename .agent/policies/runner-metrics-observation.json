@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "purpose": "runner_metrics_observation_builder",
+  "mode": "receipt-derived-observation-only",
+  "max_receipt_bytes": 50000,
+  "require_external_receipt": true,
+  "require_external_output": true,
+  "require_absent_output": true,
+  "default_tokens_status": "unavailable",
+  "default_cost_status": "unavailable",
+  "default_human_corrections_status": "not_assessed",
+  "default_final_disposition": "pending",
+  "default_regression_status": "not_assessed",
+  "bindings": [
+    ".agent/checks/build_runner_metrics_observation.py",
+    ".agent/policies/runner-metrics-observation.json",
+    ".agent/checks/validate_supervised_runner_receipt.py",
+    ".agent/policies/supervised-runner-receipt-validation.json",
+    ".agent/checks/record_run_metrics.py",
+    ".agent/policies/run-metrics.json"
+  ]
+}

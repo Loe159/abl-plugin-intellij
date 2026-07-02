@@ -69,6 +69,14 @@ def case(
             "title_sha256": f"{number:064x}",
             "snapshot_sha256": f"{number + 100:064x}",
         },
+        "task": {
+            "title": f"Human normalized task for issue {number}",
+            "goal": f"Implement the bounded expected behavior for issue {number}.",
+            "background": f"Human-written context for comparing agents on issue {number}.",
+            "acceptance_criteria": [f"Acceptance criterion for issue {number}"],
+            "constraints": ["Preserve repository guardrails"],
+            "out_of_scope": [],
+        },
         "categories": categories,
         "expected_outcome": outcome,
         "success_criteria": [f"Criterion for issue {number}"],
@@ -112,6 +120,7 @@ class AssessGoldenSetReadinessTest(unittest.TestCase):
         self.assertEqual(golden.EXPECTED_POLICY, policy)
         self.assertEqual("candidate-only", policy["mode"])
         self.assertEqual(5, policy["min_cases"])
+        self.assertIn("max_task_acceptance_criteria_per_case", policy)
         self.assertIn("refuse_or_escalate", policy["required_categories"])
 
     def test_valid_candidate_manifest_verifies_local_commits_but_is_not_ready(self) -> None:
@@ -123,12 +132,42 @@ class AssessGoldenSetReadinessTest(unittest.TestCase):
         self.assertTrue(result["coverage_complete"])
         self.assertTrue(result["local_references_verified"])
         self.assertEqual(4, len(result["local_references"]))
+        self.assertEqual(5, len(result["case_summaries"]))
+        self.assertRegex(result["case_summaries"][0]["task_sha256"], r"^[0-9a-f]{64}$")
+        self.assertNotIn("task", result["case_summaries"][0])
         self.assertFalse(result["source_state_authenticated"])
         self.assertFalse(result["issue_closure_independently_verified"])
         self.assertFalse(result["issue_reference_equivalence_verified"])
         self.assertFalse(result["golden_set_ready"])
         for field in golden.FALSE_FIELDS:
             self.assertFalse(result[field])
+
+    def test_cli_valid_candidate_is_not_adopted_golden_set(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            repo, path, _value = prepare(Path(temp_dir))
+            completed = subprocess.run(
+                [
+                    sys.executable,
+                    str(MODULE_PATH),
+                    "--repo",
+                    str(repo),
+                    "--manifest",
+                    str(path),
+                    "--format",
+                    "json",
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+
+        self.assertEqual(0, completed.returncode, completed.stderr)
+        result = json.loads(completed.stdout)
+        self.assertTrue(result["candidate_manifest_valid"])
+        self.assertTrue(result["coverage_complete"])
+        self.assertTrue(result["local_references_verified"])
+        self.assertFalse(result["source_state_authenticated"])
+        self.assertFalse(result["golden_set_ready"])
 
     def test_open_issue_and_in_checkout_manifest_are_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -161,6 +200,22 @@ class AssessGoldenSetReadinessTest(unittest.TestCase):
         self.assertIn("abl_rssw_research", missing_category["missing_categories"])
         self.assertFalse(missing_commit["candidate_manifest_valid"])
         self.assertEqual("issue-101", missing_commit["reference_failures"][0]["case"])
+
+    def test_task_normalization_is_required_and_raw_issue_fields_are_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            repo, path, value = prepare(Path(temp_dir))
+            del value["cases"][0]["task"]
+            path.write_text(json.dumps(value), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "fields do not match"):
+                golden.assess(repo, path, golden.load_policy())
+
+            second_parent = Path(temp_dir) / "second"
+            second_parent.mkdir()
+            repo, _path, value = prepare(second_parent)
+            value["cases"][0]["raw_body"] = "Do not preserve untrusted raw issue prose."
+            path.write_text(json.dumps(value), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "fields do not match"):
+                golden.assess(repo, path, golden.load_policy())
 
     def test_cli_refuses_policy_override(self) -> None:
         completed = subprocess.run(

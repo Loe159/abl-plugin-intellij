@@ -35,6 +35,7 @@ EXPECTED_POLICY: dict[str, Any] = {
     "required_missing_controls": [
         "approved_external_issue_snapshot_corpus",
         "external_candidate_manifest",
+        "human_normalized_task_corpus",
         "authenticated_closed_issue_states",
         "issue_to_reference_equivalence_review",
         "complete_category_coverage",
@@ -46,6 +47,7 @@ EXPECTED_POLICY: dict[str, Any] = {
         ".agent/checks/assess_golden_set_readiness.py",
         ".agent/policies/golden-set-readiness.json",
         "docs/agent-guides/golden-set-readiness.md",
+        "evals/golden-set.yaml",
     ],
 }
 

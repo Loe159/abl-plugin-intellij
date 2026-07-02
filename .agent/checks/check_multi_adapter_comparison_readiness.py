@@ -27,20 +27,28 @@ FALSE_FIELDS = (
 )
 
 EXPECTED_POLICY: dict[str, Any] = {
-    "version": 1,
+    "version": 2,
     "purpose": "multi_adapter_comparison_readiness_check",
     "mode": "local-preflight-only",
+    "implemented_scaffolding": [
+        "bounded_comparison_manifest",
+        "local_artifact_digest_validation",
+        "metrics_record_digest_validation",
+        "deterministic_metric_table",
+    ],
     "required_missing_controls": [
-        "explicit_comparison_task",
-        "at_least_two_reviewed_adapter_contracts",
-        "bounded_identical_stage_context",
+        "reviewed_adapter_contracts_for_each_candidate",
+        "validated_identical_stage_context_provenance",
         "adapter_invocation_sandbox_controls",
-        "captured_output_validation",
+        "captured_output_validation_from_each_adapter",
+        "provider_usage_authentication",
         "manual_metric_interpretation",
     ],
     "bindings": [
         ".agent/checks/check_multi_adapter_comparison_readiness.py",
+        ".agent/checks/validate_multi_adapter_comparison.py",
         ".agent/policies/multi-adapter-comparison-readiness.json",
+        ".agent/policies/multi-adapter-comparison.json",
         "docs/agent-guides/multi-adapter-comparison-readiness.md",
     ],
 }
@@ -90,6 +98,8 @@ def check_readiness(repo: Path, policy: dict[str, Any]) -> dict[str, Any]:
         "mode": policy["mode"],
         "comparison_ready": False,
         **{field: False for field in FALSE_FIELDS},
+        "comparison_contract_available": True,
+        "implemented_scaffolding": list(policy["implemented_scaffolding"]),
         "missing_controls": list(policy["required_missing_controls"]),
         "repo_unchanged": True,
         "bindings": bindings,
@@ -111,6 +121,7 @@ def format_text(result: dict[str, Any]) -> str:
         "model_invocation_authorized=false",
         "network_authorized=false",
     ]
+    lines.extend(f"- scaffold: {item}" for item in result["implemented_scaffolding"])
     lines.extend(f"- missing: {item}" for item in result["missing_controls"])
     return "\n".join(lines)
 

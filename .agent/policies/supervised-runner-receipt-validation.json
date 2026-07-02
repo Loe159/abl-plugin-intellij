@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "purpose": "supervised_runner_final_receipt_validation",
+  "mode": "validation-only",
+  "max_receipt_bytes": 200000,
+  "required_runner_bindings": [
+    ".agent/checks/run_supervised_implementation.py",
+    ".agent/policies/supervised-implementation-runner.json"
+  ],
+  "validator_bindings": [
+    ".agent/checks/validate_supervised_runner_receipt.py",
+    ".agent/policies/supervised-runner-receipt-validation.json"
+  ]
+}

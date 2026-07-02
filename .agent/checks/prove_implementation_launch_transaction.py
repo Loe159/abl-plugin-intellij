@@ -125,10 +125,17 @@ def claim_then_spawn(
     }
 
 
+def fixture_python() -> Path:
+    candidate = Path(sys.prefix) / "python.exe"
+    if candidate.is_file():
+        return candidate.resolve()
+    return Path(sys.executable).resolve()
+
+
 def child_command(policy: dict[str, Any]) -> list[str]:
     output = policy["child_stdout"].encode("utf-8")
     script = f"import sys; sys.stdout.buffer.write({output!r})"
-    return [sys.executable, "-I", "-S", "-B", "-c", script]
+    return [str(fixture_python()), "-I", "-S", "-B", "-c", script]
 
 
 def prove(repo: Path, policy: dict[str, Any]) -> dict[str, Any]:

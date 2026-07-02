@@ -1,34 +1,24 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-STAGE="$1"
-PROMPT_FILE="$2"
-OUTPUT_DIR="$3"
+if [[ $# -lt 4 || "$1" != "--expected-session" || "$3" != "--workspace" ]]; then
+  echo "usage: .agent/adapters/codex.sh --expected-session <expected-session.json> --workspace <worktree> -- [codex args...]" >&2
+  exit 1
+fi
 
-mkdir -p "$OUTPUT_DIR"
+expected_session="$2"
+workspace="$4"
+shift 4
+if [[ "${1:-}" == "--" ]]; then
+  shift
+fi
 
-case "$STAGE" in
-  research)
-    codex exec \
-      --sandbox read-only \
-      --ask-for-approval never \
-      --output "$OUTPUT_DIR/research.md" \
-      "$(cat "$PROMPT_FILE")"
-    ;;
+if ! command -v codex >/dev/null 2>&1; then
+  echo "codex adapter: codex executable not found" >&2
+  exit 127
+fi
 
-  plan)
-    codex exec \
-      --sandbox read-only \
-      --ask-for-approval never \
-      --output "$OUTPUT_DIR/plan.md" \
-      "$(cat "$PROMPT_FILE")"
-    ;;
-
-  implement)
-    codex exec \
-      --sandbox workspace-write \
-      --ask-for-approval never \
-      --output "$OUTPUT_DIR/summary.md" \
-      "$(cat "$PROMPT_FILE")"
-    ;;
-esac
+python .agent/adapters/local_implementation_adapter.py \
+  --expected-session "$expected_session" \
+  --workspace "$workspace" \
+  -- codex "$@"

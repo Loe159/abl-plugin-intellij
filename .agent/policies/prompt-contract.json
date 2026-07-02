@@ -53,6 +53,36 @@
         "plan.md"
       ],
       "output_artifact": "plan.md"
+    },
+    "compact-progress.md": {
+      "stage": "compact-progress",
+      "mode": "read-only",
+      "output": "progress.md",
+      "required_references": [
+        "AGENTS.md",
+        "task.md",
+        "plan.md",
+        "progress.md",
+        ".agent/policies/artifact-contract.json",
+        ".agent/templates/progress.md"
+      ],
+      "output_artifact": "progress.md"
+    },
+    "review.md": {
+      "stage": "review",
+      "mode": "read-only",
+      "output": "review.md",
+      "required_references": [
+        "AGENTS.md",
+        "task.md",
+        "research.md",
+        "plan.md",
+        "verification.md",
+        ".agent/policies/artifact-contract.json",
+        ".agent/templates/review.md",
+        "review.md"
+      ],
+      "output_artifact": "review.md"
     }
   }
 }

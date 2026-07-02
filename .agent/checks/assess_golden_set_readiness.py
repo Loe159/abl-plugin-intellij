@@ -44,6 +44,9 @@ EXPECTED_POLICY: dict[str, Any] = {
     "max_manifest_bytes": 100000,
     "max_text_characters": 1000,
     "max_criteria_per_case": 10,
+    "max_task_acceptance_criteria_per_case": 10,
+    "max_task_constraints_per_case": 10,
+    "max_task_out_of_scope_per_case": 10,
     "max_verification_steps_per_case": 10,
     "require_external_manifest": True,
     "require_issue_state": "closed",
@@ -105,6 +108,23 @@ def bounded_text_list(
     return value
 
 
+def bounded_optional_text_list(
+    value: Any,
+    name: str,
+    maximum_items: int,
+    maximum_characters: int,
+) -> list[str]:
+    if (
+        not isinstance(value, list)
+        or len(value) > maximum_items
+        or len(value) != len(set(value))
+    ):
+        raise ValueError(f"{name} must be a bounded unique list")
+    for index, item in enumerate(value):
+        bounded_text(item, f"{name}[{index}]", maximum_characters)
+    return value
+
+
 def parse_utc(value: Any, name: str) -> str:
     if type(value) is not str or UTC_TIMESTAMP.fullmatch(value) is None:
         raise ValueError(f"{name} must be an RFC 3339 UTC timestamp ending in Z")
@@ -129,6 +149,10 @@ def binding_records(repo: Path, names: list[str]) -> list[dict[str, Any]]:
             }
         )
     return records
+
+
+def canonical_json(value: Any) -> bytes:
+    return json.dumps(value, sort_keys=True, separators=(",", ":")).encode("utf-8")
 
 
 def commit_record(repo: Path, commit: str) -> dict[str, Any]:
@@ -242,12 +266,13 @@ def validate_manifest(value: Any, policy: dict[str, Any]) -> dict[str, Any]:
         case = exact_mapping(
             raw_case,
             {
-                "id",
-                "issue",
-                "categories",
-                "expected_outcome",
-                "success_criteria",
-                "reference",
+            "id",
+            "issue",
+            "task",
+            "categories",
+            "expected_outcome",
+            "success_criteria",
+            "reference",
             },
             f"cases[{index}]",
         )
@@ -278,6 +303,44 @@ def validate_manifest(value: Any, policy: dict[str, Any]) -> dict[str, Any]:
                 issue[digest_name]
             ) is None:
                 raise ValueError(f"cases[{index}].issue.{digest_name} is invalid")
+
+        task = exact_mapping(
+            case["task"],
+            {
+                "title",
+                "goal",
+                "background",
+                "acceptance_criteria",
+                "constraints",
+                "out_of_scope",
+            },
+            f"cases[{index}].task",
+        )
+        bounded_text(task["title"], f"cases[{index}].task.title", policy["max_text_characters"])
+        bounded_text(task["goal"], f"cases[{index}].task.goal", policy["max_text_characters"])
+        bounded_text(
+            task["background"],
+            f"cases[{index}].task.background",
+            policy["max_text_characters"],
+        )
+        bounded_text_list(
+            task["acceptance_criteria"],
+            f"cases[{index}].task.acceptance_criteria",
+            policy["max_task_acceptance_criteria_per_case"],
+            policy["max_text_characters"],
+        )
+        bounded_optional_text_list(
+            task["constraints"],
+            f"cases[{index}].task.constraints",
+            policy["max_task_constraints_per_case"],
+            policy["max_text_characters"],
+        )
+        bounded_optional_text_list(
+            task["out_of_scope"],
+            f"cases[{index}].task.out_of_scope",
+            policy["max_task_out_of_scope_per_case"],
+            policy["max_text_characters"],
+        )
 
         categories = bounded_text_list(
             case["categories"],
@@ -352,7 +415,18 @@ def assess(repo: Path, manifest_path: Path, policy: dict[str, Any]) -> dict[str,
 
     local_references = []
     reference_failures = []
+    case_summaries = []
     for case in validated["cases"]:
+        case_summaries.append(
+            {
+                "id": case["id"],
+                "issue_number": case["issue"]["number"],
+                "categories": list(case["categories"]),
+                "expected_outcome": case["expected_outcome"],
+                "task_sha256": sha256_bytes(canonical_json(case["task"])),
+                "reference_kind": case["reference"]["kind"],
+            }
+        )
         if case["reference"]["kind"] != "commit":
             continue
         try:
@@ -378,6 +452,7 @@ def assess(repo: Path, manifest_path: Path, policy: dict[str, Any]) -> dict[str,
         "issue_reference_equivalence_verified": False,
         "golden_set_ready": False,
         "case_count": len(validated["cases"]),
+        "case_summaries": case_summaries,
         "covered_categories": validated["covered_categories"],
         "missing_categories": validated["missing_categories"],
         "local_references": local_references,

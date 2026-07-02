@@ -27,33 +27,49 @@ The ledger distinguishes:
   validation of its bounded receipt;
 - manual-only research and planning rehearsal;
 - implementation-session contracts through validated post-consumption launch
-  readiness, without runner selection or execution;
-- runner controls that are still not ready in the real checkout;
+  readiness;
+- a functional supervised local runner that consumes exact session-start
+  authorization, launches a bounded adapter, validates implementation output,
+  generates a patch, runs the quality gate, and writes a final receipt;
+- runtime-hardening controls that are still not all ready in the real checkout;
 - an exact local session-start authorization receipt that does not authenticate
   the authorizer or invoke a runner, plus an exclusive adjacent consumption
   marker with independent current-state validation; it rejects ordinary local
   replay but is not tamper resistant, cross-host, or atomically coupled to
   invocation;
-- missing deterministic draft-PR publication, an authenticated historical
-  golden set, and multi-adapter comparison;
+- deterministic draft-PR publication tooling that remains explicit-request
+  only and is not authorized by the status check;
+- local multi-adapter comparison scaffolding that validates already-captured
+  artifacts and metrics without invoking adapters or providers;
+- missing authenticated historical golden set;
 - a local-only draft-PR publication preflight that lists missing external
   controls but does not push, create a PR, authenticate a remote, or authorize
   publication;
-- a local-only multi-adapter comparison preflight that lists missing adapter,
-  sandbox, context, validation, and metric-interpretation controls without
-  invoking adapters or model providers;
+- a local-only multi-adapter comparison preflight and validator that list
+  missing live adapter, sandbox, context-provenance, provider-authentication,
+  and interpretation controls while validating local artifact/metrics evidence;
 - manual exact approval of external GitHub issue snapshots that does not
   authenticate GitHub or independently verify labels;
-- manual post-run metrics recording that does not claim automatic runner or
-  provider telemetry.
-- a golden-set readiness preflight and candidate contract that can validate
-  local reference commits but cannot authenticate GitHub issue state or select
-  the historical corpus.
+- receipt-derived metrics-observation building plus manual post-run metrics
+  recording; this still does not claim trusted runner timestamps, provider
+  usage telemetry, billing proof, or correction measurements;
+- a golden-set readiness preflight, candidate contract, exact local adoption
+  receipt tool, and versioned `evals/golden-set.yaml` status marker; they can
+  validate local reference commits and record a human adoption decision, but
+  cannot themselves authenticate GitHub issue state or invent a historical
+  corpus.
 
 The checker validates the exact policy, hashes every declared evidence file,
-and consumes the current runner-readiness assessment. A future satisfying
-runner assessment can update only that capability; it cannot make the whole
-pilot ready while other required capabilities remain missing.
+and consumes the current runner-readiness assessment. The functional runner
+capability can be implemented while `runner_controls_ready=false`; that means
+the local supervised workflow can be exercised, not that network isolation,
+provider credential descendant noninheritance, model-turn budget enforcement,
+cleanup, or crash-atomic launch coupling are proven.
+
+The result also includes `runner_unready_controls`, a compact projection of
+every runner-readiness control whose status is not `satisfied`. This is
+diagnostic evidence only; it does not change the ledger's authorization or
+readiness rules.
 
 Every result retains all authorization, invocation, runner-selection,
 repository-mutation, network, publication, and session-start fields as false.

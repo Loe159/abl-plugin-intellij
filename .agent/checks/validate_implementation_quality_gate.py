@@ -497,8 +497,8 @@ def format_text(result: dict[str, Any]) -> str:
     lines = [
         f"implementation-quality-gate-validation: {status}",
         f"quality_gate_passed={str(result['quality_gate_passed']).lower()}",
+        *[f"{field}=false" for field in FALSE_FIELDS],
         "implementation_approved=false",
-        "publication_authorized=false",
     ]
     lines.extend(f"- {item['rule']}: {item['message']}" for item in result["failures"])
     return "\n".join(lines)

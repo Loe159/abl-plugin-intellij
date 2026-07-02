@@ -86,6 +86,13 @@ launcher enforcement proof is documented in
 parent-environment credential isolation and deliberately leaves provider
 credential propagation unproven.
 
+The supervised-runner adapter allowlist is now checked by
+`.agent/checks/prove_runner_tool_allowlist.py`. That proof is separate from
+this metadata audit: it observes the runner rejecting an untrusted adapter
+entrypoint before authorization consumption and resolving an allowlisted
+relative entrypoint to the absolute source-checkout path before launch, without
+invoking a provider.
+
 The bounded concurrent capture mechanism and excessive-output fixture are
 documented in `docs/agent-guides/bounded-output-capture.md`. The separate
 canonical result contract and adversarial validation proof are documented in

@@ -91,6 +91,13 @@ def fixture_parent_environment(
     return fixture
 
 
+def fixture_python() -> Path:
+    candidate = Path(sys.prefix) / "python.exe"
+    if candidate.is_file():
+        return candidate.resolve()
+    return Path(sys.executable).resolve()
+
+
 def prove(
     repo: Path,
     policy: dict[str, Any],
@@ -114,7 +121,7 @@ def prove(
     )
     parent = fixture_parent_environment(source_parent, sensitive_names)
     command = [
-        str(Path(sys.executable).resolve()),
+        str(fixture_python()),
         "-I",
         "-S",
         "-B",

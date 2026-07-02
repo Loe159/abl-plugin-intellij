@@ -1,0 +1,4 @@
+interface:
+  display_name: "Proparse Researcher"
+  short_description: "Optional read-only helper for RSSW Proparse evidence"
+  default_prompt: "Use the proparse-research skill exactly. Inspect repository and RSSW evidence read-only, report verified APIs and unknowns, and do not propose ABL grammar or keyword knowledge that is not backed by RSSW/Proparse."

@@ -10,6 +10,14 @@
     "plan": {
       "artifact": "plan.md",
       "allowed_statuses": ["awaiting_approval", "blocked"]
+    },
+    "compact-progress": {
+      "artifact": "progress.md",
+      "allowed_statuses": ["in_progress", "complete", "blocked"]
+    },
+    "review": {
+      "artifact": "review.md",
+      "allowed_statuses": ["complete", "blocked"]
     }
   }
 }

@@ -122,7 +122,10 @@ class StageContextBuilderTest(unittest.TestCase):
         )
 
     def test_repository_context_policy_is_valid(self) -> None:
-        self.assertEqual(["plan", "research"], sorted(self.policies["context"]["stages"]))
+        self.assertEqual(
+            ["compact-progress", "plan", "research", "review"],
+            sorted(self.policies["context"]["stages"]),
+        )
         self.assertEqual(
             "validated_stage_application",
             self.policies["context"]["stages"]["plan"]["provenance"],
@@ -177,6 +180,36 @@ class StageContextBuilderTest(unittest.TestCase):
                 "stage_application_receipt_sha256": digest,
             },
             bundle["provenance"],
+        )
+
+    def test_compact_progress_and_review_use_local_artifact_contract_provenance(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp = Path(temp_dir)
+            repo = temp / "repo"
+            base = create_repo(repo)
+            run = temp / "run"
+            create_run(run, base)
+            compact_output = temp / "compact.json"
+            compact = self.build(repo, run, "compact-progress", compact_output)
+
+            set_status(run, "plan.md", "awaiting_approval", "approved")
+            set_status(run, "verification.md", "pending", "failed")
+            review_output = temp / "review.json"
+            review = self.build(repo, run, "review", review_output)
+            compact_bundle = json.loads(compact_output.read_text(encoding="utf-8"))
+            review_bundle = json.loads(review_output.read_text(encoding="utf-8"))
+
+        self.assertTrue(compact["produced"], compact.get("failures"))
+        self.assertEqual("local_artifact_contract", compact_bundle["provenance"]["kind"])
+        self.assertEqual(
+            ["task.md", "plan.md", "progress.md", "verification.md"],
+            [record["name"] for record in compact_bundle["artifacts"]],
+        )
+        self.assertTrue(review["produced"], review.get("failures"))
+        self.assertEqual("local_artifact_contract", review_bundle["provenance"]["kind"])
+        self.assertEqual(
+            ["task.md", "research.md", "plan.md", "verification.md"],
+            [record["name"] for record in review_bundle["artifacts"]],
         )
 
     def test_plan_requires_valid_research_application_provenance(self) -> None:

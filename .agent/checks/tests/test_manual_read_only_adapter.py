@@ -114,7 +114,10 @@ class ManualReadOnlyAdapterTest(unittest.TestCase):
             output,
         )
 
-        self.assertEqual(["research", "plan"], policy["supported_stages"])
+        self.assertEqual(
+            ["research", "plan", "compact-progress", "review"],
+            policy["supported_stages"],
+        )
         self.assertEqual(
             {
                 "invokes_agent": False,

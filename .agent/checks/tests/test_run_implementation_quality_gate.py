@@ -241,6 +241,21 @@ class RunImplementationQualityGateTest(unittest.TestCase):
         self.assertEqual(["ktlintCheck", "detekt"], first_command[6:8])
         self.assertNotIn("SECRET_TOKEN", runner.call_args_list[0].args[2])
 
+    def test_text_output_lists_non_authorizing_fields(self) -> None:
+        text = gate.format_text(
+            {
+                "quality_gate_passed": True,
+                "execution_attempted": True,
+                "receipt_written": True,
+                "commands": [],
+                "failures": [],
+            }
+        )
+
+        for field in gate.FALSE_FIELDS:
+            self.assertIn(f"{field}=false", text)
+        self.assertIn("implementation_approved=false", text)
+
     def test_failed_first_command_writes_failed_receipt_and_stops(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             item = candidate(Path(temp_dir))

@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "purpose": "local_implementation_adapter",
+  "mode": "agent-command-wrapper",
+  "command_timeout_seconds": 540,
+  "max_child_output_bytes": 32768,
+  "max_summary_chars": 240,
+  "require_clean_workspace_at_start": true,
+  "require_expected_session_workspace_match": true,
+  "allowed_command_basenames": [
+    "aider",
+    "claude",
+    "claude-code",
+    "codex",
+    "mini-swe-agent",
+    "opencode"
+  ],
+  "fixture_command_basenames": [
+    "python",
+    "python.exe",
+    "python3"
+  ],
+  "fixture_runner_ids": [
+    "local-adapter-fixture"
+  ],
+  "use_isolated_child_environment": true,
+  "bindings": [
+    ".agent/adapters/local_implementation_adapter.py",
+    ".agent/policies/local-implementation-adapter.json",
+    ".agent/checks/isolated_process.py",
+    ".agent/policies/parent-environment-isolation.json",
+    ".agent/checks/validate_implementation_result.py",
+    ".agent/policies/implementation-result-validation.json",
+    ".agent/schemas/implementation-result.schema.json"
+  ]
+}

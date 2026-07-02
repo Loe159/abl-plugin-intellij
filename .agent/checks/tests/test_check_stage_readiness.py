@@ -61,7 +61,15 @@ class StageReadinessTest(unittest.TestCase):
 
     def test_repository_policy_is_valid(self) -> None:
         self.assertEqual(
-            ["complete", "implement", "plan", "research", "verify"],
+            [
+                "compact-progress",
+                "complete",
+                "implement",
+                "plan",
+                "research",
+                "review",
+                "verify",
+            ],
             sorted(self.policy["stages"]),
         )
 
@@ -149,6 +157,20 @@ class StageReadinessTest(unittest.TestCase):
         self.assertTrue(verify_after["ready"], verify_after["failures"])
         self.assertFalse(complete_before["ready"])
         self.assertTrue(complete_after["ready"], complete_after["failures"])
+
+    def test_compact_progress_and_review_have_declared_prerequisites(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            run = Path(temp_dir) / "run"
+            create_run(run, "medium")
+            compact = self.check(run, "compact-progress")
+            review_before = self.check(run, "review")
+            set_status(run, "plan.md", "awaiting_approval", "approved")
+            set_status(run, "verification.md", "pending", "failed")
+            review_after = self.check(run, "review")
+
+        self.assertTrue(compact["ready"], compact["failures"])
+        self.assertFalse(review_before["ready"])
+        self.assertTrue(review_after["ready"], review_after["failures"])
 
     def test_invalid_artifact_contract_is_not_ready(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

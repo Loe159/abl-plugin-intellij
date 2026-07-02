@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "purpose": "multi_adapter_comparison",
+  "mode": "local-artifact-and-metrics-comparison-only",
+  "max_manifest_bytes": 40000,
+  "max_artifact_bytes": 20000000,
+  "max_metrics_record_bytes": 50000,
+  "min_candidates": 2,
+  "max_candidates": 12,
+  "stages": [
+    "research",
+    "plan",
+    "implement",
+    "review"
+  ],
+  "artifact_roles": [
+    "stage_output",
+    "complete_patch",
+    "summary",
+    "not_applicable"
+  ],
+  "metric_table": [
+    "outcome.status",
+    "final_disposition",
+    "regression_status",
+    "timing.duration_ms",
+    "tokens.input_tokens",
+    "tokens.output_tokens",
+    "cost.amount_microunits",
+    "human_corrections.count",
+    "diff.changed_lines"
+  ],
+  "require_distinct_adapters": true,
+  "require_shared_stage": true,
+  "require_shared_base_commit": true,
+  "require_shared_context_sha256": true,
+  "no_winner_selection": true,
+  "bindings": [
+    ".agent/checks/validate_multi_adapter_comparison.py",
+    ".agent/policies/multi-adapter-comparison.json",
+    ".agent/checks/record_run_metrics.py",
+    ".agent/policies/run-metrics.json",
+    "docs/agent-guides/multi-adapter-comparison-readiness.md"
+  ]
+}

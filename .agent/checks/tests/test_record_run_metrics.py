@@ -138,6 +138,32 @@ class RecordRunMetricsTest(unittest.TestCase):
         self.assertEqual("unavailable", record["cost"]["status"])
         self.assertEqual("not_assessed", record["human_corrections"]["status"])
 
+    def test_blocked_implementation_can_record_no_diff(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp = Path(temp_dir)
+            value = observation(None, "implement")
+            value["outcome"] = {"status": "blocked"}
+            value["cost"] = {
+                "status": "unavailable",
+                "source": "unavailable",
+                "amount_microunits": None,
+                "currency": None,
+            }
+            value["human_corrections"] = {"status": "not_assessed", "count": None}
+            source = temp / "observation.json"
+            source.write_text(json.dumps(value), encoding="utf-8")
+            record, _content = metrics.build_record(
+                REPO_ROOT,
+                source,
+                temp / "metrics.json",
+                None,
+                metrics.load_policy(),
+            )
+
+        self.assertEqual("implement", record["stage"])
+        self.assertEqual("blocked", record["outcome"]["status"])
+        self.assertEqual("not_applicable", record["diff"]["status"])
+
     def test_rejects_digest_mismatch_fake_zero_and_implementation_without_patch(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             source, patch, output = prepare(Path(temp_dir))
@@ -155,7 +181,7 @@ class RecordRunMetricsTest(unittest.TestCase):
 
             value = observation(None, "implement")
             source.write_text(json.dumps(value), encoding="utf-8")
-            with self.assertRaisesRegex(ValueError, "measured patch"):
+            with self.assertRaisesRegex(ValueError, "Successful implement observations"):
                 metrics.build_record(
                     REPO_ROOT,
                     source,

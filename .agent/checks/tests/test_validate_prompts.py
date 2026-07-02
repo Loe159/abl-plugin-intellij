@@ -40,7 +40,10 @@ class PromptContractTest(unittest.TestCase):
         result = self.validate(PROMPTS)
 
         self.assertTrue(result["valid"], result["errors"])
-        self.assertEqual(["plan.md", "research.md"], result["prompts"])
+        self.assertEqual(
+            ["compact-progress.md", "plan.md", "research.md", "review.md"],
+            result["prompts"],
+        )
 
     def test_rejects_missing_and_unexpected_prompt(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

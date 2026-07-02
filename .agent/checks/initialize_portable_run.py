@@ -67,6 +67,7 @@ EXPECTED_POLICY: dict[str, Any] = {
         "plan.md": "awaiting_approval",
         "progress.md": "not_started",
         "verification.md": "pending",
+        "review.md": "pending",
     },
     "bindings": [
         ".agent/checks/initialize_portable_run.py",
@@ -84,6 +85,7 @@ EXPECTED_POLICY: dict[str, Any] = {
         ".agent/templates/plan.md",
         ".agent/templates/progress.md",
         ".agent/templates/verification.md",
+        ".agent/templates/review.md",
     ],
 }
 

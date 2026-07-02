@@ -18,7 +18,9 @@ The validator treats both the bundle and response as untrusted. It verifies:
 - no unresolved placeholders or conversational preamble.
 
 Research may return only `complete` or `blocked`. Planning may return only
-`awaiting_approval` or `blocked`; it can never self-approve.
+`awaiting_approval` or `blocked`; it can never self-approve. Compaction may
+return `in_progress`, `complete`, or `blocked`. Review may return only
+`complete` or `blocked`.
 
 ## Run
 

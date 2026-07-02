@@ -38,6 +38,8 @@ FALSE_FIELDS = (
 )
 SOURCE_IDS = (
     "local_runner_audit",
+    "runner_tool_allowlist_proof",
+    "local_adapter_environment_filter_proof",
     "disposable_worktree_proof",
     "direct_child_timeout_proof",
     "windows_process_tree_timeout_proof",
@@ -46,6 +48,8 @@ SOURCE_IDS = (
     "implementation_launch_transaction_proof",
     "implementation_result_validation_proof",
     "runner_output_post_validation_proof",
+    "supervised_runner_execution_proof",
+    "supervised_implementation_runner_contract",
     "implementation_patch_validation_proof",
     "implementation_patch_receipt_validation_proof",
     "implementation_quality_gate_proof",
@@ -64,6 +68,20 @@ SOURCE_CONTRACTS = {
             ],
             *audit_local_runner.EXPECTED_POLICY["unproven_enforcement_controls"],
         },
+    },
+    "runner_tool_allowlist_proof": {
+        "purpose": "runner_tool_allowlist_enforcement_proof",
+        "mode": "enforcement-proof",
+        "completion_field": "proof_complete",
+        "assessment_fields": ("control_assessments",),
+        "expected_ids": {"tool_allowlist"},
+    },
+    "local_adapter_environment_filter_proof": {
+        "purpose": "local_adapter_environment_filter_proof",
+        "mode": "enforcement-proof",
+        "completion_field": "proof_complete",
+        "assessment_fields": ("control_assessments",),
+        "expected_ids": {"local_adapter_child_environment_filter"},
     },
     "disposable_worktree_proof": {
         "purpose": "disposable_git_worktree_lifecycle_proof",
@@ -147,6 +165,57 @@ SOURCE_CONTRACTS = {
         "expected_ids": {
             prove_runner_output_post_validation.EXPECTED_POLICY["proven_control"],
             *prove_runner_output_post_validation.EXPECTED_POLICY["unproven_controls"],
+        },
+    },
+    "supervised_runner_execution_proof": {
+        "purpose": "supervised_runner_execution_fixture_proof",
+        "mode": "fixture-only",
+        "completion_field": "proof_complete",
+        "assessment_fields": ("control_assessments",),
+        "expected_ids": {
+            "runner_enforced_output_post_validation",
+            "supervised_runner_quality_gate_sequence",
+            "cleanup_after_successful_runner_completion",
+            "cleanup_after_controlled_blocked_completion",
+            "cleanup_receipt_validation_after_runner_cleanup",
+            "supervised_runner_consumption_launch_before_adapter_sequence",
+            "final_receipt_validation_after_runner_write",
+            "controlled_adapter_timeout_blocks_before_patch",
+            "cleanup_after_controlled_adapter_timeout",
+            "real_agent_result_compatibility",
+            "real_gradle_quality_gate_execution",
+            "provider_credential_descendant_noninheritance",
+            "network_isolation",
+            "authorization_consumption_to_process_start_atomicity",
+            "cleanup_after_failed_runner_completion",
+            "cleanup_after_timeout_or_process_termination",
+            "cleanup_after_host_crash",
+        },
+    },
+    "supervised_implementation_runner_contract": {
+        "purpose": "supervised_local_implementation_runner_contract_assessment",
+        "mode": "contract-only",
+        "completion_field": "assessment_complete",
+        "assessment_fields": ("control_assessments",),
+        "expected_ids": {
+            "supervised_local_runner_contract",
+            "authorization_consumption_before_adapter_execution",
+            "bounded_adapter_execution_via_isolated_process",
+            "implementation_result_post_validation_before_retention",
+            "candidate_patch_validation_before_quality_gate",
+            "quality_gate_execution_and_receipt_validation",
+            "network_and_publication_requests_disabled",
+            "optional_cleanup_after_success",
+            "optional_cleanup_after_controlled_blocked_stage",
+            "cleanup_receipt_validation_after_cleanup",
+            "final_receipt_validation_after_write",
+            "adapter_timeout_within_isolated_process_bound",
+            "model_turn_budget_declared_in_session_contract",
+            "workspace_cwd_and_external_outputs_contract",
+            "authorization_consumption_to_process_start_atomicity",
+            "provider_credential_descendant_noninheritance",
+            "network_isolation",
+            "cleanup_after_runner_completion",
         },
     },
     "implementation_patch_validation_proof": {
@@ -294,6 +363,11 @@ EXPECTED_POLICY: dict[str, Any] = {
         ],
         "runner_enforced_output_post_validation": [
             {
+                "source": "supervised_runner_execution_proof",
+                "id": "runner_enforced_output_post_validation",
+                "assessment": "verified_enforcement",
+            },
+            {
                 "source": "implementation_result_validation_proof",
                 "id": "runner_enforced_output_post_validation",
                 "assessment": "verified_enforcement",
@@ -329,7 +403,7 @@ EXPECTED_POLICY: dict[str, Any] = {
         ],
         "tool_allowlist": [
             {
-                "source": "local_runner_audit",
+                "source": "runner_tool_allowlist_proof",
                 "id": "tool_allowlist",
                 "assessment": "verified_enforcement",
             }
@@ -337,7 +411,13 @@ EXPECTED_POLICY: dict[str, Any] = {
     },
     "related_evidence_rules": {
         "parent_environment_credential_isolation": [],
-        "provider_credential_descendant_noninheritance": [],
+        "provider_credential_descendant_noninheritance": [
+            {
+                "source": "local_adapter_environment_filter_proof",
+                "id": "local_adapter_child_environment_filter",
+                "assessment": "verified_enforcement",
+            }
+        ],
         "disposable_worktree_lifecycle": [
             {
                 "source": "local_runner_audit",
@@ -349,12 +429,52 @@ EXPECTED_POLICY: dict[str, Any] = {
                 "id": "disposable_git_worktree_lifecycle_fixture",
                 "assessment": "verified_fixture",
             },
+            {
+                "source": "supervised_implementation_runner_contract",
+                "id": "optional_cleanup_after_success",
+                "assessment": "verified_contract",
+            },
+            {
+                "source": "supervised_runner_execution_proof",
+                "id": "cleanup_after_successful_runner_completion",
+                "assessment": "verified_fixture",
+            },
+            {
+                "source": "supervised_implementation_runner_contract",
+                "id": "optional_cleanup_after_controlled_blocked_stage",
+                "assessment": "verified_contract",
+            },
+            {
+                "source": "supervised_runner_execution_proof",
+                "id": "cleanup_after_controlled_blocked_completion",
+                "assessment": "verified_fixture",
+            },
+            {
+                "source": "supervised_implementation_runner_contract",
+                "id": "cleanup_receipt_validation_after_cleanup",
+                "assessment": "verified_contract",
+            },
+            {
+                "source": "supervised_runner_execution_proof",
+                "id": "cleanup_receipt_validation_after_runner_cleanup",
+                "assessment": "verified_fixture",
+            },
+            {
+                "source": "supervised_runner_execution_proof",
+                "id": "cleanup_after_controlled_adapter_timeout",
+                "assessment": "verified_fixture",
+            },
         ],
         "filesystem_write_scope": [
             {
                 "source": "local_runner_audit",
                 "id": "codex_sandbox_metadata",
                 "assessment": "observed_metadata",
+            },
+            {
+                "source": "supervised_implementation_runner_contract",
+                "id": "workspace_cwd_and_external_outputs_contract",
+                "assessment": "verified_contract",
             }
         ],
         "implementation_session_wall_clock_timeout": [
@@ -368,20 +488,57 @@ EXPECTED_POLICY: dict[str, Any] = {
                 "id": "windows_taskkill_two_level_process_tree_timeout_fixture",
                 "assessment": "verified_fixture",
             },
+            {
+                "source": "supervised_implementation_runner_contract",
+                "id": "adapter_timeout_within_isolated_process_bound",
+                "assessment": "verified_contract",
+            },
+            {
+                "source": "supervised_runner_execution_proof",
+                "id": "controlled_adapter_timeout_blocks_before_patch",
+                "assessment": "verified_fixture",
+            },
         ],
-        "model_turn_budget": [],
-        "network_isolation": [],
+        "model_turn_budget": [
+            {
+                "source": "supervised_implementation_runner_contract",
+                "id": "model_turn_budget_declared_in_session_contract",
+                "assessment": "verified_contract",
+            }
+        ],
+        "network_isolation": [
+            {
+                "source": "supervised_implementation_runner_contract",
+                "id": "network_and_publication_requests_disabled",
+                "assessment": "verified_contract",
+            }
+        ],
         "bounded_output_capture": [
             {
                 "source": "local_runner_audit",
                 "id": "codex_noninteractive_exec_metadata",
                 "assessment": "observed_metadata",
+            },
+            {
+                "source": "supervised_implementation_runner_contract",
+                "id": "bounded_adapter_execution_via_isolated_process",
+                "assessment": "verified_contract",
             }
         ],
         "authorization_consumption_to_process_start": [
             {
                 "source": "implementation_launch_transaction_proof",
                 "id": "local_exclusive_claim_before_direct_child_spawn_fixture",
+                "assessment": "verified_fixture",
+            },
+            {
+                "source": "supervised_implementation_runner_contract",
+                "id": "authorization_consumption_before_adapter_execution",
+                "assessment": "verified_contract",
+            },
+            {
+                "source": "supervised_runner_execution_proof",
+                "id": "supervised_runner_consumption_launch_before_adapter_sequence",
                 "assessment": "verified_fixture",
             }
         ],
@@ -391,18 +548,55 @@ EXPECTED_POLICY: dict[str, Any] = {
                 "source": "runner_output_post_validation_proof",
                 "id": "runner_output_post_validation_fixture",
                 "assessment": "verified_fixture",
+            },
+            {
+                "source": "supervised_implementation_runner_contract",
+                "id": "implementation_result_post_validation_before_retention",
+                "assessment": "verified_contract",
+            },
+            {
+                "source": "supervised_implementation_runner_contract",
+                "id": "final_receipt_validation_after_write",
+                "assessment": "verified_contract",
+            },
+            {
+                "source": "supervised_runner_execution_proof",
+                "id": "final_receipt_validation_after_runner_write",
+                "assessment": "verified_fixture",
             }
         ],
-        "implementation_patch_post_validation": [],
+        "implementation_patch_post_validation": [
+            {
+                "source": "supervised_implementation_runner_contract",
+                "id": "candidate_patch_validation_before_quality_gate",
+                "assessment": "verified_contract",
+            }
+        ],
         "implementation_patch_receipt_validation": [],
         "implementation_quality_gate_execution": [
             {
                 "source": "implementation_quality_gate_proof",
                 "id": "bounded_quality_gate_execution_fixture",
                 "assessment": "verified_fixture",
+            },
+            {
+                "source": "supervised_implementation_runner_contract",
+                "id": "quality_gate_execution_and_receipt_validation",
+                "assessment": "verified_contract",
+            },
+            {
+                "source": "supervised_runner_execution_proof",
+                "id": "supervised_runner_quality_gate_sequence",
+                "assessment": "verified_fixture",
             }
         ],
-        "quality_gate_receipt_validation": [],
+        "quality_gate_receipt_validation": [
+            {
+                "source": "supervised_implementation_runner_contract",
+                "id": "quality_gate_execution_and_receipt_validation",
+                "assessment": "verified_contract",
+            }
+        ],
         "tool_allowlist": [
             {
                 "source": "local_runner_audit",
@@ -414,6 +608,8 @@ EXPECTED_POLICY: dict[str, Any] = {
     "policy_bindings": [
         ".agent/checks/assess_runner_readiness.py",
         ".agent/checks/audit_local_runner.py",
+        ".agent/checks/prove_runner_tool_allowlist.py",
+        ".agent/checks/prove_local_adapter_environment_filter.py",
         ".agent/checks/prove_disposable_worktree.py",
         ".agent/checks/prove_wall_clock_timeout.py",
         ".agent/checks/prove_windows_process_tree_timeout.py",
@@ -424,6 +620,11 @@ EXPECTED_POLICY: dict[str, Any] = {
         ".agent/checks/validate_implementation_result.py",
         ".agent/checks/prove_implementation_result_validation.py",
         ".agent/checks/prove_runner_output_post_validation.py",
+        ".agent/checks/prove_supervised_runner_execution.py",
+        ".agent/checks/run_supervised_implementation.py",
+        ".agent/checks/build_implementation_session.py",
+        ".agent/checks/validate_disposable_worktree_cleanup.py",
+        ".agent/checks/validate_supervised_runner_receipt.py",
         ".agent/checks/validate_implementation_patch.py",
         ".agent/checks/prove_implementation_patch_validation.py",
         ".agent/checks/validate_implementation_patch_receipt.py",
@@ -433,6 +634,8 @@ EXPECTED_POLICY: dict[str, Any] = {
         ".agent/checks/validate_implementation_quality_gate.py",
         ".agent/checks/prove_implementation_quality_gate_validation.py",
         ".agent/policies/local-runner-audit.json",
+        ".agent/policies/runner-tool-allowlist-proof.json",
+        ".agent/policies/local-adapter-environment-filter-proof.json",
         ".agent/policies/disposable-worktree-proof.json",
         ".agent/policies/runner-readiness.json",
         ".agent/policies/wall-clock-timeout-proof.json",
@@ -444,6 +647,11 @@ EXPECTED_POLICY: dict[str, Any] = {
         ".agent/policies/implementation-result-validation.json",
         ".agent/policies/implementation-result-validation-proof.json",
         ".agent/policies/runner-output-post-validation-proof.json",
+        ".agent/policies/supervised-runner-execution-proof.json",
+        ".agent/policies/supervised-implementation-runner.json",
+        ".agent/policies/implementation-session.json",
+        ".agent/policies/disposable-worktree-cleanup-validation.json",
+        ".agent/policies/supervised-runner-receipt-validation.json",
         ".agent/schemas/implementation-result.schema.json",
         ".agent/policies/implementation-patch-post-validation.json",
         ".agent/policies/implementation-patch-post-validation-proof.json",
@@ -541,9 +749,203 @@ def assess_controls(
     return controls
 
 
+def supervised_runner_contract_source(repo: Path) -> dict[str, Any]:
+    import build_implementation_session
+    import run_supervised_implementation
+
+    repo = repo.resolve()
+    if not repo.is_dir():
+        raise ValueError("Repository path must be an existing directory")
+    runner_policy = run_supervised_implementation.load_policy()
+    isolation_policy = run_supervised_implementation.isolated_process.load_policy()
+    session_policy = build_implementation_session.load_policies()["session"]
+    bindings = binding_records(
+        REPO_ROOT,
+        [
+            *runner_policy["bindings"],
+            ".agent/checks/build_implementation_session.py",
+            ".agent/policies/implementation-session.json",
+        ],
+    )
+    session_budget_declared = (
+        session_policy["purpose"] == "supervised_implementation_session_proposal"
+        and session_policy["mode"] == "proposal-only"
+        and session_policy["budgets"]["max_turns"] == 12
+        and session_policy["budgets"]["max_duration_minutes"] == 30
+        and session_policy["capabilities"]["network_access"] is False
+    )
+    workspace_scope_declared = (
+        runner_policy["require_external_outputs"] is True
+        and runner_policy["require_outputs_outside_workspace"] is True
+        and runner_policy["require_absent_outputs"] is True
+        and runner_policy["require_distinct_outputs"] is True
+        and ".agent/checks/isolated_process.py" in runner_policy["bindings"]
+        and ".agent/policies/local-implementation-adapter.json" in runner_policy["bindings"]
+    )
+    contract_verified = (
+        runner_policy["require_consumed_authorization"] is True
+        and runner_policy["require_launch_ready"] is True
+        and runner_policy["require_valid_implementation_result"] is True
+        and runner_policy["require_candidate_ready_result_for_patch"] is True
+        and runner_policy["require_candidate_ready_patch_for_quality_gate"] is True
+        and runner_policy["write_result_only_after_valid_result"] is True
+        and runner_policy["write_final_receipt_on_blocked_stage"] is True
+        and runner_policy["allow_success_cleanup"] is True
+        and runner_policy["allow_blocked_cleanup"] is True
+        and runner_policy["require_external_outputs"] is True
+        and runner_policy["require_outputs_outside_workspace"] is True
+        and runner_policy["network_requested"] is False
+        and runner_policy["publication_requested"] is False
+        and runner_policy["cleanup_performed"] is False
+        and runner_policy["adapter_timeout_seconds"] <= isolation_policy["max_timeout_seconds"]
+        and ".agent/checks/isolated_process.py" in runner_policy["bindings"]
+        and ".agent/checks/validate_implementation_result.py" in runner_policy["bindings"]
+        and ".agent/checks/validate_implementation_patch.py" in runner_policy["bindings"]
+        and ".agent/checks/run_implementation_quality_gate.py" in runner_policy["bindings"]
+        and ".agent/checks/validate_implementation_quality_gate.py" in runner_policy["bindings"]
+        and ".agent/checks/cleanup_disposable_worktree.py" in runner_policy["bindings"]
+        and ".agent/checks/validate_disposable_worktree_cleanup.py"
+        in runner_policy["bindings"]
+        and ".agent/checks/validate_supervised_runner_receipt.py"
+        in runner_policy["bindings"]
+    )
+    verified = "verified_contract" if contract_verified else "not_proven"
+    budget_verified = (
+        "verified_contract"
+        if contract_verified and session_budget_declared
+        else "not_proven"
+    )
+    return {
+        "assessment_version": 1,
+        "purpose": "supervised_local_implementation_runner_contract_assessment",
+        "mode": "contract-only",
+        **{field: False for field in FALSE_FIELDS},
+        "assessment_complete": True,
+        "scope": {
+            "loads_exact_runner_policy": True,
+            "observes_bounded_local_runner_contract": contract_verified,
+            "invokes_adapter": False,
+            "invokes_agent": False,
+            "selects_runner": False,
+            "authorizes_session_start": False,
+            "proves_network_isolation": False,
+            "proves_provider_credential_descendant_noninheritance": False,
+            "proves_atomic_consumption_to_process_start": False,
+            "performs_cleanup": False,
+            "cleanup_after_controlled_blocked_stage_is_optional": runner_policy[
+                "allow_blocked_cleanup"
+            ],
+            "validates_cleanup_receipt_after_cleanup": (
+                ".agent/checks/validate_disposable_worktree_cleanup.py"
+                in runner_policy["bindings"]
+            ),
+            "validates_final_receipt_after_write": (
+                ".agent/checks/validate_supervised_runner_receipt.py"
+                in runner_policy["bindings"]
+            ),
+            "adapter_timeout_seconds": runner_policy["adapter_timeout_seconds"],
+            "isolated_process_max_timeout_seconds": isolation_policy["max_timeout_seconds"],
+            "declared_model_turn_budget": session_policy["budgets"]["max_turns"],
+            "declared_session_duration_minutes": session_policy["budgets"][
+                "max_duration_minutes"
+            ],
+            "proves_model_turn_budget_enforcement": False,
+            "requires_external_outputs": runner_policy["require_external_outputs"],
+            "requires_outputs_outside_workspace": runner_policy[
+                "require_outputs_outside_workspace"
+            ],
+            "proves_arbitrary_filesystem_write_denial": False,
+        },
+        "control_assessments": [
+            {"id": "supervised_local_runner_contract", "assessment": verified},
+            {
+                "id": "authorization_consumption_before_adapter_execution",
+                "assessment": verified,
+            },
+            {
+                "id": "bounded_adapter_execution_via_isolated_process",
+                "assessment": verified,
+            },
+            {
+                "id": "implementation_result_post_validation_before_retention",
+                "assessment": verified,
+            },
+            {
+                "id": "candidate_patch_validation_before_quality_gate",
+                "assessment": verified,
+            },
+            {
+                "id": "quality_gate_execution_and_receipt_validation",
+                "assessment": verified,
+            },
+            {
+                "id": "network_and_publication_requests_disabled",
+                "assessment": verified,
+            },
+            {
+                "id": "optional_cleanup_after_success",
+                "assessment": verified,
+            },
+            {
+                "id": "optional_cleanup_after_controlled_blocked_stage",
+                "assessment": verified,
+            },
+            {
+                "id": "cleanup_receipt_validation_after_cleanup",
+                "assessment": verified,
+            },
+            {
+                "id": "final_receipt_validation_after_write",
+                "assessment": verified,
+            },
+            {
+                "id": "adapter_timeout_within_isolated_process_bound",
+                "assessment": verified,
+            },
+            {
+                "id": "model_turn_budget_declared_in_session_contract",
+                "assessment": budget_verified,
+            },
+            {
+                "id": "workspace_cwd_and_external_outputs_contract",
+                "assessment": (
+                    "verified_contract"
+                    if contract_verified and workspace_scope_declared
+                    else "not_proven"
+                ),
+            },
+            {
+                "id": "authorization_consumption_to_process_start_atomicity",
+                "assessment": "not_proven",
+            },
+            {
+                "id": "provider_credential_descendant_noninheritance",
+                "assessment": "not_proven",
+            },
+            {"id": "network_isolation", "assessment": "not_proven"},
+            {"id": "cleanup_after_runner_completion", "assessment": "not_proven"},
+        ],
+        "bindings": bindings,
+    }
+
+
 def default_sources(repo: Path) -> dict[str, dict[str, Any]]:
+    import prove_local_adapter_environment_filter
+    import prove_runner_tool_allowlist
+    import prove_supervised_runner_execution
+
     return {
         "local_runner_audit": audit_local_runner.audit(repo, audit_local_runner.load_policy()),
+        "runner_tool_allowlist_proof": prove_runner_tool_allowlist.prove(
+            repo,
+            prove_runner_tool_allowlist.load_policy(),
+        ),
+        "local_adapter_environment_filter_proof": (
+            prove_local_adapter_environment_filter.prove(
+                repo,
+                prove_local_adapter_environment_filter.load_policy(),
+            )
+        ),
         "disposable_worktree_proof": prove_disposable_worktree.prove(
             repo,
             prove_disposable_worktree.load_policy(),
@@ -582,6 +984,13 @@ def default_sources(repo: Path) -> dict[str, dict[str, Any]]:
                 prove_runner_output_post_validation.load_policy(),
             )
         ),
+        "supervised_runner_execution_proof": (
+            prove_supervised_runner_execution.prove(
+                repo,
+                prove_supervised_runner_execution.load_policy(),
+            )
+        ),
+        "supervised_implementation_runner_contract": supervised_runner_contract_source(repo),
         "implementation_patch_validation_proof": (
             prove_implementation_patch_validation.prove(
                 repo,

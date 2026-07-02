@@ -21,7 +21,8 @@
     "research.md": "pending",
     "plan.md": "awaiting_approval",
     "progress.md": "not_started",
-    "verification.md": "pending"
+    "verification.md": "pending",
+    "review.md": "pending"
   },
   "bindings": [
     ".agent/checks/initialize_portable_run.py",
@@ -38,6 +39,7 @@
     ".agent/templates/research.md",
     ".agent/templates/plan.md",
     ".agent/templates/progress.md",
-    ".agent/templates/verification.md"
+    ".agent/templates/verification.md",
+    ".agent/templates/review.md"
   ]
 }

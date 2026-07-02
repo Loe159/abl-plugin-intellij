@@ -163,6 +163,14 @@ def validate_bundle(
                     "message": "Plan bundle research-application provenance does not match.",
                 }
             )
+    elif stage_context["provenance"] == "local_artifact_contract":
+        if provenance != {"kind": "local_artifact_contract"}:
+            failures.append(
+                {
+                    "rule": "bundle_provenance",
+                    "message": "Bundle local artifact provenance does not match.",
+                }
+            )
     elif provenance != {"kind": "none"}:
         failures.append(
             {

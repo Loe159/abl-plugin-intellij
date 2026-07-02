@@ -83,10 +83,22 @@ EXPECTED_POLICY: dict[str, Any] = {
         },
         {
             "id": "enforced_implementation_runner",
-            "status": "not_ready",
-            "implemented": False,
+            "status": "functional_supervised_runner_controls_incomplete",
+            "implemented": True,
             "required_for_pilot": True,
-            "evidence": [".agent/checks/assess_runner_readiness.py"],
+            "evidence": [
+                ".agent/checks/assess_runner_readiness.py",
+                ".agent/checks/prove_runner_tool_allowlist.py",
+                ".agent/checks/prove_local_adapter_environment_filter.py",
+                ".agent/checks/build_supervised_runner_invocation.py",
+                ".agent/checks/run_supervised_implementation.py",
+                ".agent/adapters/local_implementation_adapter.py",
+                ".agent/policies/runner-tool-allowlist-proof.json",
+                ".agent/policies/local-adapter-environment-filter-proof.json",
+                ".agent/policies/supervised-runner-invocation.json",
+                ".agent/policies/supervised-implementation-runner.json",
+                ".agent/policies/local-implementation-adapter.json",
+            ],
         },
         {
             "id": "explicit_session_start_authorization",
@@ -116,20 +128,24 @@ EXPECTED_POLICY: dict[str, Any] = {
         },
         {
             "id": "deterministic_draft_pr_publisher",
-            "status": "local_preflight_only",
-            "implemented": False,
+            "status": "explicit_request_only_not_authorized_by_status",
+            "implemented": True,
             "required_for_pilot": True,
             "evidence": [
                 ".agent/checks/check_draft_pr_publication_readiness.py",
+                ".agent/checks/publish_draft_pr.py",
                 ".agent/policies/draft-pr-publication-readiness.json",
+                ".agent/policies/draft-pr-publisher.json",
             ],
         },
         {
             "id": "run_metrics",
-            "status": "manual_evidence_recording_only",
+            "status": "receipt_derived_observation_and_manual_recording",
             "implemented": True,
             "required_for_pilot": True,
             "evidence": [
+                ".agent/checks/build_runner_metrics_observation.py",
+                ".agent/policies/runner-metrics-observation.json",
                 ".agent/checks/record_run_metrics.py",
                 ".agent/policies/run-metrics.json",
             ],
@@ -144,16 +160,25 @@ EXPECTED_POLICY: dict[str, Any] = {
                 ".agent/policies/historical-golden-set-readiness.json",
                 ".agent/checks/assess_golden_set_readiness.py",
                 ".agent/policies/golden-set-readiness.json",
+                ".agent/checks/draft_golden_set_manifest.py",
+                ".agent/policies/golden-set-draft.json",
+                ".agent/checks/draft_pr_golden_set_manifest.py",
+                ".agent/policies/golden-set-pr-draft.json",
+                ".agent/checks/approve_golden_set.py",
+                ".agent/policies/golden-set-adoption.json",
+                "evals/golden-set.yaml",
             ],
         },
         {
             "id": "multi_adapter_comparison",
-            "status": "local_preflight_only",
-            "implemented": False,
+            "status": "local_artifact_comparison_available_not_invoking",
+            "implemented": True,
             "required_for_pilot": True,
             "evidence": [
                 ".agent/checks/check_multi_adapter_comparison_readiness.py",
+                ".agent/checks/validate_multi_adapter_comparison.py",
                 ".agent/policies/multi-adapter-comparison-readiness.json",
+                ".agent/policies/multi-adapter-comparison.json",
             ],
         },
     ],
@@ -197,6 +222,23 @@ def evidence_records(repo: Path, capabilities: list[dict[str, Any]]) -> list[dic
     return binding_records(repo, paths)
 
 
+def runner_unready_controls(runner: dict[str, Any]) -> list[dict[str, str]]:
+    controls = runner.get("controls", [])
+    if not isinstance(controls, list):
+        raise ValueError("Runner readiness controls must be a list when present")
+    unready = []
+    for control in controls:
+        if not isinstance(control, dict):
+            raise ValueError("Runner readiness control entries must be objects")
+        control_id = control.get("id")
+        status = control.get("status")
+        if not isinstance(control_id, str) or not isinstance(status, str):
+            raise ValueError("Runner readiness controls must include string id and status")
+        if status != "satisfied":
+            unready.append({"id": control_id, "status": status})
+    return unready
+
+
 def check_status(
     repo: Path,
     policy: dict[str, Any],
@@ -214,6 +256,7 @@ def check_status(
         raise ValueError("Runner readiness assessment is incomplete")
     if any(runner.get(field) is not False for field in assess_runner_readiness.FALSE_FIELDS):
         raise ValueError("Runner readiness assessment overclaims authorization")
+    unready_controls = runner_unready_controls(runner)
 
     capabilities = [dict(capability) for capability in policy["capabilities"]]
     runner_capability = next(
@@ -237,6 +280,7 @@ def check_status(
         "capabilities": capabilities,
         "missing_required_capabilities": missing,
         "runner_controls_ready": runner["controls_ready"],
+        "runner_unready_controls": unready_controls,
         "runner_assessment": runner,
         "evidence_bindings": evidence,
         "status_bindings": bindings,
@@ -260,6 +304,10 @@ def format_text(result: dict[str, Any]) -> str:
     lines.extend(
         f"- {capability['id']}: {capability['status']}"
         for capability in result["capabilities"]
+    )
+    lines.extend(
+        f"- runner-control {control['id']}: {control['status']}"
+        for control in result["runner_unready_controls"]
     )
     return "\n".join(lines)
 

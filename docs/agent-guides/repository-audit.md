@@ -66,12 +66,14 @@ Branch protection cannot be verified from this checkout.
 The worktree contained agentic experiments before this audit:
 
 - `.agent/adapters/codex.sh` is present and modified but not validated.
-- `skills/abl-dev-context/` and `skills/graphify-nav/` contain useful ideas but
-  also stale paths, fixed external IDs, and unverified claims.
+- `skills/abl-dev-context/` and `skills/graphify-nav/` contained useful ideas
+  but also stale paths, fixed external IDs, and unverified claims. They were
+  removed during the post-runner cleanup once their useful facts had been
+  superseded by `AGENTS.md`, `.agents/skills/`, and `docs/agent-guides/`.
 - staged deletions remove an older autonomous multi-role setup under `agents/`.
 
 These artifacts must not be treated as a trusted orchestration system. This
-increment does not edit or restore them.
+historical section records why they were excluded from the maintained workflow.
 
 The verified local guardrail is documented in `docs/agent-guides/diff-policy.md`.
 It protects its own `.agent/**` policy and implementation from autonomous

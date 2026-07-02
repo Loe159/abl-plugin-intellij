@@ -47,7 +47,9 @@ untrusted producer as the bundle as a trust anchor.
 Research preparation also requires the separately carried task-approval
 receipt SHA-256 and validates its provenance before producing the bundle.
 Planning requires the separately carried stage-application receipt SHA-256 for
-the applied research:
+the applied research. `compact-progress` and `review` use local artifact
+contract provenance only; they still require a clean checkout, a valid external
+run, and a ready declared stage:
 
 ```text
 python .agent/adapters/manual_read_only.py prepare \
@@ -81,10 +83,11 @@ policy error.
 ## Contract And Limits
 
 `.agent/policies/manual-read-only-adapter.json` explicitly limits the adapter to
-`research` and `plan`. Its safety flags must all remain `false`; policy drift
-toward agent execution, run mutation, response application, or authorization is
-rejected. The command-line interface does not accept alternate policy or prompt
-paths; it always composes the versioned repository contracts.
+the contracted read-only stages: `research`, `plan`, `compact-progress`, and
+`review`. Its safety flags must all remain `false`; policy drift toward agent
+execution, run mutation, response application, or authorization is rejected.
+The command-line interface does not accept alternate policy or prompt paths; it
+always composes the versioned repository contracts.
 
 The adapter does not:
 
@@ -94,10 +97,7 @@ The adapter does not:
 - copy an accepted response into the run;
 - approve a plan or advance workflow state;
 - support implementation;
-- prove that research claims or plans are correct.
-
-The existing `.agent/adapters/codex.sh` is an unvalidated experiment and is not
-part of this contract.
+- prove that research claims, plans, compactions, or reviews are correct.
 
 After manual review, `docs/agent-guides/stage-application.md` documents the
 separate operator-confirmed tool that may copy one accepted response into the

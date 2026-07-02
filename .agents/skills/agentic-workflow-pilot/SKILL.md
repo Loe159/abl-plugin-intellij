@@ -9,6 +9,9 @@ Use this skill to keep the local workflow pilot incremental and honest. The
 goal is to improve deterministic guardrails and learning artifacts without
 turning evidence into permission.
 
+For the concrete human operator workflow, read `README.md` in this skill
+directory. `SKILL.md` remains the compact agent instruction contract.
+
 ## Workflow
 
 1. Read `AGENTS.md`, then only the relevant `docs/agent-guides/*.md` files for

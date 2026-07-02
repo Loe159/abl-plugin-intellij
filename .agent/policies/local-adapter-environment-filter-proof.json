@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "purpose": "local_adapter_environment_filter_proof",
+  "mode": "enforcement-proof",
+  "related_control": "provider_credential_descendant_noninheritance",
+  "proven_control": "local_adapter_child_environment_filter",
+  "sensitive_variable_names": [
+    "ANTHROPIC_API_KEY",
+    "AZURE_OPENAI_API_KEY",
+    "GITHUB_TOKEN",
+    "OPENAI_API_KEY"
+  ],
+  "bindings": [
+    ".agent/checks/prove_local_adapter_environment_filter.py",
+    ".agent/policies/local-adapter-environment-filter-proof.json",
+    ".agent/adapters/local_implementation_adapter.py",
+    ".agent/policies/local-implementation-adapter.json",
+    ".agent/checks/isolated_process.py",
+    ".agent/policies/parent-environment-isolation.json"
+  ]
+}

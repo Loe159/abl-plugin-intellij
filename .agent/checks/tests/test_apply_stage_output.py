@@ -74,7 +74,7 @@ def set_status(path: Path, old: str, new: str) -> None:
 
 def create_response(path: Path, artifact: str, base: str, status: str) -> None:
     text = fill_text((TEMPLATES / artifact).read_text(encoding="utf-8"), base, "New reviewed evidence.")
-    old = "pending" if artifact == "research.md" else "awaiting_approval"
+    old = "pending" if artifact in {"research.md", "progress.md", "review.md"} else "awaiting_approval"
     path.write_text(text.replace(f"status: {old}", f"status: {status}"), encoding="utf-8")
 
 
@@ -141,6 +141,9 @@ def prepare(temp: Path, stage: str) -> tuple[Path, Path, Path, str, Path]:
         assert applied["applied"], applied
         assert not applied["failures"], applied
         application_digest = applied["application_receipt_sha256"]
+        if stage == "review":
+            set_status(run / "plan.md", "awaiting_approval", "approved")
+            set_status(run / "verification.md", "pending", "failed")
     bundle = temp / ("bundle.json" if stage == "research" else "plan-bundle.json")
     built = application.build_stage_context.build_context(
         repo,
@@ -160,13 +163,21 @@ def prepare(temp: Path, stage: str) -> tuple[Path, Path, Path, str, Path]:
         PROMPTS,
         receipt if stage == "research" else None,
         digest if stage == "research" else None,
-        application_receipt,
-        application_digest,
+        application_receipt if stage == "plan" else None,
+        application_digest if stage == "plan" else None,
     )
     assert built["produced"], built
     response = temp / "response.md"
-    artifact = "research.md" if stage == "research" else "plan.md"
-    status = "complete" if stage == "research" else "awaiting_approval"
+    artifact = {
+        "research": "research.md",
+        "plan": "plan.md",
+        "review": "review.md",
+    }[stage]
+    status = {
+        "research": "complete",
+        "plan": "awaiting_approval",
+        "review": "complete",
+    }[stage]
     create_response(response, artifact, base, status)
     return repo, run, bundle, built["sha256"], response
 
@@ -200,7 +211,10 @@ def cli(action: str, repo: Path, run: Path, bundle: Path, digest: str, response:
 class ApplyStageOutputTest(unittest.TestCase):
     def test_repository_policy_is_valid_and_non_approving(self) -> None:
         policies = application.load_policies()
-        self.assertEqual(["plan", "research"], sorted(policies["application"]["stages"]))
+        self.assertEqual(
+            ["compact-progress", "plan", "research", "review"],
+            sorted(policies["application"]["stages"]),
+        )
         self.assertEqual(2, policies["application"]["version"])
         self.assertEqual("pending", policies["application"]["stages"]["research"]["allowed_current_statuses"][0])
         self.assertTrue(policies["application"]["require_absent_application_receipt"])
@@ -327,9 +341,54 @@ class ApplyStageOutputTest(unittest.TestCase):
                 "--confirm",
                 checked["required_confirmation"],
             )
+            plan_text = (run / "plan.md").read_text(encoding="utf-8")
 
-            self.assertEqual(0, completed.returncode, completed.stderr)
-            self.assertIn("status: awaiting_approval", (run / "plan.md").read_text(encoding="utf-8"))
+        self.assertEqual(0, completed.returncode, completed.stderr)
+        self.assertIn("status: awaiting_approval", plan_text)
+
+    def test_review_application_replaces_only_review_artifact(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp = Path(temp_dir)
+            repo, run, bundle, digest, response = prepare(temp, "review")
+            unchanged = {
+                path.name: path.read_bytes()
+                for path in run.glob("*.md")
+                if path.name != "review.md"
+            }
+            checked = json.loads(cli("check", repo, run, bundle, digest, response).stdout)
+
+            completed = cli(
+                "apply",
+                repo,
+                run,
+                bundle,
+                digest,
+                response,
+                "--reviewer",
+                "local-operator",
+                "--confirm",
+                checked["required_confirmation"],
+            )
+            result = json.loads(completed.stdout)
+            receipt = json.loads((run.parent / "application-receipt.json").read_text(encoding="utf-8"))
+            response_bytes = response.read_bytes()
+            review_bytes = (run / "review.md").read_bytes()
+            changed = {
+                path.name: path.read_bytes()
+                for path in run.glob("*.md")
+                if path.name != "review.md"
+            }
+
+        self.assertEqual(0, completed.returncode, completed.stderr)
+        self.assertTrue(result["applied"])
+        self.assertTrue(result["response_applied"])
+        self.assertFalse(result["authorized"])
+        self.assertFalse(result["stage_authorized"])
+        self.assertEqual(response_bytes, review_bytes)
+        self.assertEqual(unchanged, changed)
+        self.assertEqual("review", receipt["stage"])
+        self.assertEqual("review.md", receipt["artifact"])
+        self.assertFalse(receipt["authorized"])
 
     def test_wrong_or_stale_confirmation_does_not_mutate(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

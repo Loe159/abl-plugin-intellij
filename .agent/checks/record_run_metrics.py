@@ -238,8 +238,13 @@ def validate_observation(value: Any, policy: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("regression_status is unsupported")
     if observation["diff_status"] not in {"measured", "not_applicable"}:
         raise ValueError("diff_status is unsupported")
-    if observation["stage"] == "implement" and observation["diff_status"] != "measured":
-        raise ValueError("Implement observations require a measured patch")
+    outcome_status = outcome["status"]
+    if (
+        observation["stage"] == "implement"
+        and outcome_status == "succeeded"
+        and observation["diff_status"] != "measured"
+    ):
+        raise ValueError("Successful implement observations require a measured patch")
     if observation["diff_status"] == "measured":
         if type(observation["patch_sha256"]) is not str or SHA256.fullmatch(
             observation["patch_sha256"]

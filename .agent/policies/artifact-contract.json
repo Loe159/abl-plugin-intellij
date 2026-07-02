@@ -74,6 +74,19 @@
         "Acceptance Criteria",
         "Residual Risks"
       ]
+    },
+    "review.md": {
+      "artifact": "review",
+      "allowed_statuses": ["pending", "complete", "blocked"],
+      "required_frontmatter": [],
+      "required_sections": [
+        "Scope",
+        "Findings",
+        "Plan Conformance",
+        "Test Coverage",
+        "Risks And Unknowns",
+        "Recommendation"
+      ]
     }
   }
 }

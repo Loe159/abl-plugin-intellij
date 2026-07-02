@@ -28,6 +28,7 @@ def fixture_python() -> str:
 class IsolatedProcessTest(unittest.TestCase):
     def test_policy_is_exact_and_environment_is_reconstructed(self) -> None:
         policy = isolated.load_policy()
+        self.assertGreaterEqual(policy["max_timeout_seconds"], 600.0)
         class GuardedEnvironment(dict[str, str]):
             def __getitem__(self, name: str) -> str:
                 if name in {"GITHUB_TOKEN", "OPENAI_API_KEY"}:

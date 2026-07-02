@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "purpose": "github_issue_snapshot_fetch",
+  "mode": "read-only-gh-issue-view-plus-human-normalization",
+  "repository": "Loe159/abl-plugin-intellij",
+  "required_issue_state": "open",
+  "required_approval_label": "agent:approved",
+  "workflow_status_labels": [
+    "agent:candidate",
+    "agent:approved",
+    "agent:researching",
+    "agent:research-review",
+    "agent:planning",
+    "agent:plan-review",
+    "agent:implementing",
+    "agent:blocked",
+    "agent:done"
+  ],
+  "gh_json_fields": [
+    "author",
+    "body",
+    "labels",
+    "number",
+    "state",
+    "title",
+    "url"
+  ],
+  "max_normalization_bytes": 20000,
+  "max_package_bytes": 50000,
+  "max_title_characters": 500,
+  "max_body_characters": 20000,
+  "max_author_characters": 100,
+  "max_labels": 50,
+  "max_label_characters": 100,
+  "require_external_normalization": true,
+  "require_external_package": true,
+  "require_absent_package": true,
+  "bindings": [
+    ".agent/checks/fetch_github_issue_snapshot.py",
+    ".agent/policies/github-issue-snapshot-fetch.json",
+    ".agent/checks/approve_github_issue_snapshot.py",
+    ".agent/policies/github-issue-ingestion.json"
+  ]
+}

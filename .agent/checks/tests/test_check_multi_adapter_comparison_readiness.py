@@ -30,14 +30,23 @@ class CheckMultiAdapterComparisonReadinessTest(unittest.TestCase):
 
         self.assertEqual(checker.EXPECTED_POLICY, policy)
         self.assertEqual("local-preflight-only", policy["mode"])
-        self.assertIn("explicit_comparison_task", policy["required_missing_controls"])
+        self.assertIn("bounded_comparison_manifest", policy["implemented_scaffolding"])
+        self.assertIn(
+            "reviewed_adapter_contracts_for_each_candidate",
+            policy["required_missing_controls"],
+        )
         self.assertIn("manual_metric_interpretation", policy["required_missing_controls"])
 
     def test_current_readiness_is_false_and_non_invoking(self) -> None:
         result = checker.check_readiness(REPO_ROOT, checker.load_policy())
 
         self.assertFalse(result["comparison_ready"])
+        self.assertTrue(result["comparison_contract_available"])
         self.assertTrue(result["repo_unchanged"])
+        self.assertEqual(
+            checker.load_policy()["implemented_scaffolding"],
+            result["implemented_scaffolding"],
+        )
         self.assertEqual(
             checker.load_policy()["required_missing_controls"],
             result["missing_controls"],

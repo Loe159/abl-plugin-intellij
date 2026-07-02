@@ -48,7 +48,14 @@ class ArtifactContractTest(unittest.TestCase):
 
         self.assertTrue(result["valid"], result["errors"])
         self.assertEqual(
-            ["plan.md", "progress.md", "research.md", "task.md", "verification.md"],
+            [
+                "plan.md",
+                "progress.md",
+                "research.md",
+                "review.md",
+                "task.md",
+                "verification.md",
+            ],
             result["artifacts"],
         )
 

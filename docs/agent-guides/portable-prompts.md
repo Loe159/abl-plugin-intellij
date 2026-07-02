@@ -1,9 +1,11 @@
 # Portable Read-Only Prompts
 
-The pilot currently defines two portable phase prompts:
+The pilot currently defines four portable phase prompts:
 
 - `.agent/prompts/research.md`
 - `.agent/prompts/plan.md`
+- `.agent/prompts/compact-progress.md`
+- `.agent/prompts/review.md`
 
 The separate supervised-write prompt
 `.agent/prompts/implementation/implement.md` is governed by

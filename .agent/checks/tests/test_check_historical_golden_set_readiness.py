@@ -31,10 +31,12 @@ class CheckHistoricalGoldenSetReadinessTest(unittest.TestCase):
         self.assertEqual(checker.EXPECTED_POLICY, policy)
         self.assertEqual("local-preflight-only", policy["mode"])
         self.assertIn("external_candidate_manifest", policy["required_missing_controls"])
+        self.assertIn("human_normalized_task_corpus", policy["required_missing_controls"])
         self.assertIn(
             "human_golden_set_adoption_decision",
             policy["required_missing_controls"],
         )
+        self.assertIn("evals/golden-set.yaml", policy["bindings"])
 
     def test_current_readiness_is_false_and_non_authorizing(self) -> None:
         result = checker.check_readiness(REPO_ROOT, checker.load_policy())
@@ -48,6 +50,34 @@ class CheckHistoricalGoldenSetReadinessTest(unittest.TestCase):
         )
         for field in checker.FALSE_FIELDS:
             self.assertFalse(result[field])
+        self.assertIn(
+            "evals/golden-set.yaml",
+            [record["name"] for record in result["bindings"]],
+        )
+
+    def test_cli_json_reports_current_not_ready_marker(self) -> None:
+        completed = subprocess.run(
+            [
+                sys.executable,
+                str(MODULE_PATH),
+                "--repo",
+                str(REPO_ROOT),
+                "--format",
+                "json",
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+
+        self.assertEqual(2, completed.returncode, completed.stderr)
+        result = json.loads(completed.stdout)
+        self.assertFalse(result["golden_set_ready"])
+        self.assertFalse(result["candidate_manifest_valid"])
+        self.assertIn(
+            "evals/golden-set.yaml",
+            [record["name"] for record in result["bindings"]],
+        )
 
     def test_policy_drift_and_cli_override_are_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

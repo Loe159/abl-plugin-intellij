@@ -613,7 +613,8 @@ def format_text(result: dict[str, Any]) -> str:
         f"implementation-quality-gate: {status}",
         f"execution_attempted={str(result['execution_attempted']).lower()}",
         f"receipt_written={str(result['receipt_written']).lower()}",
-        "publication_authorized=false",
+        *[f"{field}=false" for field in FALSE_FIELDS],
+        "implementation_approved=false",
     ]
     lines.extend(
         f"- {record['id']}: {record['status']}" for record in result["commands"]

@@ -91,6 +91,8 @@ def load_context_policy(
         expected_provenance = {
             "research": "validated_task_approval",
             "plan": "validated_stage_application",
+            "compact-progress": "local_artifact_contract",
+            "review": "local_artifact_contract",
         }.get(stage)
         if expected_provenance is None:
             raise ValueError(f"{stage} has no contracted provenance rule")
@@ -285,10 +287,16 @@ def build_context(
                 "kind": provenance_kind,
                 "stage_application_receipt_sha256": application_receipt_sha256,
             }
+        elif provenance_kind == "local_artifact_contract":
+            if application_receipt is not None or application_receipt_sha256 is not None:
+                raise ValueError(
+                    "Stage-application provenance inputs are only valid for planning"
+                )
+            provenance = {"kind": provenance_kind}
         elif application_receipt is not None or application_receipt_sha256 is not None:
             raise ValueError("Stage-application provenance inputs are only valid for planning")
         else:
-            provenance = {"kind": "none"}
+            raise ValueError(f"Unsupported context provenance: {provenance_kind}")
 
     prompt_validation = validate_prompts.validate_prompts(
         prompts_dir,

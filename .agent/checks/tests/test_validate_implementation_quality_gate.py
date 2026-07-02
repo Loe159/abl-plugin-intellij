@@ -198,6 +198,19 @@ class ValidateImplementationQualityGateTest(unittest.TestCase):
             [record["status"] for record in result["commands"]],
         )
 
+    def test_text_output_lists_non_authorizing_fields(self) -> None:
+        text = validator.format_text(
+            {
+                "valid": True,
+                "quality_gate_passed": True,
+                "failures": [],
+            }
+        )
+
+        for field in validator.FALSE_FIELDS:
+            self.assertIn(f"{field}=false", text)
+        self.assertIn("implementation_approved=false", text)
+
     def test_wrong_digest_and_rehashed_command_tampering_are_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             item = fixture(Path(temp_dir))

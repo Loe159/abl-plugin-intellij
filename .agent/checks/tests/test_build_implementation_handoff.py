@@ -201,7 +201,8 @@ class BuildImplementationHandoffTest(unittest.TestCase):
             ["task.md", "research.md", "plan.md"],
             [record["name"] for record in bundle["artifacts"]],
         )
-        self.assertEqual(5, len(bundle["run_manifest"]))
+        expected_manifest_names = sorted(handoff.load_policies()["artifact"]["artifacts"])
+        self.assertEqual(expected_manifest_names, sorted(record["name"] for record in bundle["run_manifest"]))
         self.assertTrue(all("content" not in record for record in bundle["run_manifest"]))
 
     def test_low_risk_still_requires_approved_plan_and_valid_receipt(self) -> None:

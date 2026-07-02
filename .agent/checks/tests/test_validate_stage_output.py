@@ -71,6 +71,8 @@ def create_response(path: Path, artifact: str, base: str, status: str) -> None:
     text = fill_text((TEMPLATES / artifact).read_text(encoding="utf-8"), base)
     if artifact == "research.md":
         text = text.replace("status: pending", f"status: {status}")
+    elif artifact in {"progress.md", "review.md"}:
+        text = text.replace("status: pending", f"status: {status}")
     else:
         text = text.replace("status: awaiting_approval", f"status: {status}")
     path.write_text(text, encoding="utf-8")
@@ -154,7 +156,10 @@ class StageOutputValidatorTest(unittest.TestCase):
         return validator.validate_output(bundle, digest, response, repo, self.policies, PROMPTS)
 
     def test_repository_output_policy_is_valid_and_non_approving(self) -> None:
-        self.assertEqual(["plan", "research"], sorted(self.policies["output"]["stages"]))
+        self.assertEqual(
+            ["compact-progress", "plan", "research", "review"],
+            sorted(self.policies["output"]["stages"]),
+        )
         self.assertNotIn("approved", self.policies["output"]["stages"]["plan"]["allowed_statuses"])
 
     def test_output_policy_rejects_self_approval_and_stage_mismatch(self) -> None:
@@ -197,6 +202,56 @@ class StageOutputValidatorTest(unittest.TestCase):
                 self.assertTrue(result["valid"], result["failures"])
                 self.assertTrue(result["accepted"])
                 self.assertFalse(result["authorized"])
+
+    def test_valid_review_response_is_accepted_not_authorized(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp = Path(temp_dir)
+            repo = temp / "repo"
+            base = create_repo(repo)
+            run = temp / "run"
+            create_run(run, base)
+            for artifact, before, after in [
+                ("plan.md", "status: awaiting_approval", "status: approved"),
+                ("verification.md", "status: pending", "status: failed"),
+            ]:
+                path = run / artifact
+                path.write_text(
+                    path.read_text(encoding="utf-8").replace(before, after),
+                    encoding="utf-8",
+                )
+            bundle = temp / "review-bundle.json"
+            build_result = validator.build_stage_context.build_context(
+                repo,
+                run,
+                "review",
+                bundle,
+                {
+                    "artifact": self.policies["artifact"],
+                    "prompt": self.policies["prompt"],
+                    "readiness": validator.build_stage_context.check_stage_readiness.load_readiness_policy(
+                        POLICY_DIR / "stage-readiness.json",
+                        self.policies["artifact"],
+                    ),
+                    "context": self.policies["context"],
+                    "diff": self.policies["diff"],
+                },
+                PROMPTS,
+                None,
+                None,
+                None,
+                None,
+            )
+            response = temp / "review-response.md"
+            create_response(response, "review.md", base, "complete")
+
+            result = self.validate(bundle, build_result["sha256"], response, repo)
+
+        self.assertTrue(build_result["produced"], build_result.get("failures"))
+        self.assertTrue(result["valid"], result["failures"])
+        self.assertTrue(result["accepted"])
+        self.assertEqual("review.md", result["artifact"])
+        self.assertEqual("complete", result["status"])
+        self.assertFalse(result["authorized"])
 
     def test_blocked_response_is_valid_but_never_authorized(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

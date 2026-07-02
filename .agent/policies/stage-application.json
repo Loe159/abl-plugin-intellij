@@ -34,6 +34,14 @@
     "plan": {
       "target_artifact": "plan.md",
       "allowed_current_statuses": ["awaiting_approval"]
+    },
+    "compact-progress": {
+      "target_artifact": "progress.md",
+      "allowed_current_statuses": ["not_started", "in_progress"]
+    },
+    "review": {
+      "target_artifact": "review.md",
+      "allowed_current_statuses": ["pending"]
     }
   }
 }

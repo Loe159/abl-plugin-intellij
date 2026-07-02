@@ -107,6 +107,21 @@ order and fail-fast semantics, runtime bounds, current Gradle cache, and
 trusted producer bytes. A correctly described failed gate may be `valid=true`
 with `quality_gate_passed=false`.
 
+The text summaries list the full non-authorizing field family inherited from
+the implementation-result contract:
+
+```text
+authorized=false
+agent_invocation_authorized=false
+implementation_authorized=false
+repository_mutation_authorized=false
+network_authorized=false
+publication_authorized=false
+runner_selected=false
+session_start_authorized=false
+implementation_approved=false
+```
+
 The receipt contains output byte counts and digests, not raw build logs. The
 validator therefore checks internal consistency and current bindings but
 cannot authenticate the historical origin of those output digests.

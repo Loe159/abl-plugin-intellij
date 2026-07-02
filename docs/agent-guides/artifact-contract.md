@@ -1,13 +1,14 @@
 # Portable Agent Artifact Contract
 
-The pilot uses five small Markdown artifacts to carry verified context between
+The pilot uses six small Markdown artifacts to carry verified context between
 manual phases without depending on one model, prompt, or orchestration tool:
 
 - `task.md` records the approved problem boundary and initial risk;
 - `research.md` records evidence, unknowns, and rejected approaches;
 - `plan.md` records the reviewed implementation path and stop conditions;
 - `progress.md` records durable implementation state and decisions;
-- `verification.md` records candidate checks, policy results, and residual risk.
+- `verification.md` records candidate checks, policy results, and residual risk;
+- `review.md` records consultative read-only review findings.
 
 Templates live in `.agent/templates/`. The deterministic contract lives in
 `.agent/policies/artifact-contract.json`.
@@ -33,7 +34,7 @@ scalar so the validator remains dependency-free and predictable. UTF-8 with or
 without a byte-order mark is accepted for portability across common Windows
 tools.
 
-A filled run must contain exactly the five contracted top-level Markdown files.
+A filled run must contain exactly the six contracted top-level Markdown files.
 They must share one positive numeric issue ID and one full lowercase 40-character
 base commit. Required sections must exist and be non-empty, placeholders must be
 resolved, statuses must be allowed, and each artifact must remain at or below

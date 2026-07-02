@@ -23,6 +23,17 @@ def unready_runner(repo: Path, policy: dict[str, object]) -> dict[str, object]:
     return {
         "assessment_complete": True,
         "controls_ready": False,
+        "controls": [
+            {"id": "bounded_output_capture", "status": "satisfied"},
+            {
+                "id": "provider_credential_descendant_noninheritance",
+                "status": "missing_evidence",
+            },
+            {
+                "id": "implementation_quality_gate_execution",
+                "status": "related_evidence_only",
+            },
+        ],
         **{field: False for field in status.assess_runner_readiness.FALSE_FIELDS},
     }
 
@@ -45,9 +56,22 @@ class CheckWorkflowStatusTest(unittest.TestCase):
 
         self.assertFalse(result["pilot_ready"])
         self.assertFalse(result["runner_controls_ready"])
-        self.assertIn("enforced_implementation_runner", result["missing_required_capabilities"])
+        self.assertEqual(
+            [
+                {
+                    "id": "provider_credential_descendant_noninheritance",
+                    "status": "missing_evidence",
+                },
+                {
+                    "id": "implementation_quality_gate_execution",
+                    "status": "related_evidence_only",
+                },
+            ],
+            result["runner_unready_controls"],
+        )
+        self.assertNotIn("enforced_implementation_runner", result["missing_required_capabilities"])
         self.assertIn("historical_golden_set", result["missing_required_capabilities"])
-        self.assertIn("multi_adapter_comparison", result["missing_required_capabilities"])
+        self.assertNotIn("multi_adapter_comparison", result["missing_required_capabilities"])
         self.assertNotIn(
             "approved_github_issue_ingestion",
             result["missing_required_capabilities"],
@@ -67,6 +91,29 @@ class CheckWorkflowStatusTest(unittest.TestCase):
             for item in result["capabilities"]
             if item["id"] == "supervised_implementation_contract"
         )
+        runner = next(
+            item
+            for item in result["capabilities"]
+            if item["id"] == "enforced_implementation_runner"
+        )
+        self.assertEqual(
+            "functional_supervised_runner_controls_incomplete",
+            runner["status"],
+        )
+        self.assertTrue(runner["implemented"])
+        self.assertIn(".agent/checks/prove_runner_tool_allowlist.py", runner["evidence"])
+        self.assertIn(
+            ".agent/checks/prove_local_adapter_environment_filter.py",
+            runner["evidence"],
+        )
+        self.assertIn(".agent/policies/runner-tool-allowlist-proof.json", runner["evidence"])
+        self.assertIn(
+            ".agent/policies/local-adapter-environment-filter-proof.json",
+            runner["evidence"],
+        )
+        self.assertIn(".agent/checks/run_supervised_implementation.py", runner["evidence"])
+        self.assertIn(".agent/checks/build_supervised_runner_invocation.py", runner["evidence"])
+        self.assertIn(".agent/adapters/local_implementation_adapter.py", runner["evidence"])
         self.assertEqual(
             "post_consumption_readiness_only",
             implementation["status"],
@@ -91,19 +138,31 @@ class CheckWorkflowStatusTest(unittest.TestCase):
         metrics = next(
             item for item in result["capabilities"] if item["id"] == "run_metrics"
         )
-        self.assertEqual("manual_evidence_recording_only", metrics["status"])
+        self.assertEqual(
+            "receipt_derived_observation_and_manual_recording",
+            metrics["status"],
+        )
         self.assertTrue(metrics["implemented"])
+        self.assertIn(
+            ".agent/checks/build_runner_metrics_observation.py",
+            metrics["evidence"],
+        )
         publication = next(
             item
             for item in result["capabilities"]
             if item["id"] == "deterministic_draft_pr_publisher"
         )
-        self.assertEqual("local_preflight_only", publication["status"])
-        self.assertFalse(publication["implemented"])
+        self.assertEqual("explicit_request_only_not_authorized_by_status", publication["status"])
+        self.assertTrue(publication["implemented"])
+        self.assertNotIn(
+            "deterministic_draft_pr_publisher",
+            result["missing_required_capabilities"],
+        )
         self.assertIn(
             ".agent/checks/check_draft_pr_publication_readiness.py",
             publication["evidence"],
         )
+        self.assertIn(".agent/checks/publish_draft_pr.py", publication["evidence"])
         golden_set = next(
             item for item in result["capabilities"] if item["id"] == "historical_golden_set"
         )
@@ -113,15 +172,34 @@ class CheckWorkflowStatusTest(unittest.TestCase):
             ".agent/checks/check_historical_golden_set_readiness.py",
             golden_set["evidence"],
         )
+        self.assertIn(
+            ".agent/checks/draft_golden_set_manifest.py",
+            golden_set["evidence"],
+        )
+        self.assertIn(
+            ".agent/checks/draft_pr_golden_set_manifest.py",
+            golden_set["evidence"],
+        )
         comparison = next(
             item
             for item in result["capabilities"]
             if item["id"] == "multi_adapter_comparison"
         )
-        self.assertEqual("local_preflight_only", comparison["status"])
-        self.assertFalse(comparison["implemented"])
+        self.assertEqual(
+            "local_artifact_comparison_available_not_invoking",
+            comparison["status"],
+        )
+        self.assertTrue(comparison["implemented"])
+        self.assertNotIn(
+            "multi_adapter_comparison",
+            result["missing_required_capabilities"],
+        )
         self.assertIn(
             ".agent/checks/check_multi_adapter_comparison_readiness.py",
+            comparison["evidence"],
+        )
+        self.assertIn(
+            ".agent/checks/validate_multi_adapter_comparison.py",
             comparison["evidence"],
         )
         ingestion = next(
@@ -148,6 +226,19 @@ class CheckWorkflowStatusTest(unittest.TestCase):
         self.assertNotIn(
             "explicit_session_start_authorization",
             result["missing_required_capabilities"],
+        )
+
+    def test_text_output_names_unready_runner_controls(self) -> None:
+        result = status.check_status(REPO_ROOT, status.load_policy(), unready_runner)
+        text = status.format_text(result)
+
+        self.assertIn(
+            "- runner-control provider_credential_descendant_noninheritance: missing_evidence",
+            text,
+        )
+        self.assertIn(
+            "- runner-control implementation_quality_gate_execution: related_evidence_only",
+            text,
         )
 
     def test_cli_refuses_policy_override(self) -> None:
