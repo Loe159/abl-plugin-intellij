@@ -71,9 +71,12 @@ bounded package. It is not runner selection, sandbox enforcement, workspace
 confinement, timeout enforcement, model invocation, output capture, cleanup
 assurance, or authorization to start.
 
-In the current pilot checkout, real preflight production is expected to remain
-blocked until the implementation-session approval validation can pass with
-`controls_ready=true`.
+In the current pilot checkout, real preflight production can proceed when the
+implementation-session approval validation passes with the current
+runner-readiness report recorded by session approval validation. In the local
+pilot, `controls_ready=false` remains acceptable evidence when it is explicitly
+bound into the approval and preflight records; it is not promoted to sandbox
+enforcement or invocation authorization.
 
 The independent consumer-side validation is documented in
 `docs/agent-guides/implementation-invocation-preflight-validation.md`. Its

@@ -9,11 +9,17 @@
   "require_expected_session_workspace_match": true,
   "allowed_command_basenames": [
     "aider",
+    "aider.exe",
     "claude",
+    "claude.exe",
     "claude-code",
+    "claude-code.exe",
     "codex",
+    "codex.exe",
     "mini-swe-agent",
-    "opencode"
+    "mini-swe-agent.exe",
+    "opencode",
+    "opencode.exe"
   ],
   "fixture_command_basenames": [
     "python",

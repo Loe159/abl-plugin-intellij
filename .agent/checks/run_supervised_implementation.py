@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import shutil
 import sys
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
@@ -259,6 +260,11 @@ def adapter_entrypoint(
             allowed_path = (root / allowed).resolve()
             if candidate == allowed_path and allowed_path.is_file():
                 normalized = list(command)
+                if index == 1:
+                    interpreter = shutil.which(command[0])
+                    if interpreter is None:
+                        raise ValueError("Adapter command interpreter was not found")
+                    normalized[0] = str(Path(interpreter).resolve())
                 normalized[index] = str(allowed_path)
                 return allowed, normalized
     raise ValueError("Adapter command entrypoint is not allowlisted")

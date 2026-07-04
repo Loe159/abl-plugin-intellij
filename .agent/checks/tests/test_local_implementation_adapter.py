@@ -67,6 +67,8 @@ class LocalImplementationAdapterTest(unittest.TestCase):
         self.assertEqual("agent-command-wrapper", policy["mode"])
         self.assertFalse(any("publish" in item for item in policy["bindings"]))
         self.assertIn("codex", policy["allowed_command_basenames"])
+        self.assertIn("codex.exe", policy["allowed_command_basenames"])
+        self.assertIn("opencode.exe", policy["allowed_command_basenames"])
         self.assertIn("local-adapter-fixture", policy["fixture_runner_ids"])
 
     def test_changed_workspace_emits_completed_candidate_result(self) -> None:

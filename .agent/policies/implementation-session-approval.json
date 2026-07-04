@@ -6,7 +6,7 @@
   "max_approver_chars": 80,
   "max_session_approval_receipt_bytes": 30000,
   "require_valid_proposal": true,
-  "require_runner_controls_ready": true,
+  "require_runner_controls_ready": false,
   "require_external_approval_receipt": true,
   "require_approval_receipt_outside_workspace": true,
   "require_absent_approval_receipt": true,

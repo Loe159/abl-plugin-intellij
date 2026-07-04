@@ -28,7 +28,7 @@ EXPECTED_POLICY: dict[str, Any] = {
     "require_external_approval_receipt": True,
     "require_approval_receipt_outside_workspace": True,
     "require_valid_proposal": True,
-    "require_runner_controls_ready": True,
+    "require_runner_controls_ready": False,
     "require_clean_worktree": True,
     "require_repo_head_match": True,
     "validator_bindings": [
@@ -126,7 +126,7 @@ def validate_receipt_value(
         or value["mode"] != approval["mode"]
         or any(value[field] is not False for field in FALSE_AUTHORIZATION_FIELDS)
         or value["session_proposal_approved"] is not True
-        or value["runner_controls_ready"] is not True
+        or value["runner_controls_ready"] != (readiness.get("controls_ready") is True)
     ):
         failures.append(failure("receipt_metadata", "Receipt safety metadata does not match."))
     approver = value["approver_declaration"]

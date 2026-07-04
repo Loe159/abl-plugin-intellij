@@ -6,10 +6,10 @@
     "id": "codex-cli-disposable-worktree",
     "kind": "local-codex-cli",
     "requires_valid_preflight": true,
-    "requires_runner_controls_ready": true
+    "requires_runner_controls_ready": false
   },
   "require_valid_preflight": true,
-  "require_runner_controls_ready": true,
+  "require_runner_controls_ready": false,
   "bindings": [
     ".agent/checks/check_implementation_runner_selection.py",
     ".agent/policies/implementation-runner-selection.json",

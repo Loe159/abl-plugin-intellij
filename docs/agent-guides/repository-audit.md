@@ -1286,21 +1286,23 @@ implementation-session proposal. `approve_implementation_session.py` provides
 `check` and `approve` subcommands backed by
 `.agent/policies/implementation-session-approval.json`. The check requires a
 valid proposal, the same prepared worktree and receipt inputs, a clean matching
-source checkout, an external absent approval receipt path, and
-`assess_runner_readiness.py` reporting `controls_ready=true`.
+source checkout, an external absent approval receipt path, and a current
+`assess_runner_readiness.py` report whose SHA-256 is bound into the approval.
 
 The approval confirmation binds the issue, risk, base commit, exact proposal
 SHA-256, disposable-worktree receipt SHA-256, runner-readiness report SHA-256,
 approval-control bindings, and approval receipt path. The approve step repeats
 the assessment after confirmation and writes only an external receipt. The
-receipt records `session_proposal_approved=true`, but keeps authorization,
-runner selection, agent invocation, repository mutation, network, publication,
-and session-start fields false.
+receipt records `session_proposal_approved=true` and the current
+`runner_controls_ready` value, but keeps authorization, runner selection, agent
+invocation, repository mutation, network, publication, and session-start fields
+false.
 
-This gate is expected to block in the real pilot checkout until runner
-readiness has satisfying enforcement evidence. It does not authenticate the
-approver, select a runner, invoke an agent, enforce a sandbox, prove workspace
-confinement, or authorize session start.
+This gate no longer blocks solely because the local pilot runner remains
+`controls_ready=false`; that unready state is explicit evidence, not a hidden
+approval. It does not authenticate the approver, select a runner, invoke an
+agent, enforce a sandbox, prove workspace confinement, or authorize session
+start.
 
 The forty-fourth increment adds independent read-only validation for the
 implementation-session approval receipt.

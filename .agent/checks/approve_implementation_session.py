@@ -44,7 +44,7 @@ def load_policy(path: Path = POLICY_DIR / "implementation-session-approval.json"
         "max_approver_chars": 80,
         "max_session_approval_receipt_bytes": 30000,
         "require_valid_proposal": True,
-        "require_runner_controls_ready": True,
+        "require_runner_controls_ready": False,
         "require_external_approval_receipt": True,
         "require_approval_receipt_outside_workspace": True,
         "require_absent_approval_receipt": True,

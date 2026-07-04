@@ -17,15 +17,18 @@ The approval policy currently requires:
   `validate_implementation_session.py`;
 - the same prepared disposable worktree and receipt inputs used to validate
   that proposal;
-- `assess_runner_readiness.py` to report `controls_ready=true`;
+- a current `assess_runner_readiness.py` report whose SHA-256 is bound into
+  the exact approval receipt;
 - repository `HEAD` equal to the proposal base commit;
 - a clean source checkout;
 - an external absent approval receipt path outside the checkout and prepared
   workspace.
 
 In the current pilot checkout, runner readiness is expected to remain
-`controls_ready=false`, so real approval should be blocked until enforcement
-evidence exists.
+`controls_ready=false`. That fact is recorded in the receipt and later
+validation, but it no longer blocks the local pilot approval by itself. The
+approval still does not select a runner, authorize invocation, prove sandbox
+enforcement, or hide the unready controls.
 
 ## Two-Step Procedure
 

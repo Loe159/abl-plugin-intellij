@@ -3,6 +3,7 @@ from __future__ import annotations
 import importlib.util
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -153,6 +154,20 @@ class RunSupervisedImplementationTest(unittest.TestCase):
         self.assertFalse(policy["network_requested"])
         self.assertFalse(policy["publication_requested"])
         self.assertTrue(policy["require_consumed_authorization"])
+
+    def test_adapter_entrypoint_resolves_interpreter_to_absolute_path(self) -> None:
+        bash = shutil.which("bash")
+        if bash is None:
+            self.skipTest("bash is not installed")
+        label, command = runner.adapter_entrypoint(
+            REPO_ROOT,
+            ["bash", ".agent/adapters/codex.sh", "--version"],
+            runner.load_policy(),
+        )
+
+        self.assertEqual(".agent/adapters/codex.sh", label)
+        self.assertEqual(str(Path(bash).resolve()), command[0])
+        self.assertTrue(Path(command[1]).is_absolute())
 
     def test_end_to_end_runner_consumes_authorization_and_writes_final_receipt(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

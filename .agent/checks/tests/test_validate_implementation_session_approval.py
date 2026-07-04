@@ -117,7 +117,7 @@ class ValidateImplementationSessionApprovalTest(unittest.TestCase):
         policy = validator.load_policy()
         self.assertEqual("validation-only", policy["mode"])
         self.assertTrue(policy["require_valid_proposal"])
-        self.assertTrue(policy["require_runner_controls_ready"])
+        self.assertFalse(policy["require_runner_controls_ready"])
         self.assertIn(
             ".agent/checks/validate_implementation_session_approval.py",
             policy["validator_bindings"],
@@ -160,11 +160,40 @@ class ValidateImplementationSessionApprovalTest(unittest.TestCase):
         for field in validator.FALSE_AUTHORIZATION_FIELDS:
             self.assertFalse(result[field])
 
-    def test_unready_current_runner_controls_invalidate_receipt(self) -> None:
+    def test_unready_current_runner_controls_are_valid_when_bound_into_receipt(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             temp = Path(temp_dir)
-            repo, proposal, digest, workspace, worktree_receipt, worktree_digest, receipt, receipt_digest = (
-                prepare(temp)
+            repo, proposal, digest, workspace, worktree_receipt, worktree_digest = (
+                proposal_helpers.prepare(temp)
+            )
+            receipt = temp / "session-approval.json"
+            policies = validator.load_policies()
+            assessment = validator.approve_implementation_session.assess_approval(
+                repo,
+                proposal,
+                digest,
+                workspace,
+                worktree_receipt,
+                worktree_digest,
+                receipt,
+                policies,
+                approval_helpers.unready_runner,
+            )
+            approved = validator.approve_implementation_session.approve(
+                argparse.Namespace(
+                    repo=repo,
+                    proposal=proposal,
+                    proposal_sha256=digest,
+                    workspace=workspace,
+                    worktree_receipt=worktree_receipt,
+                    worktree_receipt_sha256=worktree_digest,
+                    approval_receipt=receipt,
+                    approver="local-reviewer",
+                    confirm=assessment["required_confirmation"],
+                ),
+                policies,
+                assessment,
+                approval_helpers.unready_runner,
             )
             result = validator.validate(
                 repo,
@@ -174,13 +203,14 @@ class ValidateImplementationSessionApprovalTest(unittest.TestCase):
                 worktree_receipt,
                 worktree_digest,
                 receipt,
-                receipt_digest,
+                approved["approval_receipt_sha256"],
                 validator.load_policies(),
                 approval_helpers.unready_runner,
             )
 
-        self.assertFalse(result["valid"])
-        self.assertIn("runner_controls_ready", [item["rule"] for item in result["failures"]])
+        self.assertTrue(result["valid"], result["failures"])
+        self.assertFalse(result["runner_controls_ready"])
+        self.assertNotIn("runner_controls_ready", [item["rule"] for item in result["failures"]])
 
     def test_wrong_digest_and_rehashed_receipt_tampering_are_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

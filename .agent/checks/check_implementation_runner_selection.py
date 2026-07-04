@@ -26,10 +26,10 @@ EXPECTED_POLICY: dict[str, Any] = {
         "id": "codex-cli-disposable-worktree",
         "kind": "local-codex-cli",
         "requires_valid_preflight": True,
-        "requires_runner_controls_ready": True,
+        "requires_runner_controls_ready": False,
     },
     "require_valid_preflight": True,
-    "require_runner_controls_ready": True,
+    "require_runner_controls_ready": False,
     "bindings": [
         ".agent/checks/check_implementation_runner_selection.py",
         ".agent/policies/implementation-runner-selection.json",

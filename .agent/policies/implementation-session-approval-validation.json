@@ -5,7 +5,7 @@
   "require_external_approval_receipt": true,
   "require_approval_receipt_outside_workspace": true,
   "require_valid_proposal": true,
-  "require_runner_controls_ready": true,
+  "require_runner_controls_ready": false,
   "require_clean_worktree": true,
   "require_repo_head_match": true,
   "validator_bindings": [

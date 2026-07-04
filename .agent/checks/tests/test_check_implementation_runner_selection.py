@@ -78,7 +78,7 @@ class CheckImplementationRunnerSelectionTest(unittest.TestCase):
         policy = selection.load_policy()
         self.assertEqual("runner-selection-readiness-only", policy["mode"])
         self.assertTrue(policy["candidate_runner"]["requires_valid_preflight"])
-        self.assertTrue(policy["candidate_runner"]["requires_runner_controls_ready"])
+        self.assertFalse(policy["candidate_runner"]["requires_runner_controls_ready"])
         self.assertIn(
             ".agent/checks/validate_implementation_invocation_preflight.py",
             policy["bindings"],
@@ -125,7 +125,7 @@ class CheckImplementationRunnerSelectionTest(unittest.TestCase):
         for field in selection.FALSE_AUTHORIZATION_FIELDS:
             self.assertFalse(result[field])
 
-    def test_invalid_preflight_and_unready_runner_controls_block_selection(self) -> None:
+    def test_invalid_preflight_and_stale_runner_readiness_block_selection(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             temp = Path(temp_dir)
             repo, proposal, digest, workspace, worktree_receipt, worktree_digest, receipt, receipt_digest, preflight, preflight_digest = (

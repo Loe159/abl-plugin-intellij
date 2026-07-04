@@ -112,10 +112,10 @@ class ApproveImplementationSessionTest(unittest.TestCase):
         policy = approval.load_policy()
         self.assertEqual("exact-local-approval-only", policy["mode"])
         self.assertTrue(policy["require_valid_proposal"])
-        self.assertTrue(policy["require_runner_controls_ready"])
+        self.assertFalse(policy["require_runner_controls_ready"])
         self.assertIn(".agent/checks/validate_implementation_session.py", policy["bindings"])
 
-    def test_unready_runner_controls_block_approval(self) -> None:
+    def test_unready_runner_controls_are_recorded_without_blocking_pilot_approval(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             temp = Path(temp_dir)
             repo, proposal, digest, workspace, worktree_receipt, worktree_digest = (
@@ -134,9 +134,10 @@ class ApproveImplementationSessionTest(unittest.TestCase):
                 unready_runner,
             )
 
-        self.assertFalse(result["approvable"])
+        self.assertTrue(result["approvable"], result["failures"])
+        self.assertFalse(result["runner_controls_ready"])
         self.assertFalse(receipt.exists())
-        self.assertIn("runner_controls_ready", [item["rule"] for item in result["failures"]])
+        self.assertNotIn("runner_controls_ready", [item["rule"] for item in result["failures"]])
 
     def test_exact_approval_writes_external_receipt_without_authorizing_start(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

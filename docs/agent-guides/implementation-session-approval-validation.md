@@ -41,7 +41,8 @@ The validator:
   and session-start fields to remain false;
 - revalidates the exact implementation-session proposal with the supplied
   prepared workspace and disposable-worktree receipt;
-- reruns runner-readiness assessment and requires `controls_ready=true`;
+- reruns runner-readiness assessment and requires the receipt to match the
+  current `controls_ready` value and runner-readiness SHA-256;
 - recalculates the exact approval confirmation digest;
 - compares approval-control bindings with trusted local bytes;
 - requires repository `HEAD` and clean worktree state to still match;
