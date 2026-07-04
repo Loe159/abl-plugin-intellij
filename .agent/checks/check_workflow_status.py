@@ -152,9 +152,9 @@ EXPECTED_POLICY: dict[str, Any] = {
         },
         {
             "id": "historical_golden_set",
-            "status": "local_preflight_only",
+            "status": "deferred_for_new_repository",
             "implemented": False,
-            "required_for_pilot": True,
+            "required_for_pilot": False,
             "evidence": [
                 ".agent/checks/check_historical_golden_set_readiness.py",
                 ".agent/policies/historical-golden-set-readiness.json",

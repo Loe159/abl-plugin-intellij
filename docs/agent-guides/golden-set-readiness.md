@@ -153,10 +153,11 @@ particular, local commit `75914f64dfe051e3d19fecab7d40dc5ecc22aba5` says
 `closes #8` while its behavior matches issue `#7`; GitHub issue `#8` concerns
 `AblSymbolIndex` concurrency instead.
 
-Consequently, no adopted repository golden-set corpus is checked in and the
-`historical_golden_set` capability remains incomplete. The local preflight now
-records this as an explicit current-state result rather than as absent
-evidence.
+Consequently, no adopted repository golden-set corpus is checked in. For the
+current young-repository pilot, `historical_golden_set` is deferred rather than
+required; fabricating issues solely to satisfy this contract would be worse
+evidence than no corpus. The local preflight still records the current-state
+gap so a real corpus can be adopted later.
 
 The `evals/` directory is reserved for benchmark scaffolding.
 `evals/golden-set.yaml` is a status marker, not a corpus: it records

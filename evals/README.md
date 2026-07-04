@@ -5,9 +5,10 @@ This directory is reserved for future agent-comparison assets.
 There is currently no adopted historical golden set checked into this
 repository. `evals/golden-set.yaml` is only a versioned status marker: it
 records that no corpus is adopted, no issue state has been authenticated, and
-no benchmark adoption is authorized. If useful historical commits exist before
-an external candidate manifest has been written, a local shortlist draft can be
-produced with:
+no benchmark adoption is authorized. The current pilot defers this requirement
+because the repository is too young to provide a trustworthy historical issue
+corpus. If useful historical commits exist before an external candidate
+manifest has been written, a local shortlist draft can be produced with:
 
 ```text
 python .agent/checks/draft_golden_set_manifest.py \

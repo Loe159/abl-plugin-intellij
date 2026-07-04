@@ -7,6 +7,7 @@
 version: 1
 purpose: historical_golden_set_status
 adoption_status: not_adopted
+pilot_requirement: deferred_for_new_repository
 golden_set_ready: false
 candidate_manifest_valid: false
 source_state_authenticated: false
@@ -23,4 +24,5 @@ external_candidate_manifest_required: true
 external_adoption_receipt_required: true
 notes:
   - The checked-in repository does not contain an adopted historical golden set.
+  - The current young-repository pilot defers this capability instead of fabricating benchmark issues.
   - This marker does not select issues, authenticate GitHub, invoke an agent, or authorize benchmark adoption.

@@ -41,7 +41,7 @@ The ledger distinguishes:
   only and is not authorized by the status check;
 - local multi-adapter comparison scaffolding that validates already-captured
   artifacts and metrics without invoking adapters or providers;
-- missing authenticated historical golden set;
+- a deferred historical golden set for the current young-repository pilot;
 - a local-only draft-PR publication preflight that lists missing external
   controls but does not push, create a PR, authenticate a remote, or authorize
   publication;
@@ -54,10 +54,10 @@ The ledger distinguishes:
   recording; this still does not claim trusted runner timestamps, provider
   usage telemetry, billing proof, or correction measurements;
 - a golden-set readiness preflight, candidate contract, exact local adoption
-  receipt tool, and versioned `evals/golden-set.yaml` status marker; they can
-  validate local reference commits and record a human adoption decision, but
-  cannot themselves authenticate GitHub issue state or invent a historical
-  corpus.
+  receipt tool, and versioned `evals/golden-set.yaml` status marker; these
+  remain available for later, but the current pilot does not require a
+  fabricated historical corpus from a repository that has not accumulated
+  suitable closed issues.
 
 The checker validates the exact policy, hashes every declared evidence file,
 and consumes the current runner-readiness assessment. The functional runner
@@ -65,6 +65,12 @@ capability can be implemented while `runner_controls_ready=false`; that means
 the local supervised workflow can be exercised, not that network isolation,
 provider credential descendant noninheritance, model-turn budget enforcement,
 cleanup, or crash-atomic launch coupling are proven.
+
+`historical_golden_set` is deliberately not required for the current pilot.
+For a young repository, inventing issues solely to satisfy a benchmark contract
+would create low-quality evidence. The golden-set tools stay in the ledger so a
+real corpus can be adopted later once closed issues or reviewed task records
+exist.
 
 The result also includes `runner_unready_controls`, a compact projection of
 every runner-readiness control whose status is not `satisfied`. This is
