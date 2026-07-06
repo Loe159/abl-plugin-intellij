@@ -7,6 +7,8 @@ and semantic model.
 ## Start Here
 
 - Read `docs/agent-guides/repository-audit.md` for the verified repository map.
+- Read `docs/agent-guides/mvp-automation-audit.md` before planning the
+  issue-id driven MVP orchestration path.
 - Read `docs/agent-guides/diff-policy.md` before validating an agent patch.
 - Read `docs/agent-guides/complete-patch.md` before producing a patch artifact.
 - Read `docs/agent-guides/risk-classification.md` before assigning a patch
@@ -252,8 +254,9 @@ and semantic model.
   real authorization coupling, crash atomicity, cross-host replay prevention,
   or agent invocation.
 - Check the current pilot capability ledger only with
-  `.agent/checks/check_workflow_status.py`; `pilot_ready=false` is an explicit
-  inventory result, not a failure to keep building the workflow incrementally.
+  `.agent/checks/check_workflow_status.py`; `pilot_ready=true` is a local
+  capability inventory result, not runner-control readiness, authorization,
+  publication permission, or proof that deferred capabilities are implemented.
 - Check draft-PR publication readiness only with
   `.agent/checks/check_draft_pr_publication_readiness.py`; the current local
   preflight never pushes a branch, creates a PR, writes to external services,
