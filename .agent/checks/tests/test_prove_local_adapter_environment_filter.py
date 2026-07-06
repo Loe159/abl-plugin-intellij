@@ -31,6 +31,10 @@ class ProveLocalAdapterEnvironmentFilterTest(unittest.TestCase):
         self.assertEqual(proof.EXPECTED_POLICY, policy)
         self.assertEqual("local_adapter_child_environment_filter", policy["proven_control"])
         self.assertEqual(
+            "local_adapter_descendant_environment_filter",
+            policy["descendant_proven_control"],
+        )
+        self.assertEqual(
             "provider_credential_descendant_noninheritance",
             policy["related_control"],
         )
@@ -44,10 +48,18 @@ class ProveLocalAdapterEnvironmentFilterTest(unittest.TestCase):
             "verified_enforcement",
             assessments["local_adapter_child_environment_filter"],
         )
+        self.assertEqual(
+            "verified_enforcement",
+            assessments["local_adapter_descendant_environment_filter"],
+        )
         self.assertTrue(result["fixture"]["matched"])
+        self.assertTrue(result["fixture"]["checked_direct_child"])
+        self.assertTrue(result["fixture"]["checked_spawned_descendant"])
         self.assertTrue(result["scope"]["checks_environment_variables_only"])
+        self.assertTrue(result["scope"]["executes_fixture_descendant_command"])
         self.assertFalse(result["scope"]["proves_provider_filesystem_credentials_blocked"])
         self.assertFalse(result["scope"]["proves_os_credential_store_blocked"])
+        self.assertFalse(result["scope"]["proves_deliberate_provider_channel_blocked"])
         for field in proof.FALSE_FIELDS:
             self.assertFalse(result[field])
 

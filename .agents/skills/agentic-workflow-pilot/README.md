@@ -53,13 +53,39 @@ Le chemin normal reste supervise:
 12. Relire `patch.diff`, les receipts et la route de risque avant toute action
     GitHub.
 
-Le runner supervise est:
+Le runner supervise peut maintenant etre declenche depuis des artefacts deja
+prepares avec une seule commande. Sans `--execute`, elle reste en dry-run et
+affiche l'invocation exacte:
+
+```text
+python .agent/checks/run_agentic_workflow.py \
+  --repo <checkout-source> \
+  --proposal <run>/implementation-session-proposal.json \
+  --workspace <run>/worktree \
+  --worktree-receipt <run>/disposable-worktree-receipt.json \
+  --approval-receipt <run>/implementation-session-approval.json \
+  --preflight <run>/implementation-invocation-preflight.json \
+  --authorization-receipt <run>/session-start-authorization.json \
+  --output-dir <run>/out \
+  --gradle-user-home <run>/gradle-home \
+  --format json \
+  -- .agent/adapters/codex.sh \
+     --expected-session <run>/out/expected-session.json \
+     --workspace <run>/worktree \
+     -- <codex-args>
+```
+
+Ajouter `--execute` a cette commande lance le runner. Cela ne fabrique pas les
+approbations, ne contourne pas le receipt d'autorisation de session-start et ne
+publie rien.
+
+Le runner supervise sous-jacent reste:
 
 ```text
 python .agent/checks/run_supervised_implementation.py ...
 ```
 
-En pratique, preferer generer l'invocation exacte:
+Pour debug, on peut encore generer l'invocation exacte sans launcher:
 
 ```text
 python .agent/checks/build_supervised_runner_invocation.py \

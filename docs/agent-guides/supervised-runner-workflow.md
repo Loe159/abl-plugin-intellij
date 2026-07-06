@@ -167,9 +167,35 @@ l'adaptateur.
 
 ## Lancer le runner supervise
 
-Pour eviter de recopier manuellement les empreintes SHA-256 et les chemins de
-sortie, construire d'abord l'invocation exacte depuis les artefacts deja
-prepares:
+Le chemin le plus court depuis des artefacts deja prepares est maintenant une
+commande unique. Par defaut elle reste en dry-run: elle valide les entrees,
+construit l'invocation exacte et affiche la commande runner sans consommer
+l'autorisation ni lancer l'adaptateur.
+
+```text
+python .agent/checks/run_agentic_workflow.py \
+  --repo <clean-source-checkout> \
+  --proposal <external-run>/implementation-session-proposal.json \
+  --workspace <prepared-external-worktree> \
+  --worktree-receipt <external-run>/disposable-worktree-receipt.json \
+  --approval-receipt <external-run>/implementation-session-approval.json \
+  --preflight <external-run>/implementation-invocation-preflight.json \
+  --authorization-receipt <external-run>/session-start-authorization.json \
+  --output-dir <external-output-directory> \
+  --gradle-user-home <external-gradle-cache> \
+  --format json \
+  -- <adapter-command> <adapter-args>
+```
+
+Ajouter `--execute` a cette meme commande demarre le runner supervise avec la
+commande construite. Ce flag ne fabrique pas d'autorisation: le receipt exact
+`session-start-authorization.json` doit deja exister, etre coherent et rester
+consommable. Le launcher conserve les champs d'autorisation a `false`, capture
+seulement les tailles et SHA-256 de stdout/stderr du process runner, et laisse
+le verdict detaille dans `final-receipt.json`.
+
+Pour inspecter l'invocation sans passer par le launcher, il reste possible de
+construire uniquement la commande exacte depuis les artefacts deja prepares:
 
 ```text
 python .agent/checks/build_supervised_runner_invocation.py \
@@ -450,8 +476,9 @@ Imagine une petite correction documentaire:
 9. La quality gate passe.
 10. Le runner ecrit `final-receipt.json`.
 11. Un humain relit le patch et les receipts.
-12. Une publication de PR brouillon, quand elle existera, devra rester un
-    composant determinant separe.
+12. Le publisher local de PR brouillon peut etre utilise plus tard en dry-run
+    par defaut, puis avec `--execute` seulement sur demande humaine explicite.
+    Il reste un composant determinant separe du runner.
 
 ## Commandes de controle utiles
 
@@ -512,20 +539,31 @@ Quality gate repository classique:
 
 ## Ce qui reste volontairement hors scope
 
-Le workflow local actuel ne prouve pas encore:
+Le workflow local actuel ne prouve pas encore les controles que
+`assess_runner_readiness.py` expose encore comme `related_evidence_only`:
 
 - l'authentification forte de l'approbateur;
 - la prevention de replay cross-host;
-- le couplage atomique crash-safe entre consommation et process;
+- la non-propagation des credentials fournisseur aux descendants lances par un
+  vrai agent, au-dela du filtrage d'environnement direct;
+- le cycle de vie complet du worktree jetable apres terminaison forcee, timeout
+  non controle, crash hote ou mutation concurrente;
+- le blocage filesystem des ecritures absolues arbitraires par un processus
+  enfant;
 - le timeout complet de session, l'arbre de processus arbitraire et le cleanup
   apres timeout hors chemin capture;
-- l'isolation reseau au niveau OS;
-- la non-propagation des credentials fournisseur aux descendants lances par un
-  vrai agent;
-- la publication deterministe d'une PR brouillon;
+- l'enforcement reel du budget de tours modele;
+- l'isolation reseau au niveau OS, sandbox ou provider;
+- le couplage atomique crash-safe entre consommation d'autorisation et process;
+- l'authentification historique d'une vraie execution Gradle quality gate;
 - la selection d'un golden set historique authentifie;
 - la comparaison multi-adapter avec metriques fiables;
 - l'approbation de merge ou de release.
+
+La publication deterministe de PR brouillon existe comme outillage local separe
+et reste en dry-run par defaut. Son execution avec effet externe demande une
+instruction humaine explicite; elle n'est jamais autorisee par le runner, le
+receipt final ou `pilot_ready=true`.
 
 Ces limites ne sont pas des echecs du runner. Elles evitent de confondre un
 prototype local supervise avec une plateforme autonome de publication.

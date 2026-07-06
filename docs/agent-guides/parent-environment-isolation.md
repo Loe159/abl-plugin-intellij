@@ -64,7 +64,8 @@ complete implementation-session deadline or arbitrary process-tree timeout.
 `local_implementation_adapter.py` also reconstructs the environment for its
 direct child command with the same allowlist. The bounded proof
 `.agent/checks/prove_local_adapter_environment_filter.py` verifies that
-synthetic provider API-key variables do not reach that direct child. This is
-related evidence only for provider-credential descendant noninheritance because
+synthetic provider API-key variables do not reach that direct child or one
+spawned descendant command. This is related evidence only for
+provider-credential descendant noninheritance because it is environment-only:
 it does not block credentials loaded from files, operating-system credential
 stores, or credentials deliberately passed through provider-specific channels.

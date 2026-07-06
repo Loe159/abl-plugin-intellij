@@ -71,13 +71,31 @@ The pilot currently requires evidence for:
 - quality-gate receipt validation;
 - tool allowlist.
 
+## Next Implementation Increments
+
+The current priority is to reduce the controls that remain
+`related_evidence_only`. Each increment must stay non-authorizing and should
+upgrade only one control when the evidence scope actually matches the policy.
+
+| Control | Current evidence | Next proof target | Boundary to preserve |
+| --- | --- | --- | --- |
+| `provider_credential_descendant_noninheritance` | Local adapter filters provider environment variables from its direct child and from one spawned descendant fixture. | Decide the provider credential model and prove real adapter descendants cannot read provider secrets from environment, files, stores, or deliberate channels, or document that this cannot be guaranteed locally. | Do not treat environment-only descendant evidence as complete provider-credential isolation. |
+| `disposable_worktree_lifecycle` | Git metadata, synthetic worktree fixture, runner cleanup on success and controlled blocks. | Cover cleanup behavior for forced termination, uncontrolled timeout, host crash window, and concurrent mutation as far as local evidence can honestly reach. | Do not claim tamper resistance, cross-host lifecycle enforcement, or crash-proof cleanup from local receipts. |
+| `filesystem_write_scope` | Runner contract uses the disposable workspace as cwd and requires external outputs. | Add sandbox or adversarial denial evidence for arbitrary absolute writes by adapter children. | Do not claim output-path validation prevents all filesystem escapes. |
+| `implementation_session_wall_clock_timeout` | Direct-child timeout, Windows two-level fixture, and captured adapter-timeout path. | Prove complete session deadline handling and process-tree cleanup for the actual runner boundary, or keep the narrower fixture status. | Do not equate adapter timeout with arbitrary descendant cleanup. |
+| `model_turn_budget` | Session policy declares `max_turns=12`. | Enforce or measure model turns through the provider wrapper or adapter protocol. | Do not treat a declared budget as consumed-budget enforcement. |
+| `network_isolation` | Runner and implementation-result contracts keep network requests false. | Provide OS/sandbox/provider-boundary evidence that a real adapter cannot use network unexpectedly. | Do not treat `network_requested=false` or Gradle offline mode as OS network isolation. |
+| `authorization_consumption_to_process_start` | Claim-before-spawn fixture and runner sequence fixture. | Reduce or explicitly model the crash window between consumption marker and process creation. | Do not claim atomicity, replay protection, or runner selection from marker consumption. |
+| `implementation_quality_gate_execution` | Synthetic bounded process fixture and runner sequence fixture. | Retain and validate durable evidence from a real candidate-ready Gradle quality-gate execution. | Do not treat a valid receipt as historical log authentication or patch approval. |
+
 The current real-checkout report returns `controls_ready=false`.
 Parent-environment credential isolation is satisfied by the exact reconstructed
 environment launcher and adversarial child fixture. Provider-credential
 noninheritance has related environment-only evidence from the local
-implementation adapter's filtered child environment, but remains unsatisfied
-because files, operating-system credential stores, deliberate provider-specific
-credential channels, and a future real agent boundary are not covered.
+implementation adapter's filtered child environment and a spawned descendant
+fixture, but remains unsatisfied because files, operating-system credential
+stores, deliberate provider-specific credential channels, and a future real
+agent boundary are not covered.
 Disposable worktrees have observed metadata, one verified synthetic
 fixture, supervised-runner contract evidence for optional cleanup after a
 successful run, and a supervised-runner fixture that observes cleanup receipt

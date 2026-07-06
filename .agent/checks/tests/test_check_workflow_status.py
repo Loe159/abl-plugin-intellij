@@ -118,6 +118,8 @@ class CheckWorkflowStatusTest(unittest.TestCase):
         )
         self.assertIn(".agent/checks/run_supervised_implementation.py", runner["evidence"])
         self.assertIn(".agent/checks/build_supervised_runner_invocation.py", runner["evidence"])
+        self.assertIn(".agent/checks/run_agentic_workflow.py", runner["evidence"])
+        self.assertIn(".agent/policies/agentic-workflow-trigger.json", runner["evidence"])
         self.assertIn(".agent/adapters/local_implementation_adapter.py", runner["evidence"])
         self.assertEqual(
             "post_consumption_readiness_only",

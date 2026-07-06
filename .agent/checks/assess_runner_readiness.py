@@ -81,7 +81,10 @@ SOURCE_CONTRACTS = {
         "mode": "enforcement-proof",
         "completion_field": "proof_complete",
         "assessment_fields": ("control_assessments",),
-        "expected_ids": {"local_adapter_child_environment_filter"},
+        "expected_ids": {
+            "local_adapter_child_environment_filter",
+            "local_adapter_descendant_environment_filter",
+        },
     },
     "disposable_worktree_proof": {
         "purpose": "disposable_git_worktree_lifecycle_proof",
@@ -415,6 +418,11 @@ EXPECTED_POLICY: dict[str, Any] = {
             {
                 "source": "local_adapter_environment_filter_proof",
                 "id": "local_adapter_child_environment_filter",
+                "assessment": "verified_enforcement",
+            },
+            {
+                "source": "local_adapter_environment_filter_proof",
+                "id": "local_adapter_descendant_environment_filter",
                 "assessment": "verified_enforcement",
             }
         ],

@@ -15,6 +15,12 @@ is implemented. Exit code `2` means the ledger is valid but the pilot remains
 incomplete. Exit code `1` means a policy, evidence, repository, or I/O error.
 The CLI accepts no policy or readiness override.
 
+The current checkout can report `pilot_ready=true` while still reporting
+`runner_controls_ready=false`. That is not contradictory: the pilot ledger
+tracks whether the required local workflow capabilities exist, while runner
+control readiness tracks stronger runtime hardening evidence for a real
+adapter session.
+
 ## Current Boundary
 
 The ledger distinguishes:
@@ -31,6 +37,8 @@ The ledger distinguishes:
 - a functional supervised local runner that consumes exact session-start
   authorization, launches a bounded adapter, validates implementation output,
   generates a patch, runs the quality gate, and writes a final receipt;
+- a single-command local trigger for that prepared supervised runner path,
+  dry-run by default and executable only with `--execute`;
 - runtime-hardening controls that are still not all ready in the real checkout;
 - an exact local session-start authorization receipt that does not authenticate
   the authorizer or invoke a runner, plus an exclusive adjacent consumption
@@ -82,3 +90,24 @@ repository-mutation, network, publication, and session-start fields as false.
 This status is documentation backed by current local evidence, not an
 authorization mechanism or a claim that absent capabilities are impossible to
 implement.
+
+## Next Implementation Increments
+
+The next documentation and implementation work should focus on the controls
+reported in `runner_unready_controls`, not on adding new autonomy. In priority
+order:
+
+| Control | Next evidence needed | Do not claim |
+| --- | --- | --- |
+| `provider_credential_descendant_noninheritance` | A provider credential model and live-adapter proof covering files, stores, and deliberate channels, or an explicit decision to keep only environment-only local wrapper evidence. | Parent or adapter environment filtering proves all provider secrets are hidden. |
+| `network_isolation` | OS, sandbox, or provider-boundary evidence for a real adapter run. | `network_requested=false` means the process had no network path. |
+| `filesystem_write_scope` | A filesystem sandbox or denial proof for arbitrary absolute writes from child processes. | External output validation blocks all workspace escapes. |
+| `disposable_worktree_lifecycle` | Cleanup evidence for success, controlled failure, timeout, forced termination, and crash boundaries as far as the local model permits. | Cleanup receipts prove a global lifecycle guarantee. |
+| `implementation_session_wall_clock_timeout` | Session-level timeout and process-tree cleanup evidence beyond direct child and two-level fixtures. | Adapter timeout equals complete session control. |
+| `model_turn_budget` | Provider or adapter-side measurement/enforcement of turn consumption. | A declared `max_turns` budget is enforced. |
+| `authorization_consumption_to_process_start` | Stronger coupling between consumed authorization and process creation, with the crash window named if it remains. | Local marker consumption is atomic launch authorization. |
+| `implementation_quality_gate_execution` | Durable, independently validated evidence from a real candidate-ready Gradle execution. | Receipt validation authenticates historical build output or approves a patch. |
+
+GitHub workflows, live issue automation, draft-PR publication automation,
+golden-set adoption, and multi-adapter benchmarking remain useful later
+increments, but they should not mask these runner-control gaps.
