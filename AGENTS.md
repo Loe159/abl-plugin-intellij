@@ -254,8 +254,9 @@ and semantic model.
   real authorization coupling, crash atomicity, cross-host replay prevention,
   or agent invocation.
 - Check the current pilot capability ledger only with
-  `.agent/checks/check_workflow_status.py`; `pilot_ready=false` is an explicit
-  inventory result, not a failure to keep building the workflow incrementally.
+  `.agent/checks/check_workflow_status.py`; `pilot_ready=true` is a local
+  capability inventory result, not runner-control readiness, authorization,
+  publication permission, or proof that deferred capabilities are implemented.
 - Check draft-PR publication readiness only with
   `.agent/checks/check_draft_pr_publication_readiness.py`; the current local
   preflight never pushes a branch, creates a PR, writes to external services,

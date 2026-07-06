@@ -44,6 +44,7 @@ EXPECTED_POLICY: dict[str, Any] = {
     "mode": "enforcement-proof",
     "related_control": "provider_credential_descendant_noninheritance",
     "proven_control": "local_adapter_child_environment_filter",
+    "descendant_proven_control": "local_adapter_descendant_environment_filter",
     "sensitive_variable_names": list(SENSITIVE_NAMES),
     "bindings": [
         ".agent/checks/prove_local_adapter_environment_filter.py",
@@ -114,11 +115,23 @@ def prove(repo: Path, policy: dict[str, Any]) -> dict[str, Any]:
     with tempfile.TemporaryDirectory() as temp_dir:
         temp = Path(temp_dir)
         workspace, expected = init_workspace(temp)
+        descendant_probe = (
+            "import json, os; "
+            f"blocked={list(policy['sensitive_variable_names'])!r}; "
+            "print(json.dumps([name for name in blocked if name in os.environ]))"
+        )
         script = (
-            "import os, sys; "
+            "import json, os, subprocess, sys; "
             f"blocked={list(policy['sensitive_variable_names'])!r}; "
             "present=[name for name in blocked if name in os.environ]; "
             "sys.exit(7) if present else None; "
+            f"probe={descendant_probe!r}; "
+            "completed=subprocess.run("
+            "[sys.executable, '-c', probe], check=False, capture_output=True, text=True"
+            "); "
+            "sys.exit(9) if completed.returncode != 0 else None; "
+            "descendant_present=json.loads(completed.stdout or '[]'); "
+            "sys.exit(8) if descendant_present else None; "
             "from pathlib import Path; Path('changed.txt').write_text('changed\\n')"
         )
         env = {name: f"fixture-{name.lower()}" for name in policy["sensitive_variable_names"]}
@@ -140,15 +153,21 @@ def prove(repo: Path, policy: dict[str, Any]) -> dict[str, Any]:
         "scope": {
             "executes_local_adapter": True,
             "executes_fixture_child_command": True,
+            "executes_fixture_descendant_command": True,
             "checks_environment_variables_only": True,
             "proves_provider_filesystem_credentials_blocked": False,
             "proves_os_credential_store_blocked": False,
+            "proves_deliberate_provider_channel_blocked": False,
             "invokes_agent": False,
             "authorizes_session": False,
         },
         "control_assessments": [
             {
                 "id": policy["proven_control"],
+                "assessment": "verified_enforcement" if matched else "not_proven",
+            },
+            {
+                "id": policy["descendant_proven_control"],
                 "assessment": "verified_enforcement" if matched else "not_proven",
             }
         ],
@@ -162,6 +181,8 @@ def prove(repo: Path, policy: dict[str, Any]) -> dict[str, Any]:
             "id": "provider_env_vars_filtered_from_local_adapter_child",
             "matched": matched,
             "sensitive_variable_count": len(policy["sensitive_variable_names"]),
+            "checked_direct_child": True,
+            "checked_spawned_descendant": True,
         },
         "bindings": initialize_portable_run.binding_records(policy["bindings"]),
     }
@@ -179,6 +200,8 @@ def format_text(result: dict[str, Any]) -> str:
     return "\n".join(
         [
             f"local-adapter-environment-filter-proof: {assessment.upper()}",
+            "local_adapter_descendant_environment_filter="
+            f"{result['control_assessments'][1]['assessment']}",
             "provider_credential_descendant_noninheritance=related_evidence_only",
             "agent_invocation_authorized=false",
         ]

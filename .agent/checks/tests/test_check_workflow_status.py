@@ -49,12 +49,17 @@ class CheckWorkflowStatusTest(unittest.TestCase):
         policy = status.load_policy()
         self.assertEqual(status.EXPECTED_POLICY, policy)
         self.assertEqual("status-only", policy["mode"])
-        self.assertTrue(all(item["required_for_pilot"] for item in policy["capabilities"]))
+        deferred = [
+            item["id"]
+            for item in policy["capabilities"]
+            if not item["required_for_pilot"]
+        ]
+        self.assertEqual(["historical_golden_set"], deferred)
 
-    def test_current_status_is_incomplete_and_names_missing_capabilities(self) -> None:
+    def test_current_status_names_unready_controls_and_deferred_capabilities(self) -> None:
         result = status.check_status(REPO_ROOT, status.load_policy(), unready_runner)
 
-        self.assertFalse(result["pilot_ready"])
+        self.assertTrue(result["pilot_ready"])
         self.assertFalse(result["runner_controls_ready"])
         self.assertEqual(
             [
@@ -70,7 +75,7 @@ class CheckWorkflowStatusTest(unittest.TestCase):
             result["runner_unready_controls"],
         )
         self.assertNotIn("enforced_implementation_runner", result["missing_required_capabilities"])
-        self.assertIn("historical_golden_set", result["missing_required_capabilities"])
+        self.assertNotIn("historical_golden_set", result["missing_required_capabilities"])
         self.assertNotIn("multi_adapter_comparison", result["missing_required_capabilities"])
         self.assertNotIn(
             "approved_github_issue_ingestion",
@@ -113,6 +118,8 @@ class CheckWorkflowStatusTest(unittest.TestCase):
         )
         self.assertIn(".agent/checks/run_supervised_implementation.py", runner["evidence"])
         self.assertIn(".agent/checks/build_supervised_runner_invocation.py", runner["evidence"])
+        self.assertIn(".agent/checks/run_agentic_workflow.py", runner["evidence"])
+        self.assertIn(".agent/policies/agentic-workflow-trigger.json", runner["evidence"])
         self.assertIn(".agent/adapters/local_implementation_adapter.py", runner["evidence"])
         self.assertEqual(
             "post_consumption_readiness_only",
@@ -166,8 +173,9 @@ class CheckWorkflowStatusTest(unittest.TestCase):
         golden_set = next(
             item for item in result["capabilities"] if item["id"] == "historical_golden_set"
         )
-        self.assertEqual("local_preflight_only", golden_set["status"])
+        self.assertEqual("deferred_for_new_repository", golden_set["status"])
         self.assertFalse(golden_set["implemented"])
+        self.assertFalse(golden_set["required_for_pilot"])
         self.assertIn(
             ".agent/checks/check_historical_golden_set_readiness.py",
             golden_set["evidence"],
@@ -212,7 +220,7 @@ class CheckWorkflowStatusTest(unittest.TestCase):
         for field in status.FALSE_AUTHORIZATION_FIELDS:
             self.assertFalse(result[field])
 
-    def test_ready_runner_alone_does_not_make_pilot_ready(self) -> None:
+    def test_ready_runner_keeps_status_non_authorizing(self) -> None:
         result = status.check_status(REPO_ROOT, status.load_policy(), ready_runner)
         runner = next(
             item for item in result["capabilities"] if item["id"] == "enforced_implementation_runner"
@@ -221,7 +229,7 @@ class CheckWorkflowStatusTest(unittest.TestCase):
         self.assertTrue(result["runner_controls_ready"])
         self.assertTrue(runner["implemented"])
         self.assertEqual("controls_ready_not_authorized", runner["status"])
-        self.assertFalse(result["pilot_ready"])
+        self.assertTrue(result["pilot_ready"])
         self.assertNotIn("enforced_implementation_runner", result["missing_required_capabilities"])
         self.assertNotIn(
             "explicit_session_start_authorization",

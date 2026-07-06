@@ -56,11 +56,14 @@ The checkout already contains the MVP building blocks:
   `.agent/checks/publish_draft_pr.py` and
   `.agent/scripts/publish-draft-pr.sh`.
 
-`check_workflow_status.py` still reports `pilot_ready=false`. For the current
-MVP direction, the important interpretation is: most local mechanics exist, but
-the checked-in ledger still requires the historical golden set and runner
-hardening evidence that are not prerequisites for a first supervised local
-exercise.
+`check_workflow_status.py` now reports `pilot_ready=true` for the local pilot
+profile because the historical golden set is explicitly deferred for this young
+repository. That does not mean the runtime controls are complete:
+`runner_controls_ready=false` still records missing or related-only evidence for
+provider credential descendant isolation, filesystem scope, network isolation,
+model-turn budgeting, full session timeout, complete disposable-worktree
+lifecycle, authorization-to-process coupling, and authenticated quality-gate
+execution.
 
 ## Documentation Cleanup
 
@@ -108,24 +111,25 @@ standardize its naming before adding a global memory layer.
 
 ## Recommended MVP Path
 
-1. Add one non-authorizing orchestrator command, for example
+1. Treat `.agent/checks/run_agentic_workflow.py` as the first single-command
+   trigger for already prepared implementation artifacts. It stays dry-run by
+   default and requires `--execute` before starting the supervised runner.
+2. Add one issue-id oriented orchestrator command, for example
    `.agent/checks/run_issue_workflow.py`, with resumable subcommands rather than
    one opaque magic command.
-2. Start with issue preparation only: `prepare --issue <n>` should fetch,
+3. Start with issue preparation only: `prepare --issue <n>` should fetch,
    check, approve-init after exact confirmation, initialize the external run,
    and show the next required human action.
-3. Add `research`, `plan`, and `approve-plan` subcommands that call the existing
+4. Add `research`, `plan`, and `approve-plan` subcommands that call the existing
    stage-context, output-validation, stage-application, and plan-approval tools.
-4. Add `prepare-implementation` to build handoff, session proposal, disposable
+5. Add `prepare-implementation` to build handoff, session proposal, disposable
    worktree, preflight, and exact start authorization package.
-5. Add `run-implementation` as a thin wrapper around
-   `build_supervised_runner_invocation.py` and
-   `run_supervised_implementation.py`.
-6. Add `summarize` to print the current run state, next command, required human
+6. Add `run-implementation` as a thin wrapper around
+   `run_agentic_workflow.py`.
+7. Add `summarize` to print the current run state, next command, required human
    confirmation phrase, and produced receipts.
-7. Move the golden set out of the MVP readiness requirement or introduce an
-   `--mvp-without-golden-set` status profile that still reports the missing
-   evidence honestly.
+8. Keep the Golden Set deferred in status output until the repository has a real
+   historical corpus, while continuing to report that no adopted corpus exists.
 
 The orchestrator should call existing validators instead of reimplementing
 their logic. It should never hide exact confirmations, never auto-approve a
@@ -153,4 +157,3 @@ record RSSW evidence. This audit does not approve any plugin behavior change.
   real gap;
 - no claim that network isolation, provider credential descendant isolation,
   or crash-atomic launch coupling are proven.
-

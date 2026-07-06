@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "purpose": "agentic_workflow_single_command_trigger",
+  "mode": "dry-run-or-explicit-execute",
+  "default_dry_run": true,
+  "require_execute_flag_for_runner_process": true,
+  "require_runner_invocation_builder": true,
+  "command_timeout_seconds": 1800.0,
+  "max_captured_output_bytes": 20000,
+  "bindings": [
+    ".agent/checks/run_agentic_workflow.py",
+    ".agent/policies/agentic-workflow-trigger.json",
+    ".agent/checks/build_supervised_runner_invocation.py",
+    ".agent/policies/supervised-runner-invocation.json",
+    ".agent/checks/run_supervised_implementation.py",
+    ".agent/policies/supervised-implementation-runner.json",
+    "docs/agent-guides/supervised-runner-workflow.md"
+  ]
+}
