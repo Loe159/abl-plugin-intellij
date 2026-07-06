@@ -1,5 +1,12 @@
 # Dossier de transfert Codex — Workflow agentique autonome et supervisé de développement
 
+> **Note historique 2026-07-04 :** ce transfert est conserve comme contexte
+> initial. L'etat courant du workflow vit dans
+> `docs/agent-guides/handoff-implementation-audit.md`,
+> `docs/agent-guides/workflow-status.md`,
+> `docs/agent-guides/runner-readiness.md` et
+> `docs/agent-guides/supervised-runner-workflow.md`.
+
 > **Destinataire :** agent Codex chargé de poursuivre concrètement le projet.  
 > **Statut :** document autonome de cadrage et d’implémentation.  
 > **Date de consolidation :** 2026-06-08.  

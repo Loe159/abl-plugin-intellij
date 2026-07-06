@@ -4,6 +4,7 @@
   "mode": "enforcement-proof",
   "related_control": "provider_credential_descendant_noninheritance",
   "proven_control": "local_adapter_child_environment_filter",
+  "descendant_proven_control": "local_adapter_descendant_environment_filter",
   "sensitive_variable_names": [
     "ANTHROPIC_API_KEY",
     "AZURE_OPENAI_API_KEY",

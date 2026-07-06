@@ -146,6 +146,11 @@
         "source": "local_adapter_environment_filter_proof",
         "id": "local_adapter_child_environment_filter",
         "assessment": "verified_enforcement"
+      },
+      {
+        "source": "local_adapter_environment_filter_proof",
+        "id": "local_adapter_descendant_environment_filter",
+        "assessment": "verified_enforcement"
       }
     ],
     "disposable_worktree_lifecycle": [

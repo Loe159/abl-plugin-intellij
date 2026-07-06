@@ -3,6 +3,7 @@
 Source : `codex-handoff-workflow-agentique.md`  
 Date d'audit initial : 2026-06-30  
 Derniere mise a jour : 2026-07-02  
+Mise a jour prochaines etapes : 2026-07-04  
 Perimetre : comparer le plan du handoff avec l'implementation presente dans le
 depot.
 
@@ -23,11 +24,13 @@ workspace jetable, valide le resultat d'implementation capture, genere et
 valide un patch, lance la quality gate hors ligne, valide le receipt de quality
 gate, puis produit un receipt final.
 
-Le pilote n'est pas encore une plateforme agentique autonome complete. Le
-checker d'etat courant indique :
+Le pilote n'est pas une plateforme agentique autonome complete. Le checker
+d'etat courant indique que les capacites requises pour le pilote local sont
+maintenant implementees, tout en conservant les champs d'autorisation a false :
 
 ```text
-agentic-workflow-status: INCOMPLETE
+pilot_ready=true
+runner_controls_ready=false
 agent_invocation_authorized=false
 publication_authorized=false
 ```
@@ -41,21 +44,27 @@ agent_invocation_authorized=false
 ```
 
 Le checker global expose aussi `runner_unready_controls`, qui liste les
-controles runner non satisfaits sans les convertir en autorisation ni en
-readiness.
+controles runner non satisfaits sans les convertir en autorisation,
+invocation, publication ni readiness de controles runtime.
 
-Raisons principales :
+Raisons principales de la difference entre pilote local pret et runner
+hardening incomplet :
 
-- le golden set historique n'est pas adopte ;
-- la comparaison multi-adaptateur valide seulement des artefacts locaux deja
-  captures et ne lance pas les adaptateurs ;
 - l'isolation des credentials fournisseur dans les descendants, l'isolation
   reseau, le budget de tours modele et le cycle de vie complet du worktree
-  jetable ne sont pas completement prouves ; l'environnement direct de
-  l'adaptateur local filtre maintenant les variables de credentials provider,
-  mais pas les credentials charges depuis fichiers ou credential stores ;
+  jetable ne sont pas completement prouves ; l'adaptateur local filtre
+  maintenant les variables de credentials provider pour sa commande enfant
+  directe et un descendant fixture, mais pas les credentials charges depuis
+  fichiers ou credential stores ;
   l'allowlist d'outils du runner est maintenant prouvee localement mais ne
   couvre pas le comportement interne d'un provider ;
+- le scope filesystem, le timeout de session complet, le couplage
+  consommation-autorisation -> process et l'execution authentifiee de la
+  quality gate restent seulement en evidence liee ;
+- le golden set historique reste differe pour ce jeune depot et n'est plus une
+  capacite requise pour le pilote courant ;
+- la comparaison multi-adaptateur valide seulement des artefacts locaux deja
+  captures et ne lance pas les adaptateurs ;
 - l'orchestration GitHub Actions agentique n'a pas ete ajoutee, car les
   changements dans `.github/**` demandent une approbation humaine explicite ;
 - l'outillage de publication existe seulement derriere une demande explicite et
@@ -148,11 +157,12 @@ Corrections locales apportees apres l'audit initial :
   `authorization_consumption_to_process_start` sans revendiquer d'atomicite
   crash-safe ni de prevention replay cross-host.
 - filtrage de l'environnement enfant dans
-  `.agent/adapters/local_implementation_adapter.py` et ajout de
+  `.agent/adapters/local_implementation_adapter.py` et renforcement de
   `.agent/checks/prove_local_adapter_environment_filter.py` comme preuve
   bornee que les variables provider synthetiques ne rejoignent pas la commande
-  enfant directe de l'adaptateur ; cela reste une evidence liee, pas une preuve
-  globale de non-inheritance des credentials fournisseur.
+  enfant directe de l'adaptateur ni un descendant fixture ; cela reste une
+  evidence liee, pas une preuve globale de non-inheritance des credentials
+  fournisseur.
 - alignement de la borne `.agent/checks/isolated_process.py` sur
   `adapter_timeout_seconds=600.0` du runner supervise, avec evidence liee dans
   `.agent/checks/assess_runner_readiness.py`; cela evite un rejet local avant
@@ -208,6 +218,9 @@ Fichiers cles :
   locale qui emet le contrat portable `implementation-result`.
 - `.agent/checks/build_supervised_runner_invocation.py` : helper qui construit
   la ligne de commande exacte du runner a partir d'artefacts deja valides.
+- `.agent/checks/run_agentic_workflow.py` : launcher a commande unique pour le
+  runner supervise prepare, en dry-run par defaut et executable seulement avec
+  `--execute`.
 - `.agent/checks/prove_supervised_runner_execution.py` : preuve par fixture
   bornee que le coeur du runner impose la validation post-capture avant de
   conserver un resultat, un patch ou une sortie de quality gate ; ses entrees
@@ -869,7 +882,7 @@ que comme agents live independants.
 
 | Agent du handoff | Implementation actuelle | Etat |
 | --- | --- | --- |
-| Orchestrator deterministe | `check_workflow_status.py`, scripts runner/preflight/approval, inventaire `.agent/config.yaml` | Partiel ; pas d'orchestrateur continu unique |
+| Orchestrator deterministe | `check_workflow_status.py`, `run_agentic_workflow.py`, scripts runner/preflight/approval, inventaire `.agent/config.yaml` | Partiel ; commande unique pour runner prepare, pas d'orchestrateur continu |
 | Normalizer deterministe | file read-only GitHub + fetch explicite + approbation de snapshot issue + portable run + approbation de tache via `prepare-task.sh` | Partiel ; pas de surveillance continue ni de selection automatique |
 | Researcher generaliste | contrats de stage read-only, adaptateur manuel, adaptateur local read-only | Partiel ; pas de preuve provider live |
 | Skill `proparse-research` | `.agents/skills/proparse-research/`, references et manifests `.agents/skills/proparse-research/agents/openai.yaml` / `.agents/skills/proparse-research/agents/proparse-researcher.yaml` | Implemente |
@@ -1553,6 +1566,8 @@ Fichiers de demarrage les plus importants :
 
 - `.agent/checks/build_supervised_runner_invocation.py` : constructeur de
   commande.
+- `.agent/checks/run_agentic_workflow.py` : launcher dry-run/`--execute` de la
+  commande runner construite.
 - `.agent/checks/run_supervised_implementation.py` : orchestre le run local.
 - `.agent/adapters/local_implementation_adapter.py` : enveloppe la commande
   locale.
@@ -1634,40 +1649,56 @@ Fichiers de demarrage les plus importants :
   GitHub.
 - `.agent/checks/approve_golden_set.py` : receipt local d'adoption exacte.
 
-## Travail restant par valeur bloquante
+## Prochaines etapes d'implementation
 
-1. Adopter un golden set historique authentifie ou reviser explicitement la
-   policy d'etat si la readiness golden-set ne doit plus bloquer la completion
-   du pilote.
-2. Definir l'authentification ou la validation independante de la source GitHub
-   et des labels si la file live `agent:approved` devient bloquante.
-3. Decider et implementer le vrai modele de credentials fournisseur pour les
-   commandes agent locales/CI, au-dela du filtrage d'environnement direct deja
-   prouve par fixture.
-4. Ajouter ou approuver une strategie d'enforcement reseau/sandbox et de scope
-   filesystem pour les vrais runs d'adaptateurs ; le runner actuel ne prouve pas
-   le blocage OS-level des ecritures absolues ou du reseau.
-5. Prouver ou reviser les controles runner encore en evidence liee seulement :
-   lifecycle complet du worktree jetable, timeout complet de session, budget de
-   tours modele, couplage consommation-autorisation -> process, et execution de
-   quality gate comme controle runner satisfaisant.
-6. Implementer des adaptateurs fournisseur specifiques et testes, ou garder le
-   wrapper de commande locale comme seul adaptateur supporte et documenter cette
-   decision.
-7. Ajouter les workflows GitHub Actions agentiques build/publish seulement apres
-   approbation humaine explicite de modification de `.github/**`.
-8. Ajouter une telemetrie automatique ou fiable si les couts/durees doivent
-   etre imposes plutot qu'enregistres manuellement.
+La prochaine valeur n'est pas d'ajouter une nouvelle surface d'autonomie. Elle
+est de transformer, une par une, les evidences liees du runner en preuves
+circonscrites ou en limites explicitement assumees. L'ordre recommande est :
+Ces prochaines etapes gardent explicitement le lifecycle complet du worktree jetable, le timeout complet de session, le couplage consommation-autorisation -> process et le scope filesystem pour les vrais runs comme controles runner, pas comme promesses implicites du pilote.
+
+1. Credentials fournisseur descendants : choisir le modele exact de credential
+   pour les commandes agent locales/CI, puis prouver que ce modele ne fuit pas
+   vers les commandes lancees par un vrai agent, ou documenter que le wrapper
+   local reste le seul adaptateur supporte.
+2. Scope reseau et filesystem : definir une preuve sandbox/OS ou une strategie
+   de refus qui couvre un adaptateur live, sans confondre `network_requested=false`
+   et absence de connectivite.
+3. Cycle de vie du worktree jetable : couvrir cleanup apres succes, arret
+   controle, timeout capture, terminaison forcee et crash autant que le modele
+   local le permet, avec receipt valide mais sans promettre de garantie
+   cross-host.
+4. Timeout de session et arbre de processus : etendre la preuve au-dela du
+   direct-child et du fixture Windows deux niveaux, ou garder explicitement ce
+   controle en evidence liee.
+5. Budget de tours modele : imposer ou mesurer le budget cote provider/adaptateur
+   au lieu de seulement le declarer dans la policy de session.
+6. Couplage consommation-autorisation -> process : reduire la fenetre crash
+   entre marqueur consomme et lancement, ou documenter le risque residuel comme
+   non resolu.
+7. Execution de quality gate : produire une evidence durable et validable d'une
+   vraie execution Gradle candidate-ready, assez forte pour satisfaire
+   `implementation_quality_gate_execution`, sans transformer la quality gate en
+   approbation humaine.
+8. GitHub, golden set, comparaison et metriques fiables : garder ces sujets
+   derriere les controles runner ci-dessus, sauf demande humaine explicite pour
+   un increment separe. Definir l'authentification ou la validation
+   independante de la source GitHub et des labels si la file live `agent:approved` devient bloquante.
 
 ## Conclusion
 
 Le depot contient maintenant un runner local d'implementation supervisee,
 fonctionnel, non autorisant, et un grand framework de preuves deterministes.
-C'est une implementation substantielle du coeur local du workflow agentique ABL,
-mais les checks courants gardent `pilot_ready=false`,
+C'est une implementation substantielle du coeur local du workflow agentique ABL.
+Les checks courants gardent `pilot_ready=true`,
 `runner_controls_ready=false`, `agent_invocation_authorized=false` et
-`publication_authorized=false`. Le handoff original decrivait toutefois un
-systeme plus large : file d'issues GitHub live authentifiee, plusieurs
-adaptateurs fournisseur concrets, benchmark historique, orchestration CI
-agentique, workflow de publication de draft PR et, a terme, execution continue
-prudente. Ces parties restent partielles ou explicitement non implementees.
+`publication_authorized=false`. Cette combinaison est intentionnelle :
+le pilote local est complet selon son ledger actuel, mais le runner n'a pas
+encore toutes les preuves runtime requises pour revendiquer des controles
+durcis.
+
+Le handoff original decrivait toutefois un systeme plus large : file d'issues
+GitHub live authentifiee, plusieurs adaptateurs fournisseur concrets, benchmark
+historique, orchestration CI agentique, workflow de publication de draft PR et,
+a terme, execution continue prudente. Ces parties restent partielles,
+explicite-request only, differees ou explicitement non implementees selon le
+cas ; aucune ne devient autorisee par `pilot_ready=true`.

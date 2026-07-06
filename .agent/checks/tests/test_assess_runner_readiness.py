@@ -98,6 +98,14 @@ class AssessRunnerReadinessTest(unittest.TestCase):
             },
             provider_noninheritance["related_evidence"],
         )
+        self.assertIn(
+            {
+                "source": "local_adapter_environment_filter_proof",
+                "id": "local_adapter_descendant_environment_filter",
+                "assessment": "verified_enforcement",
+            },
+            provider_noninheritance["related_evidence"],
+        )
         self.assertEqual("satisfied", statuses["bounded_output_capture"])
         self.assertEqual(
             "related_evidence_only",
