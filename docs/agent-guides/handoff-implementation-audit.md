@@ -1,10 +1,15 @@
 # Audit d'implementation du handoff
 
-Source : `codex-handoff-workflow-agentique.md`  
+Source historique : handoff racine retire du checkout apres consolidation  
 Date d'audit initial : 2026-06-30  
 Derniere mise a jour : 2026-07-02  
 Perimetre : comparer le plan du handoff avec l'implementation presente dans le
 depot.
+
+Pour l'etat actionnable du MVP et le plan d'automatisation par identifiant
+d'issue, lire `docs/agent-guides/mvp-automation-audit.md`. Le present fichier
+reste un journal detaille de reconciliation entre le handoff historique et le
+checkout courant.
 
 Ce document est volontairement strict. Il explique ce qui existe reellement
 dans le checkout, quel fichier porte chaque comportement, et ce qui manque

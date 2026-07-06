@@ -7,6 +7,8 @@ and semantic model.
 ## Start Here
 
 - Read `docs/agent-guides/repository-audit.md` for the verified repository map.
+- Read `docs/agent-guides/mvp-automation-audit.md` before planning the
+  issue-id driven MVP orchestration path.
 - Read `docs/agent-guides/diff-policy.md` before validating an agent patch.
 - Read `docs/agent-guides/complete-patch.md` before producing a patch artifact.
 - Read `docs/agent-guides/risk-classification.md` before assigning a patch

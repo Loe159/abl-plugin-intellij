@@ -32,6 +32,8 @@ inspections ou analyse semantique.
 - `.agent/templates/`: templates d'artefacts portables
 - `.agents/skills/agentic-workflow-pilot/`: regles du workflow courant
 - `.agents/skills/proparse-research/`: recherche Proparse/RSSW avant ABL
+- `docs/agent-guides/mvp-automation-audit.md`: synthese courte du MVP
+  issue-id, de la memoire implementee et des prochaines etapes
 - `docs/agent-guides/supervised-runner-workflow.md`: tutoriel de bout en bout
 
 ## Resoudre une issue
