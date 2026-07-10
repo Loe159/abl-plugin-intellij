@@ -30,6 +30,12 @@ Extensions supportées : `.p` `.cls` `.i` `.w` `.t`
 
 ---
 
+## Test Agent Workflow
+
+Cette ligne a été ajoutée pour tester le workflow agent GitHub (Issue LO-6).
+
+---
+
 ## Architecture
 
 ```
