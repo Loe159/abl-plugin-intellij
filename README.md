@@ -135,3 +135,5 @@ implementation("eu.rssw.openedge.parsers:proparse:NOUVELLE_VERSION") { ... }
 
 Si proparse renomme des règles ANTLR4, vérifier les méthodes orphelines dans
 `AblSymbolCollector.kt` (les visiteurs manquants sont ignorés silencieusement).
+
+<!-- PR workflow test -->
